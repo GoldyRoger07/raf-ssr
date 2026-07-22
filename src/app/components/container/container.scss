@@ -1,0 +1,23 @@
+.grid-lines{
+    display: grid;
+    justify-content: center;
+    grid-template-columns: repeat(12,85px);
+    gap: 20px;
+    width: 100%;
+}
+
+@media screen and (width <= 1240px) {
+    .grid-lines{
+        width: calc(100% - 40px);
+        grid-template-columns: repeat(8,1fr);
+        margin: 0 auto;
+    }
+}
+
+@media screen and (width <= 957px) {
+    .grid-lines{
+        width: calc(100% - 20px);
+        grid-template-columns: repeat(4,1fr);
+        margin: 0 auto;
+    }
+}

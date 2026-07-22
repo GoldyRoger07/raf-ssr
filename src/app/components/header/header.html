@@ -1,0 +1,125 @@
+<header
+  class="fixed top-0 z-50 w-full border-b border-gray-200 bg-white/10 backdrop-blur transition-transform duration-300 will-change-transform dark:border-gray-800 dark:bg-gray-900/80"
+  [class.-translate-y-full]="hidden()">
+  <my-container>
+    <nav class="w-full flex h-16 items-center justify-between gap-4 ">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2 shrink-0" aria-label="Accueil">
+        <img src="/img/logo-raf.svg" class="w-30" alt="Logo de raf">
+        <!-- <span
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-(--p-primary-color) font-bold text-white"
+        >
+          R
+        </span>
+        <span class="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Raf</span> -->
+      </a>
+  
+      <!-- Menu (desktop) -->
+      <ul class="hidden items-center gap-8 md:flex">
+        @for (item of navItems; track item.label) {
+          <li>
+            <a
+              [href]="item.link"
+              class="text-sm font-medium text-gray-600 transition-colors hover:text-orange-500 dark:text-gray-300 dark:hover:text-orange-500"
+            >
+              {{ item.label }}
+            </a>
+          </li>
+        }
+      </ul>
+  
+      <!-- Actions (desktop) -->
+      <div class="hidden items-center gap-3 md:flex">
+        <!-- Bascule de thème -->
+        <button
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          [attr.aria-label]="theme() === 'dark' ? 'Activer le thème clair' : 'Activer le thème sombre'"
+          (click)="toggleTheme()"
+        >
+          @if (theme() === 'dark') {
+            <!-- Icône soleil -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="4" />
+              <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" />
+            </svg>
+          } @else {
+            <!-- Icône lune -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+          }
+        </button>
+  
+        <app-button [v]="2">Sign in</app-button>
+        <app-button [v]="1" >Sign up</app-button>
+      </div>
+  
+      <!-- Actions (mobile) -->
+      <div class="flex items-center gap-1 md:hidden">
+        <!-- Bascule de thème -->
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          [attr.aria-label]="theme() === 'dark' ? 'Activer le thème clair' : 'Activer le thème sombre'"
+          (click)="toggleTheme()"
+        >
+          @if (theme() === 'dark') {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="4" />
+              <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" />
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+          }
+        </button>
+  
+        <!-- Bouton menu -->
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+          [attr.aria-expanded]="menuOpen()"
+          aria-controls="mobile-menu"
+          aria-label="Ouvrir le menu"
+          (click)="toggleMenu()"
+        >
+          @if (menuOpen()) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          }
+        </button>
+      </div>
+    </nav>
+
+  </my-container>
+
+  <!-- Menu déroulant (mobile) -->
+  @if (menuOpen()) {
+    <div id="mobile-menu" class="border-t border-gray-200 bg-white md:hidden dark:border-gray-800 dark:bg-gray-900">
+      <ul class="space-y-1 px-4 py-3">
+        @for (item of navItems; track item.label) {
+          <li>
+            <a
+              [href]="item.link"
+              class="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:text-gray-200 dark:hover:bg-orange-500/10 dark:hover:text-orange-500"
+              (click)="closeMenu()"
+            >
+              {{ item.label }}
+            </a>
+          </li>
+        }
+      </ul>
+      <div class="flex flex-col gap-2 border-t border-gray-200 px-4 py-4 dark:border-gray-800">
+        <app-button (click)="closeMenu()">Sign in</app-button>
+        <app-button (click)="closeMenu()">Sign up</app-button>
+      </div>
+    </div>
+  }
+</header>

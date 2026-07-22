@@ -1,0 +1,97 @@
+:host {
+  display: block;
+}
+
+/* Bouton « fill » : bordure seule + fond transparent au repos.
+   Au survol, un pseudo-élément se déploie du bas vers le haut (scaleY 0 -> 1,
+   origin bottom). Quand on quitte le survol, l'origin repasse en haut : le
+   remplissage se rétracte vers le haut -> effet inversé.
+
+   Les couleurs sont pilotées par des variables pour dériver des variantes :
+   --btn-accent     : bordure, texte au repos et couleur de remplissage
+   --btn-hover-text : couleur du texte une fois le bouton rempli */
+.btn-fill {
+  --btn-accent: var(--p-primary-color);
+  --btn-hover-text: #fff;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--btn-accent);
+  background-color: transparent;
+  color: var(--btn-accent);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.btn-fill-v2 {
+  --btn-accent: var(--p-primary-color);
+  --btn-hover-text: #fff;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--btn-accent);
+  background-color: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.btn-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--btn-accent);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.3s ease;
+}
+
+.btn-fill-v2::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--btn-accent);
+  transform: scaleY(1);
+  transform-origin: top;
+  transition: transform 0.3s ease;
+}
+
+.btn-fill:hover {
+  color: var(--btn-hover-text);
+}
+
+.btn-fill-v2:hover {
+  color: var(--btn-accent);
+}
+
+.btn-fill:hover::before {
+  transform: scaleY(1);
+  transform-origin: bottom;
+}
+
+.btn-fill-v2:hover::before {
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+
+
+/* Variante secondaire : même effet, couleur blanche.
+   Bordure/texte blancs au repos, remplissage blanc au survol, texte foncé une
+   fois rempli (pensée pour un fond sombre ou coloré, ex. le hero). */
+.btn-fill-white {
+  --btn-accent: #fff;
+  --btn-hover-text: #111827;
+}
+
+/* Respecte la préférence « réduire les animations ». */
+@media (prefers-reduced-motion: reduce) {
+  .btn-fill,
+  .btn-fill::before {
+    transition: none;
+  }
+}

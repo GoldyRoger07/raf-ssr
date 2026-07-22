@@ -1,0 +1,10 @@
+<button
+    [type]="type()"
+    class="flex w-full items-center uppercase text-xl justify-center rounded-lg p-4  font-medium"
+    [class.btn-fill]="v() !== 2"
+    [class.btn-fill-v2]="v() === 2"
+    [class.btn-fill-white]="variant() === 'white'"
+    [style]="styleVars()"
+>
+    <ng-content></ng-content>
+</button>
