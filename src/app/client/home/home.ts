@@ -5,9 +5,12 @@ import { Container } from "../../components/container/container";
 import { Footer } from "../../components/footer/footer";
 
 interface CardData{
-  title: string,
-  desc: string,
+  title: string
+  subtitle?: string
+  desc: string
   avatar?: string
+
+
 }
 
 @Component({

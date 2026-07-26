@@ -15,7 +15,7 @@
       </a>
   
       <!-- Menu (desktop) -->
-      <ul class="hidden items-center gap-8 md:flex">
+      <ul class="hidden items-center gap-8 lg:flex">
         @for (item of navItems; track item.label) {
           <li>
             <a
@@ -29,7 +29,7 @@
       </ul>
   
       <!-- Actions (desktop) -->
-      <div class="hidden items-center gap-3 md:flex">
+      <div class="hidden items-center gap-3 lg:flex">
         <!-- Bascule de thème -->
         <button
           type="button"
@@ -56,7 +56,7 @@
       </div>
   
       <!-- Actions (mobile) -->
-      <div class="flex items-center gap-1 md:hidden">
+      <div class="flex items-center gap-1 lg:hidden">
         <!-- Bascule de thème -->
         <button
           type="button"
@@ -102,7 +102,7 @@
 
   <!-- Menu déroulant (mobile) -->
   @if (menuOpen()) {
-    <div id="mobile-menu" class="border-t border-gray-200 bg-white md:hidden dark:border-gray-800 dark:bg-gray-900">
+    <div id="mobile-menu" class="border-t border-gray-200 bg-white lg:hidden dark:border-gray-800 dark:bg-gray-900">
       <ul class="space-y-1 px-4 py-3">
         @for (item of navItems; track item.label) {
           <li>

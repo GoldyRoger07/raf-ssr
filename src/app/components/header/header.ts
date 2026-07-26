@@ -30,6 +30,8 @@ export class Header {
     { label: 'Accueil', link: '#' },
     { label: 'Comment ça marche', link: '#' },
     { label: 'Tarifs', link: '#' },
+    { label: 'A Propos', link: '#' },
+    { label: 'Blog', link: '#' },    
     { label: 'Contact', link: '#' },
   ];
 
