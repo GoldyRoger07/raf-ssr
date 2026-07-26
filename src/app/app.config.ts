@@ -9,9 +9,14 @@ import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
 import { AppPreset } from './theme/app-preset';
+import { APP_BASE_HREF } from '@angular/common'
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    {
+      provide: APP_BASE_HREF,
+      useValue: '/raf/'
+    },
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes),
