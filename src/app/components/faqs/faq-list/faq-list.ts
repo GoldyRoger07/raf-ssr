@@ -1,5 +1,6 @@
 import { Component, Input, signal } from '@angular/core';
 import { FaqItem } from "../faq-item/faq-item";
+import { AnimateOnScrollDirective } from '../../../directives/animate-on-scroll';
 
 interface FaqData {
   question: string;
@@ -8,7 +9,7 @@ interface FaqData {
 
 @Component({
   selector: 'faq-list',
-  imports: [FaqItem],
+  imports: [FaqItem, AnimateOnScrollDirective],
   templateUrl: './faq-list.html',
   styleUrl: './faq-list.css',
 })

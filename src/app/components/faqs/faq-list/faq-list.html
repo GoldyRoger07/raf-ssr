@@ -2,7 +2,8 @@
             
       @for (faq of faqs; track faq.question; let i = $index) {
         <app-faq-item
-          class="md:w-[75%]"
+          animateOnScroll
+          class="fade-up md:w-[75%]"
           [question]="faq.question"
           [answer]="faq.answer"
           [isOpen]="openIndex() === i"

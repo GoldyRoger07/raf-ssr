@@ -6,6 +6,7 @@ import { My3dButton } from '../../components/buttons/my3d-button/my3d-button';
 import { FaqList } from "../../components/faqs/faq-list/faq-list";
 import { TestimonialComponent } from "../../components/testimonials/testimonial/testimonial";
 import { TestimonialList } from "../../components/testimonials/testimonial-list/testimonial-list";
+import { AnimateOnScrollDirective } from '../../directives/animate-on-scroll';
 
 interface CardData{
   title: string
@@ -18,9 +19,10 @@ interface CardData{
 
 @Component({
   selector: 'app-home',
-  imports: [Header, My3dButton, Container, Footer, FaqList, TestimonialComponent, TestimonialList],
+  imports: [Header, My3dButton, Container, Footer, FaqList, TestimonialComponent, TestimonialList, AnimateOnScrollDirective],
   templateUrl: './home.html',
   styleUrl: './home.css',
+  
 })
 export default class Home {
 

@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { Testimonial } from '../../../model/testimonial.model';
 import { TestimonialComponent } from '../testimonial/testimonial';
+import { AnimateOnScrollDirective } from '../../../directives/animate-on-scroll';
 
 @Component({
   selector: 'my-testimonial-list',
-  imports: [TestimonialComponent],
+  imports: [TestimonialComponent, AnimateOnScrollDirective],
   templateUrl: './testimonial-list.html',
   styleUrl: './testimonial-list.css',
 })

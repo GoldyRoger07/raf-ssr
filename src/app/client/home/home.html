@@ -3,8 +3,8 @@
     <div class="absolute h-full w-full linear-bg"></div>
     <my-container>
         <div class="flex flex-col items-center text-gray-700 text-center gap-5">
-            <h1 class="font-bold  text-5xl md:text-6xl">Gagnez de l'argent grâce à vos connaissances</h1>
-            <p class=" text-xl md:text-3xl md:w-[60%]">
+            <h1 animateOnScroll class="fade-up font-bold  text-5xl md:text-6xl">Gagnez de l'argent grâce à vos connaissances</h1>
+            <p animateOnScroll class="fade-up text-xl md:text-3xl md:w-[60%]">
                 Chaque quiz est une opportunité de mettre vos connaissances à profit. Relevez le défi et classez-vous parmi les meilleurs.
             </p>
             <div class="flex flex-col md:flex-row justify-center w-full gap-3">
@@ -29,10 +29,10 @@
                         
                     </span>
                 </button> -->
-                <my-3d-button backBgColor="bg-[#ce7c00]" frontBgColor="bg-(--p-primary-color)">
+                <my-3d-button animateOnScroll class="fade-right" backBgColor="bg-[#ce7c00]" frontBgColor="bg-(--p-primary-color)">
                     S'inscrire Maintenant
                 </my-3d-button>
-                <my-3d-button backBgColor="bg-gray-200" frontBgColor="bg-white" textColor="text-(--p-primary-color)">
+                <my-3d-button animateOnScroll class="fade-left" backBgColor="bg-gray-200" frontBgColor="bg-white" textColor="text-(--p-primary-color)">
                     Comment ca marche ?
                 </my-3d-button>
                 <!-- <button class="pushable bg-gray-100 shadow-md">
@@ -60,12 +60,12 @@
     <!-- <div class=" mx-auto max-w-6xl w-full z-3 "> -->
     <my-container>
         <div class="flex flex-col justify-center">
-            <h2 class="text-gray-700 font-bold text-center pt-5 pb-20 text-4xl">Comment ça marche ?</h2>
+            <h2 animateOnScroll class="fade-up text-gray-700 font-bold text-center pt-5 pb-20 text-4xl">Comment ça marche ?</h2>
             <div class="grid md:grid-cols-2  lg:grid-cols-4 gap-5">
                     
                 @for(cardData of cardDatas; track $index){
 
-                    <div class="flex flex-col gap-2">
+                    <div animateOnScroll class=" fade-up flex flex-col gap-2">
                         <span class="text-6xl font-bold stroke-content text-transparent">{{$index+1}}</span>
                         <h3 class="font-bold text-gray-600 text-2xl">{{cardData.title}}</h3>
                         <p class="text-lg text-gray-500">{{cardData.desc}}</p>
@@ -76,7 +76,7 @@
 
 
             </div>
-            <div class=" bg-blue-200 my-10 p-5 rounded-2xl grid grid-cols-[40px_1fr] gap-5">
+            <div animateOnScroll class="blur-up bg-blue-200 my-10 p-5 rounded-2xl grid grid-cols-[40px_1fr] gap-5">
                 <span class="rounded-full text-3xl text-white font-bold bg-(--p-primary-color) block w-10 h-10 text-center">i</span>
                 <p class="text-gray-500">
                     Chaque événement est unique. Le montant des récompenses, le prix du ticket, le nombre de gagnants et le thème peuvent varier d'un quiz à l'autre. Consultez les détails de chaque événement avant de participer.
@@ -94,7 +94,7 @@
         <div class="flex flex-col justify-center pb-5">
             <!-- <h2 class="text-gray-700 font-bold text-center pt-5 pb-20 text-4xl">Ce que disent nos fideles utilisateurs</h2> -->
            
-              <h2 class="mt-6 text-4xl text-center font-bold text-gray-700">
+              <h2 animateOnScroll class="fade-up mt-6 text-4xl text-center font-bold text-gray-700">
 
                 Ils ont joué,
                 <span class="text-(--p-primary-color)">
@@ -102,7 +102,7 @@
                 </span>
 
             </h2>    
-            <p class="mt-6 text-lg text-center text-gray-600">
+            <p animateOnScroll class="fade-up mt-6 text-lg text-center text-gray-600">
 
                 Découvrez ce que pensent les joueurs qui participent régulièrement à nos quiz.
 
