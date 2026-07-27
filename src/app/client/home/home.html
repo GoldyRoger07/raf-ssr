@@ -8,8 +8,38 @@
                 Chaque quiz est une opportunité de mettre vos connaissances à profit. Relevez le défi et classez-vous parmi les meilleurs.
             </p>
             <div class="flex flex-col md:flex-row justify-center w-full gap-3">
-                <app-button [v]="2">S'inscrire Maintenant</app-button>
-                <app-button [v]="1" >Comment ca marche ?</app-button>
+                <!-- <app-button [v]="2">S'inscrire Maintenant</app-button>
+                <app-button [v]="1" >Comment ca marche ?</app-button> -->
+                
+                <!-- <button class="bg-linear-to-tr from-amber-500 to-amber-600 p-2 rounded-xl">
+                    <span class="bg-(--p-primary-color) block p-5 rounded border border-amber-500">
+
+                        S'inscrire Maintenant
+                    </span>
+                </button>
+                <button>
+                    <span>
+
+                        Comment ca marche ?
+                    </span>
+                </button> -->
+
+                <!-- <button class="pushable bg-[#ce7c00] shadow-md">
+                    <span class="front bg-(--p-primary-color) font-bold uppercase text-white">
+                        
+                    </span>
+                </button> -->
+                <my-3d-button backBgColor="bg-[#ce7c00]" frontBgColor="bg-(--p-primary-color)">
+                    S'inscrire Maintenant
+                </my-3d-button>
+                <my-3d-button backBgColor="bg-gray-200" frontBgColor="bg-white" textColor="text-(--p-primary-color)">
+                    Comment ca marche ?
+                </my-3d-button>
+                <!-- <button class="pushable bg-gray-100 shadow-md">
+                    <span class="front bg-white text-(--p-primary-color) font-bold uppercase">
+                        Comment ca marche ?
+                    </span>
+                </button> -->
                 <!-- <button>
                     
                 </button>
@@ -62,53 +92,38 @@
     <!-- <div class=" mx-auto max-w-6xl w-full z-3 "> -->
     <my-container>
         <div class="flex flex-col justify-center pb-5">
-            <h2 class="text-gray-700 font-bold text-center pt-5 pb-20 text-4xl">Ce que disent nos fideles utilisateurs</h2>
-            <div class="grid md:grid-cols-2  lg:grid-cols-3 gap-5">
-                        
-                <div class="bg-white p-5 flex flex-col gap-2 rounded-xl ">
-                    <p class="text-gray-700 text-md">
-                        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsam molestias corrupti necessitatibus. Assumenda, alias laudantium eos ratione temporibus quam esse suscipit officia, dolor aut eaque? Laudantium placeat maiores atque quidem...
-                    </p>
-                    <div class="flex gap-2">
-                        <div class="w-12.5 h-12.5 rounded-full bg-(--p-primary-color) flex items-center justify-center font-bold text-white">AD</div>
-                        <div class="flex flex-col gap-0.5">
-                            <span class="font-bold text-gray-600">Amara Diallo</span>
-                            <span class="text-xs text-gray-500">Directrice Supply Chain, Novatech</span>
-                        </div>
-                    </div>
-                </div>
+            <!-- <h2 class="text-gray-700 font-bold text-center pt-5 pb-20 text-4xl">Ce que disent nos fideles utilisateurs</h2> -->
+           
+              <h2 class="mt-6 text-4xl text-center font-bold text-gray-700">
 
-                <div class="bg-white p-5 flex flex-col gap-2 rounded-xl ">
-                    <p class="text-gray-700 text-md">
-                        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsam molestias corrupti necessitatibus. Assumenda, alias laudantium eos ratione temporibus quam esse suscipit officia, dolor aut eaque? Laudantium placeat maiores atque quidem...
-                    </p>
-                    <div class="flex gap-2">
-                        <div class="w-12.5 h-12.5 rounded-full bg-(--p-primary-color) flex items-center justify-center font-bold text-white">AD</div>
-                        <div class="flex flex-col gap-0.5">
-                            <span class="font-bold text-gray-600">Amara Diallo</span>
-                            <span class="text-xs text-gray-500">Directrice Supply Chain, Novatech</span>
-                        </div>
-                    </div>
-                </div>
+                Ils ont joué,
+                <span class="text-(--p-primary-color)">
+                    ils ont gagné.
+                </span>
 
-                <div class="bg-white p-5 flex flex-col gap-2 rounded-xl ">
-                    <p class="text-gray-700 text-md">
-                        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsam molestias corrupti necessitatibus. Assumenda, alias laudantium eos ratione temporibus quam esse suscipit officia, dolor aut eaque? Laudantium placeat maiores atque quidem...
-                    </p>
-                    <div class="flex gap-2">
-                        <div class="w-12.5 h-12.5 rounded-full bg-(--p-primary-color) flex items-center justify-center font-bold text-white">AD</div>
-                        <div class="flex flex-col gap-0.5">
-                            <span class="font-bold text-gray-600">Amara Diallo</span>
-                            <span class="text-xs text-gray-500">Directrice Supply Chain, Novatech</span>
-                        </div>
-                    </div>
-                </div>
-                    
-            </div>
+            </h2>    
+            <p class="mt-6 text-lg text-center text-gray-600">
+
+                Découvrez ce que pensent les joueurs qui participent régulièrement à nos quiz.
+
+            </p>      
+                
+            <my-testimonial-list/>
             
         </div>
-    </my-container>    
+    </my-container> 
+    <div class=" w-full linear-bg z-1 h-50"></div>
+   
     <!-- </div> -->
+</section>
+
+<section class="py-20">
+    <my-container>
+        <div class="flex flex-col items-center w-full gap-3">
+            <h2 class="text-3xl font-bold text-center text-gray-700 mb-8">Foire Aux Questions</h2>
+            <faq-list/>
+        </div>
+    </my-container>
 </section>
 
 <my-footer/>

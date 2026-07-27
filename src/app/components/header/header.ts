@@ -1,8 +1,8 @@
 import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { ThemeService } from '../../theme/theme.service';
-import { Button } from '../button/button';
 import { Container } from "../container/container";
+import { My3dButton } from "../buttons/my3d-button/my3d-button";
 
 interface NavItem {
   label: string;
@@ -11,7 +11,7 @@ interface NavItem {
 
 @Component({
   selector: 'my-header',
-  imports: [Button, Container],
+  imports: [ Container, My3dButton],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -27,7 +27,6 @@ export class Header {
   private lastScrollY = 0;
 
   protected readonly navItems: NavItem[] = [
-    { label: 'Accueil', link: '#' },
     { label: 'Comment ça marche', link: '#' },
     { label: 'Tarifs', link: '#' },
     { label: 'A Propos', link: '#' },

@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { Header } from '../../components/header/header';
-import { Button } from "../../components/button/button";
 import { Container } from "../../components/container/container";
 import { Footer } from "../../components/footer/footer";
+import { My3dButton } from '../../components/buttons/my3d-button/my3d-button';
+import { FaqList } from "../../components/faqs/faq-list/faq-list";
+import { TestimonialComponent } from "../../components/testimonials/testimonial/testimonial";
+import { TestimonialList } from "../../components/testimonials/testimonial-list/testimonial-list";
 
 interface CardData{
   title: string
@@ -15,7 +18,7 @@ interface CardData{
 
 @Component({
   selector: 'app-home',
-  imports: [Header, Button, Container, Footer],
+  imports: [Header, My3dButton, Container, Footer, FaqList, TestimonialComponent, TestimonialList],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

@@ -1,0 +1,42 @@
+<!-- <section class="bg-slate-50 py-20">
+
+    <div class="mx-auto max-w-7xl px-6">
+
+        <div class="mx-auto max-w-3xl text-center">
+
+            <span
+                class="inline-flex rounded-full bg-orange-100 px-4 py-1 text-sm font-semibold text-orange-600">
+                Témoignages
+            </span>
+
+            <h2 class="mt-6 text-4xl font-extrabold text-slate-900">
+
+                Ils ont joué,
+                <span class="text-orange-500">
+                    ils ont gagné.
+                </span>
+
+            </h2>
+
+            <p class="mt-6 text-lg text-slate-600">
+
+                Découvrez ce que pensent les joueurs qui participent régulièrement à nos quiz.
+
+            </p>
+
+        </div>
+
+        
+
+    </div>
+
+</section> -->
+
+<div class="mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+
+            @for(testimonial of testimonials; track testimonial.name){
+                <my-testimonial [testimonial]="testimonial"/>
+                            
+            }
+
+</div>

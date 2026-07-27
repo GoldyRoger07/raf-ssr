@@ -1,0 +1,46 @@
+.pushable {
+    --btn-padding: 12px 42px;
+    --btn-font-size: 1.25rem;
+    --btn-translate-y: -6px;
+    --btn-active-translate-y: -2px;
+    --btn-border-radius: 16px;
+    
+    /* background: #ce7c00; */
+    border-radius: var(--btn-border-radius);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    outline-offset: 4px;
+  }
+  .front {
+    display: block;
+    padding: var(--btn-padding);
+    border-radius:var(--btn-border-radius);
+    font-size: var(--btn-font-size);
+    /* background: hsl(345deg 100% 47%); */
+    /* background: var(--p-primary-color); */
+    /* color: white; */
+    transform: translateY(var(--btn-translate-y));
+  }
+
+  .pushable:active .front {
+    transform: translateY(var(--btn-active-translate-y));
+  }
+
+  /* --- VERSION MEDIUM --- */
+.pushable.medium {
+  --btn-padding: 8px 24px;
+  --btn-font-size: 1rem;
+  --btn-translate-y: -4px;        /* Effet 3D légèrement plus bas */
+  --btn-active-translate-y: -1px;
+  --btn-border-radius: 12px;
+}
+
+/* --- VERSION SMALL --- */
+.pushable.small {
+  --btn-padding: 6px 16px;
+  --btn-font-size: 0.875rem;
+  --btn-translate-y: -3px;        /* Effet 3D encore plus bas */
+  --btn-active-translate-y: -1px;
+  --btn-border-radius: 8px;
+}
