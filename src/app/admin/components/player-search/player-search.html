@@ -1,0 +1,41 @@
+<div class="relative">
+  <p-iconfield class="w-full">
+    <p-inputicon [class]="searching() ? 'pi pi-spin pi-spinner' : 'pi pi-search'" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      [(ngModel)]="query"
+      (input)="onInput()"
+      placeholder="Telephone, email ou nom du joueur"
+      autocomplete="off"
+    />
+  </p-iconfield>
+
+  @if (results().length) {
+    <ul class="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+      @for (p of results(); track p.id) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800"
+            (click)="choose(p)"
+          >
+            <div>
+              <div class="font-medium">{{ p.firstName }} {{ p.lastName }}</div>
+              <div class="text-xs text-slate-500">{{ p.phone }} - {{ p.email }}</div>
+            </div>
+            <div class="text-right text-sm">
+              <div class="font-semibold">{{ p.winningsBalanceHtg | htg }}</div>
+              <div class="text-xs text-slate-500">de gains</div>
+            </div>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (searched() && !searching()) {
+    <div class="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+      Aucun joueur trouve.
+    </div>
+  }
+</div>

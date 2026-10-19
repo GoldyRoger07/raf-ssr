@@ -1,0 +1,132 @@
+<p-confirmdialog />
+
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Retraits</h1>
+  <p class="text-sm text-slate-500">
+    Les gains sont geles des la demande : refuser les rend au joueur, verser cloture la demande.
+  </p>
+</div>
+
+<p-tabs [value]="status()" (valueChange)="selectTab($event)">
+  <p-tablist>
+    @for (tab of tabs; track tab) {
+      <p-tab [value]="tab">{{ withdrawalStatus(tab).label }}</p-tab>
+    }
+  </p-tablist>
+</p-tabs>
+
+@if (error(); as message) {
+  <p-message severity="error" class="my-4" [text]="message" />
+}
+
+<div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <p-table
+    [value]="rows()"
+    [lazy]="true"
+    [paginator]="total() > pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [loading]="loading()"
+    (onLazyLoad)="onLazyLoad($event)"
+    dataKey="withdrawal.id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Demande</th>
+        <th>Joueur</th>
+        <th>A verser</th>
+        <th>Moyen</th>
+        <th>Statut</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-row>
+      <tr>
+        <td>
+          <div class="font-medium">#{{ row.withdrawal.id }}</div>
+          <div class="text-xs text-slate-500">{{ row.withdrawal.createdAt | haitiDate }}</div>
+        </td>
+        <td>
+          <a [routerLink]="['/admin/joueurs', row.playerId]" class="font-medium hover:text-orange-600">{{ row.playerName }}</a>
+          <div class="text-xs text-slate-500">{{ row.playerPhone }}</div>
+        </td>
+        <td>
+          <div class="font-semibold">{{ row.withdrawal.netHtg | htg }}</div>
+          <div class="text-xs text-slate-500">
+            {{ row.withdrawal.amountHtg | htg }} - {{ row.withdrawal.feeHtg | htg }} de frais
+          </div>
+        </td>
+        <td>
+          <div>{{ providerLabel(row.withdrawal.provider) }}</div>
+          @if (row.withdrawal.destinationNumber) {
+            <div class="text-xs text-slate-500">{{ row.withdrawal.destinationNumber }}</div>
+          }
+          @if (row.withdrawal.initiatedByAdminId) {
+            <div class="text-xs text-slate-500">saisi au guichet</div>
+          }
+        </td>
+        <td>
+          <p-tag [value]="withdrawalStatus(row.withdrawal.status).label" [severity]="withdrawalStatus(row.withdrawal.status).severity" />
+          @if (row.withdrawal.rejectionReason) {
+            <div class="mt-1 max-w-48 text-xs text-slate-500">{{ row.withdrawal.rejectionReason }}</div>
+          }
+          @if (row.withdrawal.payoutReference) {
+            <div class="mt-1 text-xs text-slate-500">Ref. {{ row.withdrawal.payoutReference }}</div>
+          }
+        </td>
+        <td class="text-right">
+          @switch (row.withdrawal.status) {
+            @case ('PENDING') {
+              <div class="flex justify-end gap-2">
+                <p-button label="Refuser" severity="danger" [outlined]="true" size="small" (onClick)="openReject(row)" />
+                <p-button label="Approuver" size="small" (onClick)="approve(row)" />
+              </div>
+            }
+            @case ('APPROVED') {
+              <p-button
+                [label]="row.withdrawal.provider === 'MANUAL' ? 'Remettre les especes' : 'Marquer verse'"
+                [icon]="row.withdrawal.provider === 'MANUAL' ? 'pi pi-money-bill' : 'pi pi-check'"
+                size="small"
+                (onClick)="openPay(row)"
+              />
+            }
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="py-10 text-center text-slate-500">Aucune demande dans cet etat.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Refus -->
+<p-dialog header="Refuser le retrait" [(visible)]="rejectOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+    Les gains seront rendus au joueur, qui recevra ce motif par email.
+  </p>
+  <textarea pTextarea [(ngModel)]="rejectReason" rows="3" maxlength="255" class="w-full" placeholder="Motif du refus"></textarea>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="rejectOpen.set(false)" />
+    <p-button label="Refuser" severity="danger" [loading]="busy()" [disabled]="!rejectReason.trim()" (onClick)="reject()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Versement operateur -->
+<p-dialog header="Enregistrer le versement" [(visible)]="payOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  @if (selected(); as row) {
+    <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+      Apres avoir envoye {{ row.withdrawal.netHtg | htg }} via {{ providerLabel(row.withdrawal.provider) }}
+      au {{ row.withdrawal.destinationNumber }}, saisissez la reference de l'operateur.
+    </p>
+  }
+  <input pInputText [(ngModel)]="payoutReference" maxlength="120" class="w-full" placeholder="Reference de la transaction" />
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="payOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" [disabled]="!payoutReference.trim()" (onClick)="markPaid()" />
+  </ng-template>
+</p-dialog>
+
+<cash-pickup-dialog [withdrawal]="selected()" [(visible)]="pickupOpen" (paid)="load()" />

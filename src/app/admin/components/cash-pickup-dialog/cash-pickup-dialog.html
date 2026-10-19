@@ -1,0 +1,45 @@
+<p-dialog header="Remise en especes" [(visible)]="visible" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  @if (withdrawal(); as w) {
+    <div class="mb-5 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+      <div class="font-medium">{{ w.playerName }}</div>
+      <div class="text-slate-500">{{ w.playerPhone }}</div>
+      <div class="mt-3 text-2xl font-semibold">{{ w.withdrawal.netHtg | htg }}</div>
+      <div class="text-slate-500">a remettre (frais deduits)</div>
+    </div>
+
+    @if (error(); as message) {
+      <p-message severity="error" class="mb-4" [text]="message" />
+    }
+
+    @if (!codeSent()) {
+      <p class="mb-5 text-sm text-slate-600 dark:text-slate-300">
+        Verifiez l'identite du joueur, puis envoyez-lui un code par SMS. Il devra vous le donner
+        pour que la remise soit validee.
+      </p>
+      <p-button label="Envoyer le code au joueur" icon="pi pi-send" [loading]="busy()" styleClass="w-full" (onClick)="sendCode()" />
+    } @else {
+      <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+        Saisissez le code recu par le joueur sur son telephone.
+      </p>
+      <div class="mb-4 flex justify-center">
+        <p-inputotp [(ngModel)]="code" [length]="6" [integerOnly]="true" />
+      </div>
+      <div class="mb-5 flex flex-col gap-2">
+        <label for="receipt" class="text-sm font-medium">Numero du recu (facultatif)</label>
+        <input pInputText id="receipt" [(ngModel)]="receipt" maxlength="120" />
+      </div>
+      <div class="flex gap-2">
+        <p-button label="Renvoyer" severity="secondary" [outlined]="true" [disabled]="busy()" (onClick)="sendCode()" />
+        <p-button
+          label="Valider la remise"
+          icon="pi pi-check"
+          class="flex-1"
+          styleClass="w-full"
+          [loading]="busy()"
+          [disabled]="code.length < 6"
+          (onClick)="confirm()"
+        />
+      </div>
+    }
+  }
+</p-dialog>

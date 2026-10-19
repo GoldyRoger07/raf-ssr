@@ -1,0 +1,162 @@
+<a routerLink="/admin/joueurs" class="mb-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600">
+  <i class="pi pi-arrow-left"></i> Joueurs
+</a>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (player(); as p) {
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold">{{ p.firstName }} {{ p.lastName }}</h1>
+      <div class="text-sm text-slate-500">{{ p.phone }} - {{ p.email }}</div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <p-tag [value]="p.status" [severity]="p.status === 'ACTIVE' ? 'success' : 'danger'" />
+        <p-tag [value]="p.emailVerified ? 'Email verifie' : 'Email non verifie'" [severity]="p.emailVerified ? 'success' : 'secondary'" />
+        <p-tag [value]="p.phoneVerified ? 'Telephone verifie' : 'Telephone non verifie'" [severity]="p.phoneVerified ? 'success' : 'secondary'" />
+        <span class="text-xs text-slate-500">Inscrit le {{ p.createdAt | haitiDate }}</span>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
+      <p-button label="Recharge manuelle" icon="pi pi-plus" (onClick)="openTopUp()" />
+    </div>
+  </div>
+
+  <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Credits de jeu</div>
+      <div class="mt-1 text-2xl font-semibold">{{ p.creditBalance | credits }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Gains retirables</div>
+      <div class="mt-1 text-2xl font-semibold">{{ p.winningsBalanceHtg | htg }}</div>
+      <div class="text-sm text-slate-500">{{ p.winningsBalance | credits }}</div>
+    </div>
+  </div>
+
+  <p-tabs value="transactions">
+    <p-tablist>
+      <p-tab value="transactions">Mouvements</p-tab>
+      <p-tab value="withdrawals">Retraits ({{ withdrawals().length }})</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="transactions">
+        <p-table
+          [value]="transactions()"
+          [lazy]="true"
+          [paginator]="transactionsTotal() > pageSize"
+          [rows]="pageSize"
+          [totalRecords]="transactionsTotal()"
+          [loading]="loadingTransactions()"
+          (onLazyLoad)="onTransactionsPage($event)"
+          dataKey="id"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Date</th>
+              <th>Mouvement</th>
+              <th>Solde</th>
+              <th class="text-right">Montant</th>
+              <th class="text-right">Solde apres</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-t>
+            <tr>
+              <td class="text-sm text-slate-500">{{ t.createdAt | haitiDate }}</td>
+              <td>
+                <div class="font-medium">{{ typeLabels[t.type] ?? t.type }}</div>
+                @if (t.description) {
+                  <div class="text-xs text-slate-500">{{ t.description }}</div>
+                }
+              </td>
+              <td>{{ t.balanceType === 'CREDIT' ? 'Credits' : 'Gains' }}</td>
+              <td class="text-right font-medium" [class.text-green-600]="t.amount > 0" [class.text-red-600]="t.amount < 0">
+                {{ t.amount | credits: true }}
+              </td>
+              <td class="text-right">{{ t.balanceAfter | credits }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr><td colspan="5" class="py-8 text-center text-slate-500">Aucun mouvement.</td></tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <p-tabpanel value="withdrawals">
+        <p-table [value]="withdrawals()" dataKey="withdrawal.id">
+          <ng-template #header>
+            <tr>
+              <th>Demande</th>
+              <th>A verser</th>
+              <th>Moyen</th>
+              <th>Statut</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-row>
+            <tr>
+              <td>
+                <div class="font-medium">#{{ row.withdrawal.id }}</div>
+                <div class="text-xs text-slate-500">{{ row.withdrawal.createdAt | haitiDate }}</div>
+              </td>
+              <td class="font-medium">{{ row.withdrawal.netHtg | htg }}</td>
+              <td>{{ providerLabel(row.withdrawal.provider) }}</td>
+              <td>
+                <p-tag [value]="withdrawalStatus(row.withdrawal.status).label" [severity]="withdrawalStatus(row.withdrawal.status).severity" />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr><td colspan="4" class="py-8 text-center text-slate-500">Aucun retrait.</td></tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+}
+
+<!-- Recharge manuelle -->
+<p-dialog header="Recharge manuelle" [(visible)]="topUpOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+    A utiliser apres avoir encaisse l'argent hors ligne. La reference empeche d'enregistrer deux fois le meme encaissement.
+  </p>
+  <div class="space-y-4">
+    <div class="flex flex-col gap-2">
+      <label for="topup-amount" class="text-sm font-medium">Montant encaisse (HTG)</label>
+      <p-inputnumber inputId="topup-amount" [(ngModel)]="topUpAmount" [min]="1" locale="fr-FR" suffix=" HTG" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="topup-ref" class="text-sm font-medium">Reference (numero du recu)</label>
+      <input pInputText id="topup-ref" [(ngModel)]="topUpReference" maxlength="120" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="topup-note" class="text-sm font-medium">Note (facultatif)</label>
+      <input pInputText id="topup-note" [(ngModel)]="topUpNote" maxlength="255" />
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="topUpOpen.set(false)" />
+    <p-button label="Crediter" [loading]="busy()" [disabled]="!topUpAmount || !topUpReference.trim()" (onClick)="topUp()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Ajustement -->
+<p-dialog header="Ajuster un solde" [(visible)]="adjustOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+    Correction exceptionnelle, tracee a votre nom. Montant positif pour crediter, negatif pour debiter.
+  </p>
+  <div class="space-y-4">
+    <p-selectbutton [options]="balanceOptions" [(ngModel)]="adjustBalance" optionLabel="label" optionValue="value" [allowEmpty]="false" />
+    <div class="flex flex-col gap-2">
+      <label for="adjust-amount" class="text-sm font-medium">Montant (credits)</label>
+      <p-inputnumber inputId="adjust-amount" [(ngModel)]="adjustAmount" locale="fr-FR" suffix=" cr." />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="adjust-reason" class="text-sm font-medium">Motif</label>
+      <input pInputText id="adjust-reason" [(ngModel)]="adjustReason" maxlength="255" />
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="adjustOpen.set(false)" />
+    <p-button label="Appliquer" [loading]="busy()" [disabled]="!adjustAmount || !adjustReason.trim()" (onClick)="adjust()" />
+  </ng-template>
+</p-dialog>

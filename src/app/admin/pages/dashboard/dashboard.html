@@ -1,0 +1,125 @@
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold">Tableau de bord</h1>
+    @if (data(); as d) {
+      <p class="text-sm text-slate-500">Mis a jour le {{ d.generatedAt | haitiDate }}</p>
+    }
+  </div>
+  @if (auth.isAdmin()) {
+    <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="loading()" (onClick)="load()" />
+  }
+</div>
+
+@if (!auth.isAdmin()) {
+  <p-message severity="info" text="Espace moderateur : la gestion de la banque de questions arrive dans la prochaine version du back-office." />
+} @else if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (data(); as d) {
+  <!-- A traiter -->
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">A traiter</h2>
+  <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <a routerLink="/admin/retraits" [queryParams]="{ statut: 'PENDING' }"
+       class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Retraits a examiner</div>
+      <div class="mt-1 text-3xl font-semibold" [class.text-orange-600]="d.pending.withdrawalsToReview > 0">
+        {{ d.pending.withdrawalsToReview }}
+      </div>
+      <div class="mt-1 text-sm text-slate-500">{{ d.pending.withdrawalsToReviewHtg | htg }} en attente</div>
+    </a>
+    <a routerLink="/admin/retraits" [queryParams]="{ statut: 'APPROVED' }"
+       class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Retraits a verser</div>
+      <div class="mt-1 text-3xl font-semibold" [class.text-orange-600]="d.pending.withdrawalsToPay > 0">
+        {{ d.pending.withdrawalsToPay }}
+      </div>
+      <div class="mt-1 text-sm text-slate-500">approuves, versement a faire</div>
+    </a>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Parties signalees</div>
+      <div class="mt-1 text-3xl font-semibold" [class.text-red-600]="d.pending.flaggedSessions > 0">
+        {{ d.pending.flaggedSessions }}
+      </div>
+      <div class="mt-1 text-sm text-slate-500">a revoir avant la cloture</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Dernier rapprochement</div>
+      @if (d.lastReconciliation; as r) {
+        <div class="mt-2">
+          <p-tag
+            [value]="r.status === 'OK' ? 'Aucun ecart' : r.status === 'FAILED' ? 'Echec' : r.findingCount + ' ecart(s)'"
+            [severity]="r.status === 'OK' ? 'success' : 'danger'"
+          />
+        </div>
+        <div class="mt-2 text-sm text-slate-500">{{ r.startedAt | haitiDate }}</div>
+      } @else {
+        <div class="mt-2 text-sm text-slate-500">Jamais execute</div>
+      }
+    </div>
+  </div>
+
+  <!-- Argent -->
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Argent en circulation</h2>
+  <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Gains dus aux joueurs (retirables)</div>
+      <div class="mt-1 text-3xl font-semibold">{{ d.balances.winningsBalanceHtg | htg }}</div>
+      <div class="mt-1 text-sm text-slate-500">{{ d.balances.winningsBalance | credits }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Credits de jeu (non retirables)</div>
+      <div class="mt-1 text-3xl font-semibold">{{ d.balances.creditBalanceHtg | htg }}</div>
+      <div class="mt-1 text-sm text-slate-500">{{ d.balances.creditBalance | credits }}</div>
+    </div>
+  </div>
+
+  <!-- 30 jours -->
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">30 derniers jours</h2>
+  <div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Ventes de tickets</div>
+      <div class="mt-1 text-xl font-semibold">{{ d.last30Days.ticketSalesHtg | htg }}</div>
+      <div class="text-sm text-slate-500">{{ d.last30Days.ticketsSold }} ticket(s)</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Gains verses</div>
+      <div class="mt-1 text-xl font-semibold">{{ d.last30Days.prizesPaidHtg | htg }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Recharges</div>
+      <div class="mt-1 text-xl font-semibold">{{ d.last30Days.topUpsHtg | htg }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Retraits verses</div>
+      <div class="mt-1 text-xl font-semibold">{{ d.last30Days.withdrawalsPaidHtg | htg }}</div>
+    </div>
+  </div>
+
+  <!-- Joueurs et quiz -->
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Joueurs</h2>
+      <div class="text-3xl font-semibold">{{ d.players.total }}</div>
+      <div class="mt-2 space-y-1 text-sm text-slate-500">
+        <div>+{{ d.players.newLast7Days }} sur 7 jours</div>
+        <div>{{ d.players.phoneVerified }} telephone(s) verifie(s)</div>
+      </div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Quiz</h2>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        @for (q of quizzes(); track q.status) {
+          <div class="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+            <div class="text-xs text-slate-500">{{ q.label }}</div>
+            <div class="text-lg font-semibold">{{ q.count }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <p-skeleton height="7rem" borderRadius="0.75rem" />
+    }
+  </div>
+}
