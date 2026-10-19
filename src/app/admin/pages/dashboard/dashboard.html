@@ -11,7 +11,24 @@
 </div>
 
 @if (!auth.isAdmin()) {
-  <p-message severity="info" text="Espace moderateur : la gestion de la banque de questions arrive dans la prochaine version du back-office." />
+  <!-- Moderateur : son espace est la banque de questions. -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <a routerLink="/admin/questions" class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <i class="pi pi-question-circle mb-2 text-xl text-orange-600"></i>
+      <div class="font-semibold">Questions</div>
+      <div class="text-sm text-slate-500">Rediger, relire, publier ou archiver</div>
+    </a>
+    <a routerLink="/admin/categories" class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <i class="pi pi-tags mb-2 text-xl text-orange-600"></i>
+      <div class="font-semibold">Categories</div>
+      <div class="text-sm text-slate-500">Organiser les sujets des quiz</div>
+    </a>
+    <a routerLink="/admin/import" class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <i class="pi pi-upload mb-2 text-xl text-orange-600"></i>
+      <div class="font-semibold">Import CSV</div>
+      <div class="text-sm text-slate-500">Ajouter des questions en masse</div>
+    </a>
+  </div>
 } @else if (error(); as message) {
   <p-message severity="error" [text]="message" />
 } @else if (data(); as d) {
