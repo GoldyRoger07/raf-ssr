@@ -1,0 +1,103 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Comptes et roles</h1>
+  <p class="text-sm text-slate-500">
+    Donner le role Administrateur ouvre l'acces a l'argent. Un changement ferme toutes les sessions du compte concerne.
+  </p>
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-4">
+  <p-iconfield class="w-full max-w-sm">
+    <p-inputicon class="pi pi-search" />
+    <input pInputText type="search" class="w-full" [(ngModel)]="query" (input)="onSearch()" placeholder="Email, nom ou telephone" />
+  </p-iconfield>
+  <div class="flex items-center gap-2">
+    <p-toggleswitch inputId="staffOnly" [(ngModel)]="staffOnly" (onChange)="reload()" />
+    <label for="staffOnly" class="text-sm">Personnel seulement</label>
+  </div>
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4" [text]="message" />
+}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <p-table
+    [value]="rows()"
+    [lazy]="true"
+    [paginator]="total() > pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [loading]="loading()"
+    (onLazyLoad)="onLazyLoad($event)"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Compte</th>
+        <th>Roles</th>
+        <th>Statut</th>
+        <th>Cree le</th>
+        <th class="text-right"></th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-u>
+      <tr>
+        <td>
+          <div class="font-medium">{{ u.firstName }} {{ u.lastName }} @if (isMe(u)) { <span class="text-xs text-slate-500">(vous)</span> }</div>
+          <div class="text-xs text-slate-500">{{ u.email }} — {{ u.phone }}</div>
+        </td>
+        <td>
+          <div class="flex flex-wrap gap-1">
+            @for (role of u.roles; track role) {
+              <p-tag [value]="roleLabel(role)" [severity]="role === 'PLAYER' ? 'secondary' : role === 'MODERATOR' ? 'info' : 'warn'" />
+            }
+          </div>
+        </td>
+        <td>
+          <p-tag [value]="u.status === 'ACTIVE' ? 'Actif' : u.status === 'SUSPENDED' ? 'Suspendu' : 'Banni'"
+                 [severity]="u.status === 'ACTIVE' ? 'success' : 'danger'" />
+        </td>
+        <td class="text-sm text-slate-500">{{ u.createdAt | haitiDate }}</td>
+        <td class="text-right">
+          <div class="flex justify-end gap-1">
+            <p-button label="Historique" size="small" [text]="true" severity="secondary" routerLink="/admin/journal"
+                      [queryParams]="{ entityType: 'User', entityId: u.id }" />
+            @if (!isMe(u)) {
+              <p-button label="Modifier" size="small" [text]="true" (onClick)="openEdit(u)" />
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="5" class="py-10 text-center text-slate-500">Aucun compte.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog [header]="editing() ? editing()!.firstName + ' ' + editing()!.lastName : ''" [(visible)]="editOpen" [modal]="true"
+          [style]="{ width: '32rem' }" [draggable]="false">
+  <h3 class="mb-2 text-sm font-semibold">Roles</h3>
+  <div class="mb-5 space-y-3">
+    @for (role of roles; track role.value) {
+      <div class="flex items-start gap-3">
+        <p-checkbox [inputId]="'role-' + role.value" [value]="role.value" [(ngModel)]="selectedRoles" />
+        <label [for]="'role-' + role.value" class="text-sm">
+          <span class="font-medium">{{ role.label }}</span>
+          <span class="block text-xs text-slate-500">{{ role.description }}</span>
+        </label>
+      </div>
+    }
+  </div>
+
+  <h3 class="mb-2 text-sm font-semibold">Statut</h3>
+  <p-selectbutton [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" [allowEmpty]="false" />
+
+  @if (editError(); as message) {
+    <p-message severity="error" class="mt-4" [text]="message" />
+  }
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="editOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>

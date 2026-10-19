@@ -1,0 +1,86 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Journal d'audit</h1>
+  <p class="text-sm text-slate-500">
+    Chaque action sensible (argent, quiz, comptes, questions) est tracee avec son auteur. Le journal ne se modifie pas.
+  </p>
+</div>
+
+<div class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex flex-col gap-1">
+    <label for="action" class="text-xs text-slate-500">Action</label>
+    <p-select inputId="action" [options]="actions()" [(ngModel)]="action" [showClear]="true" [filter]="true" placeholder="Toutes" styleClass="w-64" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="type" class="text-xs text-slate-500">Type d'objet</label>
+    <p-select inputId="type" [options]="entityTypes()" [(ngModel)]="entityType" [showClear]="true" placeholder="Tous" styleClass="w-48" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="entityId" class="text-xs text-slate-500">Identifiant de l'objet</label>
+    <input pInputText id="entityId" [(ngModel)]="entityId" class="w-36" (keyup.enter)="apply()" />
+  </div>
+  @if (actorId) {
+    <div class="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-sm dark:bg-orange-500/10">
+      Auteur #{{ actorId }}
+      <button type="button" class="pi pi-times text-xs" aria-label="Retirer le filtre auteur" (click)="actorId = null; apply()"></button>
+    </div>
+  }
+  <p-button label="Filtrer" icon="pi pi-filter" (onClick)="apply()" />
+  <p-button label="Reinitialiser" severity="secondary" [text]="true" (onClick)="reset()" />
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4" [text]="message" />
+}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <p-table
+    [value]="rows()"
+    [lazy]="true"
+    [paginator]="total() > pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [loading]="loading()"
+    (onLazyLoad)="onLazyLoad($event)"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Date</th>
+        <th>Auteur</th>
+        <th>Action</th>
+        <th>Objet</th>
+        <th>Changement</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-e>
+      <tr class="cursor-pointer align-top" (click)="toggle(e)">
+        <td class="whitespace-nowrap text-sm text-slate-500">{{ e.createdAt | haitiDate }}</td>
+        <td>
+          @if (e.actorUserId) {
+            <button type="button" class="text-left font-medium hover:text-orange-600" (click)="$event.stopPropagation(); byActor(e)">
+              {{ e.actorName }}
+            </button>
+            <div class="text-xs text-slate-500">{{ e.ipAddress }}</div>
+          } @else {
+            <span class="text-slate-500">Systeme</span>
+          }
+        </td>
+        <td><code class="text-xs">{{ e.action }}</code></td>
+        <td class="text-sm">{{ e.entityType }} {{ e.entityId ? '#' + e.entityId : '' }}</td>
+        <td class="max-w-md text-sm">
+          @if (expanded() === e.id) {
+            @if (e.beforeState) {
+              <div class="mb-1"><span class="text-xs text-slate-500">Avant :</span> <span class="break-all">{{ e.beforeState }}</span></div>
+            }
+            <div><span class="text-xs text-slate-500">Apres :</span> <span class="break-all">{{ e.afterState ?? '—' }}</span></div>
+          } @else {
+            <span class="line-clamp-1 text-slate-600 dark:text-slate-300">{{ e.afterState ?? e.beforeState ?? '—' }}</span>
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="5" class="py-10 text-center text-slate-500">Aucune entree pour ces filtres.</td></tr>
+    </ng-template>
+  </p-table>
+</div>

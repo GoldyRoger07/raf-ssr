@@ -24,3 +24,10 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
   return auth.isAdmin() ? true : router.createUrlTree(['/admin']);
 };
+
+/** Comptes et roles : super-administrateur seulement (donner ADMIN ouvre l'acces a l'argent). */
+export const superAdminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isSuperAdmin() ? true : router.createUrlTree(['/admin']);
+};

@@ -1,4 +1,4 @@
-import { PaymentProvider, WithdrawalStatus } from './models';
+import { PaymentProvider, ReconciliationRun, WithdrawalStatus } from './models';
 
 /** Severites des p-tag PrimeNG. */
 export type Severity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
@@ -80,4 +80,16 @@ export const DIFFICULTY: Record<string, string> = {
 
 export function difficultyLabel(difficulty: string): string {
   return DIFFICULTY[difficulty] ?? difficulty;
+}
+
+/** Resultat d'un rapprochement, pour un p-tag. */
+export function runStatus(run: ReconciliationRun): { label: string; severity: Severity } {
+  switch (run.status) {
+    case 'OK':
+      return { label: 'Aucun ecart', severity: 'success' };
+    case 'DISCREPANCIES':
+      return { label: `${run.findingCount} ecart(s)`, severity: 'danger' };
+    default:
+      return { label: 'Echec du controle', severity: 'warn' };
+  }
 }

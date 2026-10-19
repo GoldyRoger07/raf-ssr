@@ -1,0 +1,78 @@
+<a routerLink="/admin/rapprochement" class="mb-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600">
+  <i class="pi pi-arrow-left"></i> Rapprochement
+</a>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (run(); as r) {
+  <div class="mb-6 flex flex-wrap items-center gap-3">
+    <h1 class="text-2xl font-semibold">Rapprochement du {{ r.startedAt | haitiDate }}</h1>
+    <p-tag [value]="runStatus(r).label" [severity]="runStatus(r).severity" />
+  </div>
+
+  @if (r.errorMessage) {
+    <p-message severity="warn" class="mb-4" [text]="'Le controle n\'a pas abouti et ne prouve donc rien : ' + r.errorMessage" />
+  }
+
+  <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Portefeuilles</div>
+      <div class="text-xl font-semibold">{{ r.walletsChecked }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Mouvements</div>
+      <div class="text-xl font-semibold">{{ r.transactionsChecked }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Gains dus aux joueurs</div>
+      <div class="text-xl font-semibold">{{ r.totalWinningsBalanceHtg | htg }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Credits en circulation</div>
+      <div class="text-xl font-semibold">{{ r.totalCreditBalanceHtg | htg }}</div>
+    </div>
+  </div>
+
+  @if (r.findings?.length) {
+    @if (r.findingCount > r.findings!.length) {
+      <p-message severity="info" class="mb-4" [text]="'Seuls les ' + r.findings!.length + ' premiers ecarts sur ' + r.findingCount + ' sont conserves.'" />
+    }
+    <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+      Chaque ecart revele une erreur de code ou une modification manuelle de la base. Ne corrigez pas a la main avant
+      d'en avoir trouve la cause : le journal d'audit et l'historique du portefeuille concerne sont les premiers indices.
+    </p>
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <p-table [value]="r.findings!" [scrollable]="true" scrollHeight="560px">
+        <ng-template #header>
+          <tr>
+            <th>Controle</th>
+            <th>Joueur</th>
+            <th>Objet</th>
+            <th class="text-right">Attendu</th>
+            <th class="text-right">Enregistre</th>
+            <th>Detail</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-f>
+          <tr>
+            <td>
+              <div class="font-medium">{{ f.check }}</div>
+              <div class="max-w-56 text-xs text-slate-500">{{ f.checkDescription }}</div>
+            </td>
+            <td>
+              @if (f.userId) {
+                <a [routerLink]="['/admin/joueurs', f.userId]" class="hover:text-orange-600">#{{ f.userId }}</a>
+              } @else { — }
+            </td>
+            <td class="text-sm">{{ f.referenceType }} #{{ f.referenceId }}</td>
+            <td class="text-right">{{ f.expectedValue != null ? (f.expectedValue | credits) : '—' }}</td>
+            <td class="text-right font-medium text-red-600">{{ f.actualValue != null ? (f.actualValue | credits) : '—' }}</td>
+            <td class="max-w-64 text-sm">{{ f.detail }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  } @else if (r.status === 'OK') {
+    <p-message severity="success" text="Aucun ecart : les soldes et les operations concordent." />
+  }
+}

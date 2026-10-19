@@ -4,7 +4,15 @@ import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
 import {
+  AdminGameSession,
   AdminWithdrawal,
+  AuditEntry,
+  AuditFilters,
+  GameReview,
+  ReconciliationRun,
+  RoleName,
+  UserResponse,
+  UserStatus,
   BalanceType,
   Dashboard,
   PlayerSummary,
@@ -109,5 +117,82 @@ export class AdminApi {
 
   cancelCounterWithdrawal(id: number): Observable<Withdrawal> {
     return this.http.post<Withdrawal>(`${this.base}/wallet/counter-withdrawals/${id}/cancel`, {});
+  }
+
+  // --- Parties signalees ------------------------------------------------------------
+
+  flaggedSessions(page = 0, size = 50): Observable<Page<AdminGameSession>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<AdminGameSession>>(`${this.base}/game/sessions/flagged`, { params });
+  }
+
+  quizSessions(quizId: number, flaggedOnly: boolean, page = 0, size = 50): Observable<Page<AdminGameSession>> {
+    const params = new HttpParams().set('flagged', flaggedOnly).set('page', page).set('size', size);
+    return this.http.get<Page<AdminGameSession>>(`${this.base}/quizzes/${quizId}/sessions`, { params });
+  }
+
+  sessionReview(sessionId: number): Observable<GameReview> {
+    return this.http.get<GameReview>(`${this.base}/game/sessions/${sessionId}/review`);
+  }
+
+  invalidateSession(sessionId: number, reason: string): Observable<AdminGameSession> {
+    return this.http.post<AdminGameSession>(`${this.base}/game/sessions/${sessionId}/invalidate`, { reason });
+  }
+
+  // --- Rapprochement comptable -------------------------------------------------------
+
+  reconciliationRuns(page = 0, size = 20): Observable<Page<ReconciliationRun>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<ReconciliationRun>>(`${this.base}/reconciliation/runs`, { params });
+  }
+
+  reconciliationRun(id: number): Observable<ReconciliationRun> {
+    return this.http.get<ReconciliationRun>(`${this.base}/reconciliation/runs/${id}`);
+  }
+
+  runReconciliation(): Observable<ReconciliationRun> {
+    return this.http.post<ReconciliationRun>(`${this.base}/reconciliation/runs`, {});
+  }
+
+  // --- Journal d'audit ------------------------------------------------------------------
+
+  audit(
+    filters: { action?: string | null; entityType?: string | null; entityId?: string | null; actorId?: number | null },
+    page = 0,
+    size = 50,
+  ): Observable<Page<AuditEntry>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== null && value !== undefined && `${value}`.trim() !== '') {
+        params = params.set(key, `${value}`.trim());
+      }
+    }
+    return this.http.get<Page<AuditEntry>>(`${this.base}/audit`, { params });
+  }
+
+  auditFilters(): Observable<AuditFilters> {
+    return this.http.get<AuditFilters>(`${this.base}/audit/filters`);
+  }
+
+  // --- Comptes et roles (super-administrateur) --------------------------------------------
+
+  users(query: string, staffOnly: boolean, page = 0, size = 20): Observable<Page<UserResponse>> {
+    const params = new HttpParams()
+      .set('query', query)
+      .set('staffOnly', staffOnly)
+      .set('page', page)
+      .set('size', size)
+      .set('sort', 'createdAt,desc');
+    return this.http.get<Page<UserResponse>>(`${this.base}/users`, { params });
+  }
+
+  setRoles(userId: number, roles: RoleName[]): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.base}/users/${userId}/roles`, roles);
+  }
+
+  setStatus(userId: number, status: UserStatus): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.base}/users/${userId}/status`, JSON.stringify(status), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

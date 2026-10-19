@@ -6,7 +6,7 @@ import { AdminApi } from './core/admin-api.service';
 import { QuestionApi } from './core/question-api.service';
 import { QuizApi } from './core/quiz-api.service';
 import { authInterceptor } from './core/auth.interceptor';
-import { adminGuard, staffGuard } from './core/auth.guard';
+import { adminGuard, staffGuard, superAdminGuard } from './core/auth.guard';
 import { AuthService } from './core/auth.service';
 
 /**
@@ -88,6 +88,37 @@ export default [
             title: 'Modifier le quiz - RAF Admin',
             canActivate: [adminGuard],
             loadComponent: () => import('./pages/quiz-form/quiz-form'),
+          },
+          {
+            path: 'parties',
+            title: 'Parties - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/game-sessions/game-sessions'),
+          },
+          // --- Controle
+          {
+            path: 'rapprochement',
+            title: 'Rapprochement - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/reconciliation/reconciliation'),
+          },
+          {
+            path: 'rapprochement/:id',
+            title: 'Rapprochement - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/reconciliation-detail/reconciliation-detail'),
+          },
+          {
+            path: 'journal',
+            title: "Journal d'audit - RAF Admin",
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/audit/audit'),
+          },
+          {
+            path: 'comptes',
+            title: 'Comptes et roles - RAF Admin',
+            canActivate: [superAdminGuard],
+            loadComponent: () => import('./pages/accounts/accounts'),
           },
           // --- Banque de questions (moderateurs et administrateurs)
           {

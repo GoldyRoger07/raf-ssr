@@ -323,3 +323,102 @@ export interface ImportReport {
   failed: number;
   errors: { line: number; reason: string; excerpt?: string }[];
 }
+
+// --- Phase 3 : parties, rapprochement, audit, comptes -------------------------------
+
+export type GameSessionStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED' | 'INVALIDATED';
+
+export interface AdminGameSession {
+  id: number;
+  quizId: number;
+  quizTitle: string;
+  userId: number;
+  userEmail: string;
+  playerName: string;
+  ticketId: number;
+  status: GameSessionStatus;
+  startedAt: string;
+  serverDeadlineAt: string;
+  submittedAt?: string;
+  clientDurationMs?: number;
+  score?: number;
+  correctCount?: number;
+  answeredCount?: number;
+  flagged: boolean;
+  flagReason?: string;
+  invalidationReason?: string;
+  ip?: string;
+  userAgent?: string;
+}
+
+export interface GameReviewItem {
+  position: number;
+  questionId: number;
+  text: string;
+  explanation?: string;
+  choices: { id: number; text: string }[];
+  correctChoiceId: number;
+  chosenChoiceId?: number;
+  correct: boolean;
+  elapsedMs?: number;
+}
+
+export interface GameReview {
+  sessionId: number;
+  quizId: number;
+  status: GameSessionStatus;
+  score?: number;
+  correctCount?: number;
+  answeredCount?: number;
+  items: GameReviewItem[];
+}
+
+export interface ReconciliationFinding {
+  check: string;
+  checkDescription: string;
+  userId?: number;
+  walletId?: number;
+  referenceType?: string;
+  referenceId?: number;
+  expectedValue?: number;
+  actualValue?: number;
+  detail?: string;
+}
+
+export interface ReconciliationRun {
+  id: number;
+  trigger: 'SCHEDULED' | 'MANUAL';
+  triggeredBy?: number;
+  status: 'OK' | 'DISCREPANCIES' | 'FAILED';
+  startedAt: string;
+  finishedAt?: string;
+  walletsChecked: number;
+  transactionsChecked: number;
+  findingCount: number;
+  totalCreditBalance: number;
+  totalCreditBalanceHtg: number;
+  totalWinningsBalance: number;
+  totalWinningsBalanceHtg: number;
+  errorMessage?: string;
+  findings?: ReconciliationFinding[];
+}
+
+export interface AuditEntry {
+  id: number;
+  createdAt: string;
+  actorUserId?: number;
+  actorName?: string;
+  action: string;
+  entityType?: string;
+  entityId?: string;
+  beforeState?: string;
+  afterState?: string;
+  ipAddress?: string;
+}
+
+export interface AuditFilters {
+  actions: string[];
+  entityTypes: string[];
+}
+
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'BANNED';

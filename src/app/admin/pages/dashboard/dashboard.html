@@ -51,14 +51,16 @@
       </div>
       <div class="mt-1 text-sm text-slate-500">approuves, versement a faire</div>
     </a>
-    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <a routerLink="/admin/parties"
+       class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="text-sm text-slate-500">Parties signalees</div>
       <div class="mt-1 text-3xl font-semibold" [class.text-red-600]="d.pending.flaggedSessions > 0">
         {{ d.pending.flaggedSessions }}
       </div>
       <div class="mt-1 text-sm text-slate-500">a revoir avant la cloture</div>
-    </div>
-    <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    </a>
+    <a [routerLink]="d.lastReconciliation ? ['/admin/rapprochement', d.lastReconciliation.id] : '/admin/rapprochement'"
+       class="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="text-sm text-slate-500">Dernier rapprochement</div>
       @if (d.lastReconciliation; as r) {
         <div class="mt-2">
@@ -71,7 +73,7 @@
       } @else {
         <div class="mt-2 text-sm text-slate-500">Jamais execute</div>
       }
-    </div>
+    </a>
   </div>
 
   <!-- Argent -->

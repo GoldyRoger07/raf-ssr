@@ -12,7 +12,8 @@
       <span class="text-sm font-semibold uppercase tracking-wide text-slate-500">Back-office</span>
     </div>
 
-    <nav class="flex-1 space-y-1 p-3">
+    <!-- min-h-0 + overflow : sur un ecran peu haut, la navigation defile au lieu de deborder. -->
+    <nav class="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
       @for (item of nav(); track item.link) {
         @if (item.section) {
           <div class="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{{ item.section }}</div>

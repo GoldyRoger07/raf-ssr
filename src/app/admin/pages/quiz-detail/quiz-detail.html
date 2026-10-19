@@ -40,6 +40,9 @@
           <p-button label="Figer le classement" icon="pi pi-lock" [loading]="busy()" (onClick)="finalize()" />
         }
       }
+      @if (q.status === 'RUNNING' || q.status === 'CLOSING' || q.status === 'COMPUTING' || q.status === 'FINISHED') {
+        <p-button label="Parties jouees" icon="pi pi-list" severity="secondary" [outlined]="true" routerLink="/admin/parties" [queryParams]="{ quiz: q.id }" />
+      }
       @if (q.status === 'DRAFT' || q.status === 'REGISTRATION' || q.status === 'SCHEDULED') {
         <p-button label="Annuler le quiz" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="cancelReason = ''; cancelOpen.set(true)" />
       }

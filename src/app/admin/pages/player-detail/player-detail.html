@@ -17,6 +17,8 @@
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
+      <p-button label="Historique" icon="pi pi-history" severity="secondary" [text]="true" routerLink="/admin/journal"
+                [queryParams]="{ entityType: 'User', entityId: p.id }" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
       <p-button label="Recharge manuelle" icon="pi pi-plus" (onClick)="openTopUp()" />
     </div>
