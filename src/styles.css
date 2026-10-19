@@ -22,7 +22,7 @@
 
 
 .fade-up{
-    transform: translateY(25%) scale(0.95);
+    transform: translateY(25%);
     opacity: 0;
     transition: all 600ms ease-in-out ;
     

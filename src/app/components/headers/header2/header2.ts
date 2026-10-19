@@ -1,8 +1,8 @@
-import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, PLATFORM_ID, signal } from '@angular/core';
+import { My3dButton } from "../../buttons/my3d-button/my3d-button";
 import { isPlatformBrowser } from '@angular/common';
-import { ThemeService } from '../../theme/theme.service';
-import { Container } from "../container/container";
-import { My3dButton } from "../buttons/my3d-button/my3d-button";
+import { ThemeService } from '../../../theme/theme.service';
+import { Container } from "../../container/container";
 
 interface NavItem {
   label: string;
@@ -10,13 +10,13 @@ interface NavItem {
 }
 
 @Component({
-  selector: 'my-header',
-  imports: [ Container, My3dButton],
-  templateUrl: './header.html',
-  styleUrl: './header.css',
+  selector: 'my-header-2',
+  imports: [My3dButton, Container],
+  templateUrl: './header2.html',
+  styleUrl: './header2.css',
 })
-export class Header {
-  private readonly themeService = inject(ThemeService);
+export class Header2 {
+   private readonly themeService = inject(ThemeService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly theme = this.themeService.theme;
@@ -51,6 +51,7 @@ export class Header {
     // dès qu'on remonte.
     if (current > this.lastScrollY && current > 80) {
       this.hidden.set(true);
+      console.log("why")
     } else if (current < this.lastScrollY) {
       this.hidden.set(false);
     }

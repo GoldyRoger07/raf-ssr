@@ -1,0 +1,25 @@
+:host {
+  display: block;
+  color: #714f31;
+}
+
+
+.menu{
+  transform: translate(0,-150%);
+  /* transform-origin: top; */
+  transition: all .3s ease-in-out;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.hide-header{
+  transform: translateY(-100%);
+}
+
+.menu.open{
+  transform: translate(0,0);
+}
+
+.header-wrapper{
+  background-color: #fff !important;
+}
