@@ -1,0 +1,76 @@
+<p-confirmdialog />
+
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Categories</h1>
+    <p class="text-sm text-slate-500">Une categorie desactivee n'est plus proposee comme sujet de quiz.</p>
+  </div>
+  <p-button label="Nouvelle categorie" icon="pi pi-plus" (onClick)="openCreate()" />
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4" [text]="message" />
+}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <p-table [value]="categories()" [loading]="loading()" dataKey="id">
+    <ng-template #header>
+      <tr>
+        <th>Categorie</th>
+        <th>Parente</th>
+        <th>Etat</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-c>
+      <tr>
+        <td>
+          <div class="font-medium">{{ c.name }}</div>
+          @if (c.description) {
+            <div class="max-w-md text-xs text-slate-500">{{ c.description }}</div>
+          }
+        </td>
+        <td class="text-sm text-slate-500">{{ parentName(c.parentId) || '—' }}</td>
+        <td><p-tag [value]="c.active ? 'Active' : 'Desactivee'" [severity]="c.active ? 'success' : 'secondary'" /></td>
+        <td class="text-right">
+          <div class="flex justify-end gap-1">
+            <p-button label="Questions" size="small" [text]="true" [routerLink]="'/admin/questions'" [queryParams]="{ categorie: c.id }" />
+            <p-button icon="pi pi-pencil" size="small" [text]="true" severity="secondary" ariaLabel="Modifier" (onClick)="openEdit(c)" />
+            @if (canDelete()) {
+              <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" ariaLabel="Supprimer" (onClick)="remove(c)" />
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="4" class="py-10 text-center text-slate-500">Aucune categorie : commencez par en creer une.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog [header]="editing() ? 'Modifier la categorie' : 'Nouvelle categorie'" [(visible)]="editOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+  <div class="space-y-4">
+    <div class="flex flex-col gap-2">
+      <label for="cat-name" class="text-sm font-medium">Nom</label>
+      <input pInputText id="cat-name" [(ngModel)]="name" maxlength="120" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="cat-desc" class="text-sm font-medium">Description</label>
+      <textarea pTextarea id="cat-desc" [(ngModel)]="description" rows="2" maxlength="500"></textarea>
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="cat-parent" class="text-sm font-medium">Categorie parente</label>
+      <p-select inputId="cat-parent" [options]="parentOptions()" [(ngModel)]="parentId" optionLabel="name" optionValue="id"
+                [showClear]="true" placeholder="Aucune" styleClass="w-full" />
+    </div>
+    <div class="flex items-center gap-3">
+      <p-toggleswitch inputId="cat-active" [(ngModel)]="active" />
+      <label for="cat-active" class="text-sm">Active</label>
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="editOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" [disabled]="!name.trim()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>

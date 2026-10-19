@@ -1,0 +1,91 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Import CSV</h1>
+  <p class="text-sm text-slate-500">
+    Une ligne fautive est ignoree et expliquee dans le rapport, sans bloquer les autres. Reimporter le meme fichier ne cree aucun doublon.
+  </p>
+</div>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <section class="space-y-4 rounded-xl border border-slate-200 bg-white p-5 lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex flex-col gap-2">
+      <label for="category" class="text-sm font-medium">Categorie de destination</label>
+      <p-select inputId="category" [options]="categories()" [(ngModel)]="categoryId" optionLabel="name" optionValue="id"
+                [filter]="true" placeholder="Choisir une categorie" styleClass="w-full max-w-md" />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="file" class="text-sm font-medium">Fichier CSV</label>
+      <input id="file" type="file" accept=".csv,text/csv" (change)="onFile($event)"
+             class="block w-full max-w-md text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2
+                    file:font-medium file:text-orange-700 hover:file:bg-orange-100 dark:text-slate-300 dark:file:bg-orange-500/10 dark:file:text-orange-300" />
+    </div>
+
+    <div class="flex items-center gap-3">
+      <p-toggleswitch inputId="publish" [(ngModel)]="publishDirectly" />
+      <label for="publish" class="text-sm">Publier directement les questions importees</label>
+    </div>
+    @if (!publishDirectly) {
+      <p class="text-xs text-slate-500">Les questions arriveront en brouillon : relisez-les avant de les publier.</p>
+    }
+
+    @if (error(); as message) {
+      <p-message severity="error" [text]="message" />
+    }
+
+    <p-button label="Importer" icon="pi pi-upload" [loading]="importing()" [disabled]="!file() || !categoryId" (onClick)="upload()" />
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-5 text-sm dark:border-slate-800 dark:bg-slate-900">
+    <h2 class="mb-2 font-semibold">Format attendu</h2>
+    <p class="mb-2 text-slate-600 dark:text-slate-300">Separateur <code>;</code> ou <code>,</code>, detecte automatiquement. Colonnes :</p>
+    <code class="mb-3 block break-all rounded bg-slate-50 p-2 text-xs dark:bg-slate-800">
+      question;reponse_a;reponse_b;reponse_c;reponse_d;bonne_reponse;difficulte;explication
+    </code>
+    <ul class="mb-4 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">
+      <li><code>bonne_reponse</code> : A, B, C ou D</li>
+      <li><code>difficulte</code> : FACILE, MOYEN ou DIFFICILE (vide = MOYEN)</li>
+      <li>Vrai / faux : laisser <code>reponse_c</code> et <code>reponse_d</code> vides</li>
+    </ul>
+    <p-button label="Telecharger un modele" icon="pi pi-download" [text]="true" size="small" (onClick)="downloadTemplate()" />
+  </section>
+</div>
+
+@if (report(); as r) {
+  <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <h2 class="mb-4 font-semibold">Rapport d'import</h2>
+    <div class="mb-4 grid grid-cols-3 gap-4">
+      <div class="rounded-lg bg-green-50 p-4 dark:bg-green-500/10">
+        <div class="text-sm text-green-800 dark:text-green-300">Importees</div>
+        <div class="text-2xl font-semibold">{{ r.imported }}</div>
+      </div>
+      <div class="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+        <div class="text-sm text-slate-500">Deja presentes (ignorees)</div>
+        <div class="text-2xl font-semibold">{{ r.skipped }}</div>
+      </div>
+      <div class="rounded-lg p-4" [class]="r.failed ? 'bg-red-50 dark:bg-red-500/10' : 'bg-slate-50 dark:bg-slate-800/60'">
+        <div class="text-sm" [class.text-red-800]="r.failed">En erreur</div>
+        <div class="text-2xl font-semibold">{{ r.failed }}</div>
+      </div>
+    </div>
+
+    @if (r.errors.length) {
+      <p-table [value]="r.errors" [scrollable]="true" scrollHeight="320px">
+        <ng-template #header>
+          <tr><th>Ligne</th><th>Probleme</th><th>Extrait</th></tr>
+        </ng-template>
+        <ng-template #body let-e>
+          <tr>
+            <td class="font-medium">{{ e.line }}</td>
+            <td>{{ e.reason }}</td>
+            <td class="max-w-sm truncate text-xs text-slate-500">{{ e.excerpt }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+
+    @if (r.imported) {
+      <p-button class="mt-4 inline-block" label="Voir les questions" icon="pi pi-arrow-right" [text]="true"
+                routerLink="/admin/questions" [queryParams]="{ categorie: categoryId }" />
+    }
+  </section>
+}

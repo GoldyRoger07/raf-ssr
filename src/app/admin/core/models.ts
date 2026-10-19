@@ -125,3 +125,201 @@ export interface Wallet {
   winningsBalanceHtg: number;
   htgRate: number;
 }
+
+// --- Quiz -------------------------------------------------------------------------
+
+export type QuizStatus =
+  | 'DRAFT'
+  | 'REGISTRATION'
+  | 'SCHEDULED'
+  | 'RUNNING'
+  | 'CLOSING'
+  | 'COMPUTING'
+  | 'FINISHED'
+  | 'CANCELLED';
+
+export type TopicMode = 'ADMIN' | 'VOTE';
+
+export interface RewardView {
+  rankFrom: number;
+  rankTo: number;
+  amountCredits: number;
+  amountHtg: number;
+  label?: string;
+}
+
+export interface TopicView {
+  id: number;
+  categoryId: number;
+  label: string;
+  imageUrl?: string;
+  voteCount: number;
+}
+
+export interface Quiz {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string;
+  themeLabel?: string;
+  bannerUrl?: string;
+  status: QuizStatus;
+  topicMode: TopicMode;
+  selectedCategoryId?: number;
+  selectedCategoryName?: string;
+  ticketPriceCredits: number;
+  ticketPriceHtg: number;
+  minPlayers: number;
+  maxTicketsTotal?: number;
+  maxTicketsPerPlayer?: number;
+  gameDurationSeconds: number;
+  questionsPerGame: number;
+  pointsPerCorrect: number;
+  minScoreThreshold: number;
+  closingCountdownMinutes: number;
+  startDelayMinutes: number;
+  voteOpensAt?: string;
+  voteClosesAt?: string;
+  voteOpen: boolean;
+  thresholdReachedAt?: string;
+  scheduledStartAt?: string;
+  startedAt?: string;
+  endsAt?: string;
+  finishedAt?: string;
+  cancellationReason?: string;
+  playersRegistered: number;
+  ticketsSold: number;
+  poolSize: number;
+  rewards: RewardView[];
+  topics: TopicView[];
+}
+
+/** Corps de creation / modification d'un quiz (QuizDto). */
+export interface QuizInput {
+  title: string;
+  description: string | null;
+  themeLabel: string | null;
+  topicMode: TopicMode;
+  categoryId: number | null;
+  bannerMediaId: number | null;
+  ticketPriceCredits: number;
+  minPlayers: number;
+  maxTicketsTotal: number | null;
+  maxTicketsPerPlayer: number | null;
+  startDelayMinutes: number;
+  gameDurationSeconds: number;
+  questionsPerGame: number;
+  pointsPerCorrect: number;
+  minScoreThreshold: number;
+  closingCountdownMinutes: number;
+}
+
+export interface RewardTier {
+  rankFrom: number;
+  rankTo: number;
+  amountCredits: number;
+  label?: string | null;
+}
+
+export interface Economics {
+  totalRewardsCredits: number;
+  ticketPriceCredits: number;
+  minPlayers: number;
+  breakEvenPlayers: number;
+  minRevenueCredits: number;
+  marginAtMinPlayers: number;
+  profitableAtMinPlayers: boolean;
+  rewardedPlaces: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  displayName: string;
+  score: number;
+  rewardCredits: number;
+  rewardHtg: number;
+}
+
+export interface Leaderboard {
+  quizId: number;
+  quizTitle: string;
+  finishedAt?: string;
+  totalRanked: number;
+  entries: LeaderboardEntry[];
+}
+
+// --- Banque de questions -----------------------------------------------------------
+
+export type QuestionStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type QuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE';
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  parentId?: number;
+  imageUrl?: string;
+  active: boolean;
+}
+
+export interface CategoryInput {
+  name: string;
+  description: string | null;
+  parentId: number | null;
+  mediaId: null;
+  active: boolean;
+}
+
+export interface Choice {
+  id: number;
+  text: string;
+  correct: boolean;
+  position: number;
+  imageUrl?: string;
+}
+
+export interface Question {
+  id: number;
+  categoryId: number;
+  categoryName: string;
+  text: string;
+  type: QuestionType;
+  difficulty: Difficulty;
+  status: QuestionStatus;
+  explanation?: string;
+  imageUrl?: string;
+  timesServed: number;
+  timesCorrect: number;
+  successRate?: number;
+  choices: Choice[];
+  createdAt: string;
+}
+
+export interface QuestionInput {
+  categoryId: number;
+  text: string;
+  type: QuestionType;
+  difficulty: Difficulty;
+  explanation: string | null;
+  mediaId: null;
+  choices: { text: string; correct: boolean; mediaId: null }[];
+}
+
+export interface PoolStatus {
+  categoryId: number;
+  available: number;
+  required: number;
+  sufficient: boolean;
+  easy: number;
+  medium: number;
+  hard: number;
+}
+
+export interface ImportReport {
+  imported: number;
+  skipped: number;
+  failed: number;
+  errors: { line: number; reason: string; excerpt?: string }[];
+}

@@ -12,6 +12,8 @@ interface NavItem {
   link: string;
   exact?: boolean;
   adminOnly?: boolean;
+  /** Titre de section affiche au-dessus de l'entree. */
+  section?: string;
 }
 
 /** Cadre du back-office : barre laterale, barre du haut, zone de contenu. */
@@ -33,6 +35,10 @@ export default class AdminLayout {
     { label: 'Retraits', icon: 'pi pi-wallet', link: '/admin/retraits', adminOnly: true },
     { label: 'Guichet', icon: 'pi pi-money-bill', link: '/admin/guichet', adminOnly: true },
     { label: 'Joueurs', icon: 'pi pi-users', link: '/admin/joueurs', adminOnly: true },
+    { label: 'Quiz', icon: 'pi pi-trophy', link: '/admin/quiz', adminOnly: true, section: 'Jeu' },
+    { label: 'Questions', icon: 'pi pi-question-circle', link: '/admin/questions', section: 'Contenu' },
+    { label: 'Categories', icon: 'pi pi-tags', link: '/admin/categories' },
+    { label: 'Import CSV', icon: 'pi pi-upload', link: '/admin/import' },
   ];
 
   protected readonly nav = computed(() =>

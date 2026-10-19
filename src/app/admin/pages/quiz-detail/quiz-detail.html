@@ -1,0 +1,274 @@
+<p-confirmdialog />
+
+<a routerLink="/admin/quiz" class="mb-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600">
+  <i class="pi pi-arrow-left"></i> Quiz
+</a>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (quiz(); as q) {
+  <!-- En-tete et action principale -->
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex flex-wrap items-center gap-3">
+        <h1 class="text-2xl font-semibold">{{ q.title }}</h1>
+        <p-tag [value]="quizStatus(q.status).label" [severity]="quizStatus(q.status).severity" />
+      </div>
+      @if (q.themeLabel) {
+        <p class="text-sm text-slate-500">Theme annonce : {{ q.themeLabel }}</p>
+      }
+      @if (q.cancellationReason) {
+        <p class="mt-1 text-sm text-red-600">Annule : {{ q.cancellationReason }}</p>
+      }
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      @switch (q.status) {
+        @case ('DRAFT') {
+          <p-button label="Modifier" icon="pi pi-pencil" severity="secondary" [outlined]="true" [routerLink]="['/admin/quiz', q.id, 'modifier']" />
+          <p-button label="Publier" icon="pi pi-send" [disabled]="!q.rewards.length" (onClick)="publishOpen.set(true)" />
+        }
+        @case ('REGISTRATION') {
+          @if (q.topicMode === 'VOTE' && !q.selectedCategoryId) {
+            <p-button label="Arreter le sujet" icon="pi pi-flag" (onClick)="overrideTopicId = null; voteOpen.set(true)" />
+          }
+        }
+        @case ('SCHEDULED') {
+          <p-button label="Demarrer maintenant" icon="pi pi-play" [loading]="busy()" (onClick)="start()" />
+        }
+        @case ('COMPUTING') {
+          <p-button label="Figer le classement" icon="pi pi-lock" [loading]="busy()" (onClick)="finalize()" />
+        }
+      }
+      @if (q.status === 'DRAFT' || q.status === 'REGISTRATION' || q.status === 'SCHEDULED') {
+        <p-button label="Annuler le quiz" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="cancelReason = ''; cancelOpen.set(true)" />
+      }
+    </div>
+  </div>
+
+  @if (q.status === 'DRAFT' && !q.rewards.length) {
+    <p-message severity="info" class="mb-4" text="Definissez les recompenses avant de publier." />
+  }
+
+  <!-- Chiffres -->
+  <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Joueurs inscrits</div>
+      <div class="text-2xl font-semibold">{{ q.playersRegistered }} <span class="text-base font-normal text-slate-500">/ {{ q.minPlayers }} min.</span></div>
+      <div class="text-xs text-slate-500">{{ q.ticketsSold }} ticket(s) vendu(s)</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Prix du ticket</div>
+      <div class="text-2xl font-semibold">{{ q.ticketPriceHtg | htg }}</div>
+      <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Sujet</div>
+      <div class="text-lg font-semibold">{{ q.selectedCategoryName ?? (q.topicMode === 'VOTE' ? 'Soumis au vote' : '—') }}</div>
+      @if (q.poolSize) {
+        <div class="text-xs text-slate-500">{{ q.poolSize }} questions figees</div>
+      }
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm text-slate-500">Partie</div>
+      <div class="text-lg font-semibold">{{ q.questionsPerGame }} questions en {{ q.gameDurationSeconds }} s</div>
+      <div class="text-xs text-slate-500">{{ q.pointsPerCorrect }} pts par bonne reponse, cloture a {{ q.minScoreThreshold }} pts</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Recompenses et bilan -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="font-semibold">Recompenses</h2>
+        @if (q.status === 'DRAFT') {
+          <p-button [label]="q.rewards.length ? 'Modifier' : 'Definir'" icon="pi pi-pencil" size="small" [outlined]="true" (onClick)="openRewards()" />
+        }
+      </div>
+      @if (q.rewards.length) {
+        <table class="w-full text-sm">
+          <thead class="text-left text-slate-500">
+            <tr><th class="py-1 font-medium">Rangs</th><th class="py-1 font-medium">Libelle</th><th class="py-1 text-right font-medium">Par joueur</th></tr>
+          </thead>
+          <tbody>
+            @for (r of q.rewards; track r.rankFrom) {
+              <tr class="border-t border-slate-100 dark:border-slate-800">
+                <td class="py-2">{{ r.rankFrom === r.rankTo ? r.rankFrom + 'e' : r.rankFrom + 'e a ' + r.rankTo + 'e' }}</td>
+                <td class="py-2 text-slate-500">{{ r.label }}</td>
+                <td class="py-2 text-right font-medium">{{ r.amountHtg | htg }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="text-sm text-slate-500">Aucune recompense definie.</p>
+      }
+
+      @if (economics(); as e) {
+        <div class="mt-4 rounded-lg p-4 text-sm"
+             [class]="e.profitableAtMinPlayers ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'">
+          <div class="mb-2 font-medium" [class.text-green-800]="e.profitableAtMinPlayers" [class.text-red-800]="!e.profitableAtMinPlayers">
+            @if (e.profitableAtMinPlayers) {
+              Rentable des le seuil de {{ e.minPlayers }} joueurs
+            } @else {
+              Deficitaire au seuil minimum : il faut {{ e.breakEvenPlayers }} joueurs pour couvrir les gains
+            }
+          </div>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div><div class="text-slate-500">Cagnotte</div><div class="font-semibold">{{ e.totalRewardsCredits * htgRate() | htg }}</div></div>
+            <div><div class="text-slate-500">Places payees</div><div class="font-semibold">{{ e.rewardedPlaces }}</div></div>
+            <div><div class="text-slate-500">Point d'equilibre</div><div class="font-semibold">{{ e.breakEvenPlayers }} joueurs</div></div>
+            <div><div class="text-slate-500">Marge au seuil</div><div class="font-semibold">{{ e.marginAtMinPlayers * htgRate() | htg }}</div></div>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Calendrier -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 font-semibold">Calendrier</h2>
+      <dl class="space-y-2 text-sm">
+        @if (q.voteOpensAt) {
+          <div><dt class="text-slate-500">Vote</dt><dd>{{ q.voteOpensAt | haitiDate }} → {{ q.voteClosesAt | haitiDate }}</dd></div>
+        }
+        <div><dt class="text-slate-500">Seuil atteint</dt><dd>{{ q.thresholdReachedAt | haitiDate }}</dd></div>
+        <div><dt class="text-slate-500">Demarrage prevu</dt><dd>{{ q.scheduledStartAt | haitiDate }} <span class="text-slate-500">(+{{ q.startDelayMinutes }} min apres le seuil)</span></dd></div>
+        <div><dt class="text-slate-500">Demarre le</dt><dd>{{ q.startedAt | haitiDate }}</dd></div>
+        <div><dt class="text-slate-500">Cloture</dt><dd>{{ q.endsAt | haitiDate }} <span class="text-slate-500">({{ q.closingCountdownMinutes }} min de compte a rebours)</span></dd></div>
+        <div><dt class="text-slate-500">Termine le</dt><dd>{{ q.finishedAt | haitiDate }}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <!-- Vote -->
+  @if (q.topicMode === 'VOTE' && q.topics.length) {
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 font-semibold">Sujets soumis au vote @if (q.voteOpen) { <p-tag value="Vote ouvert" severity="success" class="ml-2" /> }</h2>
+      <ul class="space-y-2">
+        @for (t of q.topics; track t.id) {
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+            <span [class.font-semibold]="t.categoryId === q.selectedCategoryId">
+              {{ t.label }}
+              @if (t.categoryId === q.selectedCategoryId) { <i class="pi pi-check ml-1 text-green-600"></i> }
+            </span>
+            <span class="text-sm text-slate-500">{{ t.voteCount }} voix</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- Classement -->
+  @if (leaderboard(); as board) {
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 font-semibold">Classement final ({{ board.totalRanked }} joueurs)</h2>
+      <p-table [value]="board.entries" dataKey="rank" [scrollable]="true" scrollHeight="400px">
+        <ng-template #header>
+          <tr><th>Rang</th><th>Joueur</th><th class="text-right">Score</th><th class="text-right">Gain</th></tr>
+        </ng-template>
+        <ng-template #body let-e>
+          <tr>
+            <td class="font-medium">{{ e.rank }}</td>
+            <td>{{ e.displayName }}</td>
+            <td class="text-right">{{ e.score }}</td>
+            <td class="text-right font-medium">{{ e.rewardCredits ? (e.rewardHtg | htg) : '—' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="4" class="py-6 text-center text-slate-500">Aucune partie validee.</td></tr>
+        </ng-template>
+      </p-table>
+    </section>
+  }
+
+  <!-- Dialogue : recompenses -->
+  <p-dialog header="Recompenses" [(visible)]="rewardsOpen" [modal]="true" [style]="{ width: '44rem' }" [draggable]="false">
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+      Montants fixes en credits, par tranche de rangs. Les tranches doivent se suivre a partir du rang 1, sans trou ni chevauchement.
+    </p>
+    <div class="space-y-2">
+      @for (t of tiers; track $index) {
+        <div class="grid grid-cols-12 items-end gap-2">
+          <div class="col-span-2 flex flex-col gap-1">
+            <label class="text-xs text-slate-500" [for]="'from' + $index">Du rang</label>
+            <p-inputnumber [inputId]="'from' + $index" [(ngModel)]="t.rankFrom" [min]="1" (ngModelChange)="touchTiers()" styleClass="w-full" inputStyleClass="w-full" />
+          </div>
+          <div class="col-span-2 flex flex-col gap-1">
+            <label class="text-xs text-slate-500" [for]="'to' + $index">Au rang</label>
+            <p-inputnumber [inputId]="'to' + $index" [(ngModel)]="t.rankTo" [min]="1" (ngModelChange)="touchTiers()" styleClass="w-full" inputStyleClass="w-full" />
+          </div>
+          <div class="col-span-3 flex flex-col gap-1">
+            <label class="text-xs text-slate-500" [for]="'amount' + $index">Credits par joueur</label>
+            <p-inputnumber [inputId]="'amount' + $index" [(ngModel)]="t.amountCredits" [min]="1" locale="fr-FR" (ngModelChange)="touchTiers()" styleClass="w-full" inputStyleClass="w-full" />
+          </div>
+          <div class="col-span-4 flex flex-col gap-1">
+            <label class="text-xs text-slate-500" [for]="'label' + $index">Libelle</label>
+            <input pInputText [id]="'label' + $index" [(ngModel)]="t.label" maxlength="120" />
+          </div>
+          <div class="col-span-1">
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" [disabled]="tiers.length === 1" ariaLabel="Supprimer la tranche" (onClick)="removeTier($index)" />
+          </div>
+        </div>
+      }
+    </div>
+    <p-button label="Ajouter une tranche" icon="pi pi-plus" [text]="true" size="small" class="mt-2 inline-block" (onClick)="addTier()" />
+
+    @if (preview(); as p) {
+      <div class="mt-4 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800/60">
+        <div><div class="text-slate-500">Cagnotte</div><div class="font-semibold">{{ p.total * htgRate() | htg }}</div></div>
+        <div><div class="text-slate-500">Point d'equilibre</div><div class="font-semibold">{{ p.breakEven }} joueurs</div></div>
+        <div>
+          <div class="text-slate-500">Marge au seuil ({{ q.minPlayers }})</div>
+          <div class="font-semibold" [class.text-red-600]="p.margin < 0">{{ p.margin * htgRate() | htg }}</div>
+        </div>
+      </div>
+    }
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="rewardsOpen.set(false)" />
+      <p-button label="Enregistrer" [loading]="busy()" (onClick)="saveRewards()" />
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialogue : publication -->
+  <p-dialog header="Publier le quiz" [(visible)]="publishOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+      Les tickets seront mis en vente. Apres publication, plus aucun parametre ne pourra etre modifie.
+    </p>
+    @if (q.topicMode === 'VOTE') {
+      <div class="flex flex-col gap-2">
+        <label for="voteDuration" class="text-sm font-medium">Duree du vote (minutes)</label>
+        <p-inputnumber inputId="voteDuration" [(ngModel)]="voteDurationMinutes" [min]="5" />
+        <small class="text-slate-500">1440 min = 24 h. Vous arretez ensuite le sujet vous-meme.</small>
+      </div>
+    }
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="publishOpen.set(false)" />
+      <p-button label="Publier" icon="pi pi-send" [loading]="busy()" (onClick)="publish()" />
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialogue : arret du sujet -->
+  <p-dialog header="Arreter le sujet" [(visible)]="voteOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+      Par defaut, le sujet en tete du vote est retenu (a egalite, le premier propose). Vous pouvez aussi en imposer un.
+    </p>
+    <p-select [options]="q.topics" [(ngModel)]="overrideTopicId" optionLabel="label" optionValue="id" [showClear]="true"
+              placeholder="Suivre le resultat du vote" styleClass="w-full" />
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="voteOpen.set(false)" />
+      <p-button label="Arreter le sujet" [loading]="busy()" (onClick)="closeVote()" />
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialogue : annulation -->
+  <p-dialog header="Annuler le quiz" [(visible)]="cancelOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+    <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+      Tous les tickets vendus ({{ q.ticketsSold }}) seront rembourses en credits, et les acheteurs prevenus avec ce motif.
+    </p>
+    <textarea pTextarea [(ngModel)]="cancelReason" rows="3" maxlength="255" class="w-full" placeholder="Motif de l'annulation"></textarea>
+    <ng-template #footer>
+      <p-button label="Retour" severity="secondary" [text]="true" (onClick)="cancelOpen.set(false)" />
+      <p-button label="Annuler et rembourser" severity="danger" [loading]="busy()" [disabled]="!cancelReason.trim()" (onClick)="cancel()" />
+    </ng-template>
+  </p-dialog>
+}

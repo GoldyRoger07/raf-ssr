@@ -46,3 +46,38 @@ export function withdrawalStatus(status: string): { label: string; severity: Sev
 export function providerLabel(provider: string): string {
   return PROVIDER[provider as PaymentProvider] ?? provider;
 }
+
+const QUIZ_STATUS_TAG: Record<string, { label: string; severity: Severity }> = {
+  DRAFT: { label: 'Brouillon', severity: 'secondary' },
+  REGISTRATION: { label: 'Inscriptions', severity: 'info' },
+  SCHEDULED: { label: 'Programme', severity: 'info' },
+  RUNNING: { label: 'En cours', severity: 'success' },
+  CLOSING: { label: 'En cloture', severity: 'warn' },
+  COMPUTING: { label: 'Calcul du classement', severity: 'warn' },
+  FINISHED: { label: 'Termine', severity: 'contrast' },
+  CANCELLED: { label: 'Annule', severity: 'danger' },
+};
+
+export function quizStatus(status: string): { label: string; severity: Severity } {
+  return QUIZ_STATUS_TAG[status] ?? { label: status, severity: 'secondary' };
+}
+
+const QUESTION_STATUS_TAG: Record<string, { label: string; severity: Severity }> = {
+  DRAFT: { label: 'Brouillon', severity: 'secondary' },
+  PUBLISHED: { label: 'Publiee', severity: 'success' },
+  ARCHIVED: { label: 'Archivee', severity: 'contrast' },
+};
+
+export function questionStatus(status: string): { label: string; severity: Severity } {
+  return QUESTION_STATUS_TAG[status] ?? { label: status, severity: 'secondary' };
+}
+
+export const DIFFICULTY: Record<string, string> = {
+  EASY: 'Facile',
+  MEDIUM: 'Moyen',
+  HARD: 'Difficile',
+};
+
+export function difficultyLabel(difficulty: string): string {
+  return DIFFICULTY[difficulty] ?? difficulty;
+}

@@ -3,6 +3,8 @@ import { Routes } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { AdminApi } from './core/admin-api.service';
+import { QuestionApi } from './core/question-api.service';
+import { QuizApi } from './core/quiz-api.service';
 import { authInterceptor } from './core/auth.interceptor';
 import { adminGuard, staffGuard } from './core/auth.guard';
 import { AuthService } from './core/auth.service';
@@ -21,6 +23,8 @@ export default [
       provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
       AuthService,
       AdminApi,
+      QuizApi,
+      QuestionApi,
       MessageService,
       ConfirmationService,
     ],
@@ -59,6 +63,57 @@ export default [
             title: 'Fiche joueur - RAF Admin',
             canActivate: [adminGuard],
             loadComponent: () => import('./pages/player-detail/player-detail'),
+          },
+          // --- Quiz (administrateurs : prix et recompenses engagent de l'argent)
+          {
+            path: 'quiz',
+            title: 'Quiz - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/quizzes/quizzes'),
+          },
+          {
+            path: 'quiz/nouveau',
+            title: 'Nouveau quiz - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/quiz-form/quiz-form'),
+          },
+          {
+            path: 'quiz/:id',
+            title: 'Quiz - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/quiz-detail/quiz-detail'),
+          },
+          {
+            path: 'quiz/:id/modifier',
+            title: 'Modifier le quiz - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/quiz-form/quiz-form'),
+          },
+          // --- Banque de questions (moderateurs et administrateurs)
+          {
+            path: 'questions',
+            title: 'Questions - RAF Admin',
+            loadComponent: () => import('./pages/questions/questions'),
+          },
+          {
+            path: 'questions/nouvelle',
+            title: 'Nouvelle question - RAF Admin',
+            loadComponent: () => import('./pages/question-form/question-form'),
+          },
+          {
+            path: 'questions/:id',
+            title: 'Question - RAF Admin',
+            loadComponent: () => import('./pages/question-form/question-form'),
+          },
+          {
+            path: 'categories',
+            title: 'Categories - RAF Admin',
+            loadComponent: () => import('./pages/categories/categories'),
+          },
+          {
+            path: 'import',
+            title: 'Import CSV - RAF Admin',
+            loadComponent: () => import('./pages/import/import'),
           },
         ],
       },
