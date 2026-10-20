@@ -5,7 +5,8 @@
     <h1 class="text-2xl font-semibold">Questions</h1>
     <p class="text-sm text-slate-500">Seules les questions publiees entrent dans le vivier des quiz.</p>
   </div>
-  <div class="flex gap-2">
+  <div class="flex flex-wrap gap-2">
+    <p-button label="Generer avec l'IA" icon="pi pi-sparkles" severity="secondary" [outlined]="true" routerLink="/admin/generation" />
     <p-button label="Importer un CSV" icon="pi pi-upload" severity="secondary" [outlined]="true" routerLink="/admin/import" />
     <p-button label="Nouvelle question" icon="pi pi-plus" routerLink="/admin/questions/nouvelle"
               [queryParams]="categoryId ? { categorie: categoryId } : {}" />
@@ -19,6 +20,8 @@
   </p-iconfield>
   <p-select [options]="categories()" [(ngModel)]="categoryId" optionLabel="name" optionValue="id" [showClear]="true"
             [filter]="true" placeholder="Toutes les categories" (onChange)="reload()" styleClass="w-64" />
+  <p-select [options]="sources" [(ngModel)]="source" optionLabel="label" optionValue="value" [showClear]="true"
+            placeholder="Toutes les origines" (onChange)="reload()" styleClass="w-56" />
 </div>
 
 @if (search.trim().length >= 2) {
@@ -62,7 +65,13 @@
       <tr>
         <td class="max-w-md">
           <a [routerLink]="['/admin/questions', q.id]" class="font-medium hover:text-orange-600">{{ q.text }}</a>
-          <div class="text-xs text-slate-500">{{ q.type === 'TRUE_FALSE' ? 'Vrai / faux' : q.choices.length + ' propositions' }}</div>
+          <div class="text-xs text-slate-500">
+            {{ q.type === 'TRUE_FALSE' ? 'Vrai / faux' : q.choices.length + ' propositions' }}
+            @if (q.source === 'AI') {
+              <span class="ml-1 rounded bg-violet-50 px-1.5 py-0.5 font-medium text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+                    [pTooltip]="q.aiModel ? 'Generee par ' + q.aiModel : ''"><i class="pi pi-sparkles text-[10px]"></i> IA</span>
+            }
+          </div>
         </td>
         <td>{{ q.categoryName }}</td>
         <td>{{ difficultyLabel(q.difficulty) }}</td>

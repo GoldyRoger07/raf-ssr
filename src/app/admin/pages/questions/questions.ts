@@ -18,7 +18,7 @@ import { Observable, Subject, debounceTime } from 'rxjs';
 
 import { Page, errorMessage } from '../../core/api';
 import { difficultyLabel, questionStatus } from '../../core/labels';
-import { Category, Question, QuestionStatus } from '../../core/models';
+import { Category, Question, QuestionSource, QuestionStatus } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 
 const PAGE_SIZE = 20;
@@ -56,8 +56,16 @@ export default class Questions {
     { value: 'ARCHIVED', label: 'Archivees' },
   ];
 
-  protected readonly status = signal<QuestionStatus>('PUBLISHED');
-  protected categoryId: number | null = Number(inject(ActivatedRoute).snapshot.queryParamMap.get('categorie')) || null;
+  protected readonly sources: { value: QuestionSource; label: string }[] = [
+    { value: 'AI', label: 'Generees par IA' },
+    { value: 'IMPORT', label: 'Import CSV' },
+    { value: 'MANUAL', label: 'Saisies' },
+  ];
+
+  private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected readonly status = signal<QuestionStatus>((this.query.get('statut') as QuestionStatus) || 'PUBLISHED');
+  protected categoryId: number | null = Number(this.query.get('categorie')) || null;
+  protected source: QuestionSource | null = (this.query.get('origine') as QuestionSource) || null;
   protected search = '';
   protected readonly categories = signal<Category[]>([]);
   protected readonly rows = signal<Question[]>([]);
@@ -129,7 +137,7 @@ export default class Questions {
     const request: Observable<Page<Question>> =
       term.length >= 2
         ? this.api.search(term, this.page, PAGE_SIZE)
-        : this.api.list(this.status(), this.categoryId, this.page, PAGE_SIZE);
+        : this.api.list(this.status(), this.categoryId, this.page, PAGE_SIZE, this.source);
 
     request.subscribe({
       next: (page) => {

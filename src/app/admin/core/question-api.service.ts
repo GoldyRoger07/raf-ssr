@@ -4,12 +4,16 @@ import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
 import {
+  AiStatus,
   Category,
   CategoryInput,
+  GenerateInput,
+  GenerationReport,
   ImportReport,
   PoolStatus,
   Question,
   QuestionInput,
+  QuestionSource,
   QuestionStatus,
 } from './models';
 
@@ -22,7 +26,7 @@ export class QuestionApi {
 
   // --- Questions ------------------------------------------------------------------
 
-  list(status: QuestionStatus, categoryId: number | null, page = 0, size = 20): Observable<Page<Question>> {
+  list(status: QuestionStatus, categoryId: number | null, page = 0, size = 20, source: QuestionSource | null = null): Observable<Page<Question>> {
     let params = new HttpParams()
       .set('status', status)
       .set('page', page)
@@ -30,6 +34,9 @@ export class QuestionApi {
       .set('sort', 'createdAt,desc');
     if (categoryId) {
       params = params.set('categoryId', categoryId);
+    }
+    if (source) {
+      params = params.set('source', source);
     }
     return this.http.get<Page<Question>>(this.base, { params });
   }
@@ -65,6 +72,15 @@ export class QuestionApi {
     form.append('file', file);
     const params = new HttpParams().set('categoryId', categoryId).set('publishDirectly', publishDirectly);
     return this.http.post<ImportReport>(`${this.base}/import`, form, { params });
+  }
+
+  aiStatus(): Observable<AiStatus> {
+    return this.http.get<AiStatus>(`${this.base}/ai/status`);
+  }
+
+  /** Les questions generees arrivent en brouillon. La reponse peut prendre une minute. */
+  generate(input: GenerateInput): Observable<GenerationReport> {
+    return this.http.post<GenerationReport>(`${this.base}/ai/generate`, input);
   }
 
   poolStatus(categoryId: number, questionsPerGame: number): Observable<PoolStatus> {

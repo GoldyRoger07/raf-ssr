@@ -30,6 +30,8 @@ const META: Record<string, SettingMeta> = {
   'game.fast_answer_flag_count': { group: 'Jeu', label: 'Reponses trop rapides avant signalement', unit: 'reponses' },
   'game.pool_ratio_min': { group: 'Jeu', label: 'Taille minimale du vivier', unit: '× questions par partie' },
   'question.import_max_rows': { group: 'Contenu', label: 'Lignes maximum par import CSV', unit: 'lignes' },
+  'ai.max_questions_per_request': { group: 'Contenu', label: 'Questions maximum par generation IA', unit: 'questions' },
+  'ai.max_requests_per_day': { group: 'Contenu', label: 'Generations IA maximum par jour', unit: 'demandes' },
 };
 const GROUP_ORDER = ['Argent', 'Retraits', 'Jeu', 'Contenu', 'Autres'];
 const CREDIT_RATE = 'credit.htg_rate';

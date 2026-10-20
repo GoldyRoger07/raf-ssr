@@ -270,6 +270,8 @@ export interface Leaderboard {
 export type QuestionStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type QuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE';
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
+/** Origine d'une question : saisie, import CSV ou generation par IA. */
+export type QuestionSource = 'MANUAL' | 'IMPORT' | 'AI';
 
 export interface Category {
   id: number;
@@ -316,6 +318,41 @@ export interface Question {
   successRate?: number;
   choices: Choice[];
   createdAt: string;
+  source: QuestionSource;
+  /** Modele qui a genere la question (source AI). */
+  aiModel?: string;
+}
+
+// --- Generation par IA ---------------------------------------------------------------
+
+export interface AiStatus {
+  enabled: boolean;
+  provider: string;
+  model: string;
+  maxQuestionsPerRequest: number;
+  maxRequestsPerDay: number;
+  requestsToday: number;
+}
+
+export interface GenerateInput {
+  categoryId: number;
+  count: number;
+  /** null = melange */
+  difficulty: Difficulty | null;
+  /** null = surtout des QCM, quelques vrai / faux */
+  type: QuestionType | null;
+  instructions: string | null;
+}
+
+export interface GenerationReport {
+  provider: string;
+  model: string;
+  requested: number;
+  created: number;
+  duplicates: number;
+  rejected: number;
+  rejections: { excerpt?: string; reason: string }[];
+  questions: Question[];
 }
 
 export interface QuestionInput {

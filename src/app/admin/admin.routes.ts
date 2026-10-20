@@ -145,6 +145,11 @@ export default [
             loadComponent: () => import('./pages/questions/questions'),
           },
           {
+            path: 'generation',
+            title: 'Generation IA - RAF Admin',
+            loadComponent: () => import('./pages/generate/generate'),
+          },
+          {
             path: 'questions/nouvelle',
             title: 'Nouvelle question - RAF Admin',
             loadComponent: () => import('./pages/question-form/question-form'),
