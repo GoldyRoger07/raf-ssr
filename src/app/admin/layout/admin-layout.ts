@@ -44,6 +44,7 @@ export default class AdminLayout {
     { label: 'Rapprochement', icon: 'pi pi-calculator', link: '/admin/rapprochement', adminOnly: true, section: 'Controle' },
     { label: "Journal d'audit", icon: 'pi pi-history', link: '/admin/journal', adminOnly: true },
     { label: 'Comptes et roles', icon: 'pi pi-shield', link: '/admin/comptes', superAdminOnly: true },
+    { label: 'Parametres', icon: 'pi pi-sliders-h', link: '/admin/parametres', superAdminOnly: true },
   ];
 
   protected readonly nav = computed(() =>

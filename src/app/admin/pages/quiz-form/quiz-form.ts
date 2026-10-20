@@ -16,7 +16,8 @@ import { debounceTime, forkJoin, map, of, startWith, switchMap } from 'rxjs';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { HtgPipe } from '../../core/format';
-import { Category, PoolStatus, Quiz, QuizInput, TopicMode } from '../../core/models';
+import { PLAY_MODE } from '../../core/labels';
+import { Category, PlayMode, PoolStatus, Quiz, QuizInput, TopicMode } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 import { QuizApi } from '../../core/quiz-api.service';
 
@@ -60,6 +61,11 @@ export default class QuizForm implements OnInit {
     { label: 'Sujet vote par les joueurs', value: 'VOTE' },
   ];
 
+  protected readonly playModeOptions = [
+    { label: PLAY_MODE['SEQUENTIAL'].label, value: 'SEQUENTIAL' },
+    { label: PLAY_MODE['BATCH'].label, value: 'BATCH' },
+  ];
+
   protected readonly form = inject(FormBuilder).group({
     title: ['', [Validators.required, Validators.maxLength(160)]],
     description: ['', Validators.maxLength(1000)],
@@ -72,7 +78,8 @@ export default class QuizForm implements OnInit {
     maxTicketsTotal: [null as number | null, Validators.min(1)],
     maxTicketsPerPlayer: [null as number | null, Validators.min(1)],
     startDelayMinutes: [30, [Validators.required, Validators.min(0)]],
-    gameDurationSeconds: [120, [Validators.required, Validators.min(10), Validators.max(3600)]],
+    playMode: ['SEQUENTIAL' as PlayMode, Validators.required],
+    questionDurationSeconds: [5, [Validators.required, Validators.min(3), Validators.max(300)]],
     questionsPerGame: [40, [Validators.required, Validators.min(1)]],
     pointsPerCorrect: [10, [Validators.required, Validators.min(1)]],
     minScoreThreshold: [200, [Validators.required, Validators.min(1)]],
@@ -92,6 +99,11 @@ export default class QuizForm implements OnInit {
   protected readonly maxScore = computed(
     () => (this.values().questionsPerGame ?? 0) * (this.values().pointsPerCorrect ?? 0),
   );
+  protected readonly playModeHint = computed(() => PLAY_MODE[this.values().playMode ?? 'SEQUENTIAL'].hint);
+  /** Duree maximale d'une partie : chaque question consomme au plus son chrono. */
+  protected readonly maxDurationSeconds = computed(
+    () => (this.values().questionsPerGame ?? 0) * (this.values().questionDurationSeconds ?? 0),
+  );
 
   /** Etat du vivier de chaque categorie concernee, pour le nombre de questions par partie choisi. */
   protected readonly pools = signal<(PoolStatus & { name: string })[]>([]);
@@ -99,7 +111,8 @@ export default class QuizForm implements OnInit {
   ngOnInit(): void {
     this.adminApi.dashboard().subscribe({ next: (d) => this.htgRate.set(d.htgRate), error: () => undefined });
     this.questionApi.categories().subscribe({
-      next: (categories) => this.categories.set(categories.filter((c) => c.active)),
+      // Seuls les sujets proposes en mode En groupe (le backend refuse les autres).
+      next: (categories) => this.categories.set(categories.filter((c) => c.active && c.groupEnabled)),
       error: (error) => this.loadError.set(errorMessage(error)),
     });
 
@@ -163,7 +176,8 @@ export default class QuizForm implements OnInit {
       maxTicketsTotal: v.maxTicketsTotal || null,
       maxTicketsPerPlayer: v.maxTicketsPerPlayer || null,
       startDelayMinutes: v.startDelayMinutes!,
-      gameDurationSeconds: v.gameDurationSeconds!,
+      playMode: v.playMode!,
+      questionDurationSeconds: v.questionDurationSeconds!,
       questionsPerGame: v.questionsPerGame!,
       pointsPerCorrect: v.pointsPerCorrect!,
       minScoreThreshold: v.minScoreThreshold!,
@@ -203,6 +217,10 @@ export default class QuizForm implements OnInit {
   }
 
   private fill(quiz: Quiz): void {
+    if (quiz.gameMode === 'SOLO') {
+      this.router.navigate(['/admin/quiz/solo', quiz.id, 'modifier'], { replaceUrl: true });
+      return;
+    }
     if (quiz.status !== 'DRAFT') {
       this.notDraft.set(true);
       return;
@@ -219,7 +237,8 @@ export default class QuizForm implements OnInit {
       maxTicketsTotal: quiz.maxTicketsTotal ?? null,
       maxTicketsPerPlayer: quiz.maxTicketsPerPlayer ?? null,
       startDelayMinutes: quiz.startDelayMinutes,
-      gameDurationSeconds: quiz.gameDurationSeconds,
+      playMode: quiz.playMode,
+      questionDurationSeconds: quiz.questionDurationSeconds,
       questionsPerGame: quiz.questionsPerGame,
       pointsPerCorrect: quiz.pointsPerCorrect,
       minScoreThreshold: quiz.minScoreThreshold,

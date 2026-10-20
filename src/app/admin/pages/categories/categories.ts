@@ -15,7 +15,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { errorMessage } from '../../core/api';
 import { AuthService } from '../../core/auth.service';
-import { Category, CategoryInput } from '../../core/models';
+import { Category, CategoryInput, GameMode } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 
 @Component({
@@ -40,8 +40,11 @@ export default class Categories {
   private readonly api = inject(QuestionApi);
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
-  /** La suppression est reservee aux administrateurs (cote backend aussi). */
-  protected readonly canDelete = inject(AuthService).isAdmin;
+  /**
+   * Suppression et disponibilite par mode de jeu sont reservees aux
+   * administrateurs (cote backend aussi) : les modes engagent de l'argent.
+   */
+  protected readonly isAdmin = inject(AuthService).isAdmin;
 
   protected readonly categories = signal<Category[]>([]);
   protected readonly loading = signal(false);
@@ -111,6 +114,32 @@ export default class Categories {
         this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error) });
       },
     });
+  }
+
+  /**
+   * Interrupteur En groupe / Solo. Applique tout de suite dans la liste, puis
+   * remplace par la reponse du serveur, ou retabli en cas d'erreur.
+   */
+  protected toggleMode(category: Category, mode: GameMode, enabled: boolean): void {
+    const field = mode === 'SOLO' ? 'soloEnabled' : 'groupEnabled';
+    this.replace({ ...category, [field]: enabled });
+    this.api.configureCategoryModes(category.id, { [field]: enabled }).subscribe({
+      next: (updated) => {
+        this.replace(updated);
+        this.messages.add({
+          severity: 'success',
+          summary: `${category.name} : ${enabled ? 'propose' : 'retire'} en mode ${mode === 'SOLO' ? 'Solo' : 'En groupe'}`,
+        });
+      },
+      error: (error) => {
+        this.replace(category);
+        this.messages.add({ severity: 'error', summary: 'Modification impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
+  private replace(category: Category): void {
+    this.categories.update((list) => list.map((c) => (c.id === category.id ? category : c)));
   }
 
   protected remove(category: Category): void {

@@ -49,7 +49,10 @@
     <ng-template #body let-s>
       <tr>
         <td>
-          <div class="font-medium">#{{ s.id }}</div>
+          <div class="font-medium">
+            #{{ s.id }}
+            @if (s.gameMode === 'SOLO') { <p-tag value="Solo" severity="secondary" class="ml-1" /> }
+          </div>
           <div class="text-xs text-slate-500">{{ s.startedAt | haitiDate }}</div>
         </td>
         <td>
@@ -63,6 +66,9 @@
           @if (s.score != null) {
             <div class="font-semibold">{{ s.score }} pts</div>
             <div class="text-xs text-slate-500">{{ s.correctCount }}/{{ s.answeredCount }} bonnes</div>
+            @if (s.won) {
+              <div class="text-xs font-medium text-green-700 dark:text-green-400"><i class="pi pi-trophy mr-1"></i>Sans-faute, prix verse</div>
+            }
           } @else { — }
         </td>
         <td class="max-w-56 text-sm">
@@ -77,7 +83,7 @@
         <td class="text-right">
           <div class="flex justify-end gap-1">
             <p-button label="Corrige" size="small" [text]="true" (onClick)="openReview(s)" />
-            @if (s.status === 'SUBMITTED' || s.status === 'IN_PROGRESS') {
+            @if ((s.status === 'SUBMITTED' || s.status === 'IN_PROGRESS') && !s.won) {
               <p-button label="Invalider" size="small" [text]="true" severity="danger" (onClick)="openInvalidate(s)" />
             }
           </div>
@@ -138,7 +144,7 @@
   <ng-template #footer>
     <p-button label="Fermer" severity="secondary" [text]="true" (onClick)="reviewOpen.set(false)" />
     @if (reviewed(); as s) {
-      @if (s.status === 'SUBMITTED' || s.status === 'IN_PROGRESS') {
+      @if ((s.status === 'SUBMITTED' || s.status === 'IN_PROGRESS') && !s.won) {
         <p-button label="Invalider cette partie" severity="danger" (onClick)="openInvalidate(s)" />
       }
     }

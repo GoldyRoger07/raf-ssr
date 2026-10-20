@@ -78,6 +78,18 @@ export default [
             loadComponent: () => import('./pages/quiz-form/quiz-form'),
           },
           {
+            path: 'quiz/solo/nouveau',
+            title: 'Nouveau quiz solo - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/solo-quiz-form/solo-quiz-form'),
+          },
+          {
+            path: 'quiz/solo/:id/modifier',
+            title: 'Modifier le quiz solo - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/solo-quiz-form/solo-quiz-form'),
+          },
+          {
             path: 'quiz/:id',
             title: 'Quiz - RAF Admin',
             canActivate: [adminGuard],
@@ -119,6 +131,12 @@ export default [
             title: 'Comptes et roles - RAF Admin',
             canActivate: [superAdminGuard],
             loadComponent: () => import('./pages/accounts/accounts'),
+          },
+          {
+            path: 'parametres',
+            title: 'Parametres - RAF Admin',
+            canActivate: [superAdminGuard],
+            loadComponent: () => import('./pages/settings/settings'),
           },
           // --- Banque de questions (moderateurs et administrateurs)
           {

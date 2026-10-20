@@ -82,7 +82,6 @@
     <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div class="text-sm text-slate-500">Gains dus aux joueurs (retirables)</div>
       <div class="mt-1 text-3xl font-semibold">{{ d.balances.winningsBalanceHtg | htg }}</div>
-      <div class="mt-1 text-sm text-slate-500">{{ d.balances.winningsBalance | credits }}</div>
     </div>
     <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div class="text-sm text-slate-500">Credits de jeu (non retirables)</div>
@@ -95,9 +94,9 @@
   <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">30 derniers jours</h2>
   <div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
     <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-      <div class="text-sm text-slate-500">Ventes de tickets</div>
+      <div class="text-sm text-slate-500">Ventes de jeu</div>
       <div class="mt-1 text-xl font-semibold">{{ d.last30Days.ticketSalesHtg | htg }}</div>
-      <div class="text-sm text-slate-500">{{ d.last30Days.ticketsSold }} ticket(s)</div>
+      <div class="text-sm text-slate-500">{{ d.last30Days.ticketsSold }} ticket(s) et les parties solo</div>
     </div>
     <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div class="text-sm text-slate-500">Gains verses</div>

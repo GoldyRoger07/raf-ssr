@@ -31,14 +31,12 @@ export interface Dashboard {
   balances: {
     creditBalance: number;
     creditBalanceHtg: number;
-    winningsBalance: number;
     winningsBalanceHtg: number;
   };
   last30Days: {
     ticketSalesCredits: number;
     ticketSalesHtg: number;
     ticketsSold: number;
-    prizesPaidCredits: number;
     prizesPaidHtg: number;
     topUpsCredits: number;
     topUpsHtg: number;
@@ -64,7 +62,6 @@ export interface PlayerSummary {
   emailVerified: boolean;
   phoneVerified: boolean;
   creditBalance: number;
-  winningsBalance: number;
   winningsBalanceHtg: number;
   createdAt: string;
 }
@@ -82,7 +79,6 @@ export type WithdrawalStatus =
 export interface Withdrawal {
   id: number;
   userId: number;
-  amountCredits: number;
   amountHtg: number;
   feeHtg: number;
   netHtg: number;
@@ -120,7 +116,6 @@ export interface WalletTransaction {
 
 export interface Wallet {
   creditBalance: number;
-  winningsBalance: number;
   creditBalanceHtg: number;
   winningsBalanceHtg: number;
   htgRate: number;
@@ -140,10 +135,15 @@ export type QuizStatus =
 
 export type TopicMode = 'ADMIN' | 'VOTE';
 
+/** En groupe (tickets, classement) ou Solo (partie payee, prix pour un sans-faute). */
+export type GameMode = 'GROUP' | 'SOLO';
+
+/** Tirage complet et soumission groupee, ou une question a la fois imposee par le serveur. */
+export type PlayMode = 'BATCH' | 'SEQUENTIAL';
+
 export interface RewardView {
   rankFrom: number;
   rankTo: number;
-  amountCredits: number;
   amountHtg: number;
   label?: string;
 }
@@ -164,6 +164,7 @@ export interface Quiz {
   themeLabel?: string;
   bannerUrl?: string;
   status: QuizStatus;
+  gameMode: GameMode;
   topicMode: TopicMode;
   selectedCategoryId?: number;
   selectedCategoryName?: string;
@@ -172,9 +173,12 @@ export interface Quiz {
   minPlayers: number;
   maxTicketsTotal?: number;
   maxTicketsPerPlayer?: number;
-  gameDurationSeconds: number;
+  playMode: PlayMode;
+  questionDurationSeconds: number;
   questionsPerGame: number;
   pointsPerCorrect: number;
+  /** Solo : prix d'un sans-faute (ticketPrice* = prix d'une partie). */
+  soloPrizeHtg?: number;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
   startDelayMinutes: number;
@@ -207,27 +211,41 @@ export interface QuizInput {
   maxTicketsTotal: number | null;
   maxTicketsPerPlayer: number | null;
   startDelayMinutes: number;
-  gameDurationSeconds: number;
+  playMode: PlayMode;
+  questionDurationSeconds: number;
   questionsPerGame: number;
   pointsPerCorrect: number;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
 }
 
+/** Corps de creation / modification d'un quiz solo (SoloQuizDto). */
+export interface SoloQuizInput {
+  title: string;
+  description: string | null;
+  categoryId: number;
+  bannerMediaId: number | null;
+  entryPriceCredits: number;
+  prizeHtg: number;
+  questionsPerGame: number;
+  questionDurationSeconds: number;
+}
+
 export interface RewardTier {
+  amountHtg: number;
   rankFrom: number;
   rankTo: number;
-  amountCredits: number;
   label?: string | null;
 }
 
 export interface Economics {
-  totalRewardsCredits: number;
+  totalRewardsHtg: number;
+  ticketPriceHtg: number;
   ticketPriceCredits: number;
   minPlayers: number;
   breakEvenPlayers: number;
-  minRevenueCredits: number;
-  marginAtMinPlayers: number;
+  minRevenueHtg: number;
+  marginAtMinPlayersHtg: number;
   profitableAtMinPlayers: boolean;
   rewardedPlaces: number;
 }
@@ -236,7 +254,6 @@ export interface LeaderboardEntry {
   rank: number;
   displayName: string;
   score: number;
-  rewardCredits: number;
   rewardHtg: number;
 }
 
@@ -262,6 +279,10 @@ export interface Category {
   parentId?: number;
   imageUrl?: string;
   active: boolean;
+  /** Le sujet est propose en mode En groupe. */
+  groupEnabled: boolean;
+  /** Le sujet est propose en mode Solo. */
+  soloEnabled: boolean;
 }
 
 export interface CategoryInput {
@@ -335,8 +356,11 @@ export interface AdminGameSession {
   userId: number;
   userEmail: string;
   playerName: string;
-  ticketId: number;
+  /** Absent en Solo : la partie est payee a son lancement. */
+  ticketId?: number;
   status: GameSessionStatus;
+  gameMode: GameMode;
+  playMode: PlayMode;
   startedAt: string;
   serverDeadlineAt: string;
   submittedAt?: string;
@@ -344,6 +368,8 @@ export interface AdminGameSession {
   score?: number;
   correctCount?: number;
   answeredCount?: number;
+  /** Solo : sans-faute, prix verse. */
+  won: boolean;
   flagged: boolean;
   flagReason?: string;
   invalidationReason?: string;
@@ -397,7 +423,6 @@ export interface ReconciliationRun {
   findingCount: number;
   totalCreditBalance: number;
   totalCreditBalanceHtg: number;
-  totalWinningsBalance: number;
   totalWinningsBalanceHtg: number;
   errorMessage?: string;
   findings?: ReconciliationFinding[];
@@ -422,3 +447,12 @@ export interface AuditFilters {
 }
 
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+
+/** Parametre applicatif (valeur entiere). */
+export interface AppSetting {
+  key: string;
+  value: string;
+  description?: string;
+  minValue: number;
+  updatedAt?: string;
+}

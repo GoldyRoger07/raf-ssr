@@ -6,6 +6,7 @@ import { API_BASE_URL, Page } from './api';
 import {
   AdminGameSession,
   AdminWithdrawal,
+  AppSetting,
   AuditEntry,
   AuditFilters,
   GameReview,
@@ -34,6 +35,16 @@ export class AdminApi {
     return this.http.get<Dashboard>(`${this.base}/dashboard`);
   }
 
+  // --- Parametres (super-administrateur) ------------------------------------------
+
+  settings(): Observable<AppSetting[]> {
+    return this.http.get<AppSetting[]>(`${this.base}/settings`);
+  }
+
+  updateSetting(key: string, value: number): Observable<AppSetting> {
+    return this.http.put<AppSetting>(`${this.base}/settings/${encodeURIComponent(key)}`, { value: String(value) });
+  }
+
   searchPlayers(query: string, page = 0, size = 20): Observable<Page<PlayerSummary>> {
     const params = new HttpParams().set('query', query).set('page', page).set('size', size);
     return this.http.get<Page<PlayerSummary>>(`${this.base}/players`, { params });
@@ -60,10 +71,10 @@ export class AdminApi {
     return this.http.post(`${this.base}/wallet/topups/manual`, { userId, amountHtg, reference, note });
   }
 
-  adjust(userId: number, balanceType: BalanceType, amountCredits: number, reason: string): Observable<unknown> {
+  adjust(userId: number, balanceType: BalanceType, amount: number, reason: string): Observable<unknown> {
     return this.http.post(`${this.base}/wallet/users/${userId}/adjust`, {
       balanceType,
-      amountCredits,
+      amount,
       reason,
     });
   }

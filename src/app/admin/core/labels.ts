@@ -21,6 +21,7 @@ export const PROVIDER: Record<PaymentProvider, string> = {
 export const TRANSACTION_TYPE: Record<string, string> = {
   TOPUP: 'Recharge',
   TICKET_PURCHASE: 'Achat de ticket',
+  SOLO_ENTRY: 'Partie solo',
   PRIZE: 'Gain',
   WITHDRAWAL: 'Retrait',
   REFUND: 'Remboursement',
@@ -36,6 +37,22 @@ export const QUIZ_STATUS: Record<string, string> = {
   COMPUTING: 'Calcul',
   FINISHED: 'Termines',
   CANCELLED: 'Annules',
+};
+
+export const GAME_MODE: Record<string, string> = {
+  GROUP: 'En groupe',
+  SOLO: 'Solo',
+};
+
+export const PLAY_MODE: Record<string, { label: string; hint: string }> = {
+  SEQUENTIAL: {
+    label: 'Question par question',
+    hint: 'Le serveur envoie une question a la fois et impose le chrono : le joueur ne voit jamais une question avant son tour.',
+  },
+  BATCH: {
+    label: 'Tirage complet',
+    hint: 'Toutes les questions partent au demarrage et les reponses reviennent d\'un bloc. Plus leger, mais le chrono reste tenu par l\'appareil du joueur.',
+  },
 };
 
 /** Libelle et couleur d'un statut de retrait (repli neutre pour un statut inconnu). */
@@ -58,8 +75,16 @@ const QUIZ_STATUS_TAG: Record<string, { label: string; severity: Severity }> = {
   CANCELLED: { label: 'Annule', severity: 'danger' },
 };
 
-export function quizStatus(status: string): { label: string; severity: Severity } {
-  return QUIZ_STATUS_TAG[status] ?? { label: status, severity: 'secondary' };
+/** En Solo, RUNNING et FINISHED se lisent "ouvert" et "ferme". */
+const SOLO_STATUS_TAG: Record<string, { label: string; severity: Severity }> = {
+  RUNNING: { label: 'Ouvert', severity: 'success' },
+  FINISHED: { label: 'Ferme', severity: 'contrast' },
+};
+
+export function quizStatus(status: string, mode: string = 'GROUP'): { label: string; severity: Severity } {
+  return (mode === 'SOLO' ? SOLO_STATUS_TAG[status] : undefined)
+    ?? QUIZ_STATUS_TAG[status]
+    ?? { label: status, severity: 'secondary' };
 }
 
 const QUESTION_STATUS_TAG: Record<string, { label: string; severity: Severity }> = {

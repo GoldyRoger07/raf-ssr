@@ -1,0 +1,112 @@
+<a [routerLink]="quizId() ? ['/admin/quiz', quizId()] : '/admin/quiz'" [queryParams]="quizId() ? null : { mode: 'solo' }"
+   class="mb-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600">
+  <i class="pi pi-arrow-left"></i> {{ quizId() ? 'Retour au quiz' : 'Quiz solo' }}
+</a>
+
+<h1 class="mb-6 text-2xl font-semibold">{{ quizId() ? 'Modifier le quiz solo' : 'Nouveau quiz solo' }}</h1>
+
+@if (loadError(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (notDraft()) {
+  <p-message severity="warn" text="Ce quiz solo est ouvert : ses regles ne peuvent plus etre modifiees. Fermez-le et creez-en un nouveau." />
+} @else {
+  <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
+    <!-- General -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-4 font-semibold">General</h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <label for="title" class="text-sm font-medium">Titre</label>
+          <input pInputText id="title" formControlName="title" [class.ng-dirty]="invalid('title')" />
+          @if (invalid('title')) {
+            <small class="text-red-600">Le titre est obligatoire (160 caracteres max).</small>
+          }
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="category" class="text-sm font-medium">Sujet</label>
+          <p-select inputId="category" [options]="categories()" formControlName="categoryId" optionLabel="name" optionValue="id"
+                    placeholder="Choisir un sujet" [filter]="true" styleClass="w-full" />
+          @if (invalid('categoryId')) {
+            <small class="text-red-600">Choisissez le sujet du quiz.</small>
+          } @else {
+            <small class="text-slate-500">Seuls les sujets proposes en Solo apparaissent. Un joueur ne joue qu'une partie par sujet et par jour.</small>
+          }
+        </div>
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label for="description" class="text-sm font-medium">Description</label>
+          <textarea pTextarea id="description" formControlName="description" rows="2"></textarea>
+        </div>
+      </div>
+
+      @if (pool(); as p) {
+        <div class="mt-4 flex items-center gap-3 rounded-lg px-3 py-2 text-sm"
+             [class]="p.sufficient ? 'bg-green-50 text-green-800 dark:bg-green-500/10 dark:text-green-300' : 'bg-red-50 text-red-800 dark:bg-red-500/10 dark:text-red-300'">
+          <i [class]="p.sufficient ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'"></i>
+          <span>
+            {{ p.available }} question(s) publiee(s), {{ p.required }} requises
+            ({{ p.easy }} faciles, {{ p.medium }} moyennes, {{ p.hard }} difficiles)
+            @if (!p.sufficient) { — l'ouverture sera refusee }
+          </span>
+        </div>
+      }
+    </section>
+
+    <!-- Argent -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-4 font-semibold">Prix</h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <label for="entry" class="text-sm font-medium">Prix d'une partie (credits)</label>
+          <p-inputnumber inputId="entry" formControlName="entryPriceCredits" [min]="1" locale="fr-FR" />
+          @if (entryHtg() !== null) {
+            <small class="text-slate-500">soit {{ entryHtg() | htg }}, debite au lancement</small>
+          }
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="prize" class="text-sm font-medium">Prix d'un sans-faute (HTG)</label>
+          <p-inputnumber inputId="prize" formControlName="prizeHtg" [min]="1" locale="fr-FR" />
+          @if (prizeHtg() !== null) {
+            <small class="text-slate-500">soit {{ prizeHtg() | htg }}, verse sur les gains du joueur</small>
+          }
+        </div>
+      </div>
+      @if (breakEvenWinRate(); as rate) {
+        <div class="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          <i class="pi pi-info-circle mr-1"></i>
+          Rentable tant que moins de <strong>{{ rate.toFixed(1) }} %</strong> des parties sont des sans-faute.
+          Plus il y a de questions par partie, plus le sans-faute est rare.
+        </div>
+      }
+    </section>
+
+    <!-- Deroule -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-4 font-semibold">Deroule</h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <label for="perGame" class="text-sm font-medium">Questions par partie</label>
+          <p-inputnumber inputId="perGame" formControlName="questionsPerGame" [min]="1" />
+          <small class="text-slate-500">toutes doivent etre justes pour gagner</small>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="perQuestion" class="text-sm font-medium">Chrono par question (s)</label>
+          <p-inputnumber inputId="perQuestion" formControlName="questionDurationSeconds" [min]="3" [max]="300" />
+          <small class="text-slate-500">partie de {{ maxDurationSeconds() }} s au plus</small>
+        </div>
+      </div>
+      <p class="mt-4 text-sm text-slate-500">
+        <i class="pi pi-lock mr-1"></i>
+        Toujours joue question par question : le serveur impose le chrono et le joueur ne voit jamais une question avant son tour.
+      </p>
+    </section>
+
+    @if (error(); as message) {
+      <p-message severity="error" [text]="message" />
+    }
+
+    <div class="flex justify-end gap-2">
+      <p-button label="Annuler" severity="secondary" [text]="true" [routerLink]="quizId() ? ['/admin/quiz', quizId()] : '/admin/quiz'" />
+      <p-button type="submit" [label]="quizId() ? 'Enregistrer' : 'Creer le brouillon'" icon="pi pi-check" [loading]="saving()" />
+    </div>
+  </form>
+}

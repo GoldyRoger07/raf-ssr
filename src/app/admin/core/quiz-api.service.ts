@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
-import { Economics, Leaderboard, Quiz, QuizInput, QuizStatus, RewardTier } from './models';
+import { Economics, GameMode, Leaderboard, Quiz, QuizInput, QuizStatus, RewardTier, SoloQuizInput } from './models';
 
 /** Quiz : configuration et cycle de vie (administrateurs). */
 @Injectable()
@@ -12,8 +12,8 @@ export class QuizApi {
   private readonly apiUrl = inject(API_BASE_URL);
   private readonly base = `${this.apiUrl}/api/admin/quizzes`;
 
-  list(status: QuizStatus, page = 0, size = 20): Observable<Page<Quiz>> {
-    const params = new HttpParams().set('status', status).set('page', page).set('size', size);
+  list(status: QuizStatus, mode: GameMode, page = 0, size = 20): Observable<Page<Quiz>> {
+    const params = new HttpParams().set('status', status).set('mode', mode).set('page', page).set('size', size);
     return this.http.get<Page<Quiz>>(this.base, { params });
   }
 
@@ -27,6 +27,24 @@ export class QuizApi {
 
   update(id: number, input: QuizInput): Observable<Quiz> {
     return this.http.put<Quiz>(`${this.base}/${id}`, input);
+  }
+
+  createSolo(input: SoloQuizInput): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/solo`, input);
+  }
+
+  updateSolo(id: number, input: SoloQuizInput): Observable<Quiz> {
+    return this.http.put<Quiz>(`${this.base}/solo/${id}`, input);
+  }
+
+  /** Copie le quiz (quel que soit son etat) dans un nouveau brouillon. */
+  duplicate(id: number): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/duplicate`, {});
+  }
+
+  /** Solo : plus aucune partie ne peut etre lancee. */
+  close(id: number): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/close`, {});
   }
 
   configureTopics(id: number, categoryIds: number[]): Observable<Quiz> {

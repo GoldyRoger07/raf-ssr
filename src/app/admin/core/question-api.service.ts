@@ -86,6 +86,11 @@ export class QuestionApi {
     return this.http.put<Category>(`${this.apiUrl}/api/categories/${id}`, input);
   }
 
+  /** Interrupteurs En groupe / Solo (administrateurs). Un champ absent reste inchange. */
+  configureCategoryModes(id: number, modes: { groupEnabled?: boolean; soloEnabled?: boolean }): Observable<Category> {
+    return this.http.patch<Category>(`${this.apiUrl}/api/categories/${id}/modes`, modes);
+  }
+
   deleteCategory(id: number): Observable<unknown> {
     return this.http.delete(`${this.apiUrl}/api/categories/${id}`);
   }

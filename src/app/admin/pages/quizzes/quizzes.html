@@ -1,14 +1,27 @@
 <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
     <h1 class="text-2xl font-semibold">Quiz</h1>
-    <p class="text-sm text-slate-500">Un quiz se configure en brouillon ; une fois publie, ses regles ne bougent plus.</p>
+    <p class="text-sm text-slate-500">
+      @if (mode() === 'SOLO') {
+        Un quiz solo se joue en continu : chaque partie est payee, un sans-faute rapporte le prix.
+      } @else {
+        Un quiz se configure en brouillon ; une fois publie, ses regles ne bougent plus.
+      }
+    </p>
   </div>
-  <p-button label="Nouveau quiz" icon="pi pi-plus" routerLink="/admin/quiz/nouveau" />
+  <div class="flex flex-wrap items-center gap-3">
+    <p-selectbutton [options]="modeOptions" [ngModel]="mode()" (ngModelChange)="selectMode($event)" optionLabel="label" optionValue="value" [allowEmpty]="false" />
+    @if (mode() === 'SOLO') {
+      <p-button label="Nouveau quiz solo" icon="pi pi-plus" routerLink="/admin/quiz/solo/nouveau" />
+    } @else {
+      <p-button label="Nouveau quiz" icon="pi pi-plus" routerLink="/admin/quiz/nouveau" />
+    }
+  </div>
 </div>
 
 <p-tabs [value]="status()" (valueChange)="selectTab($event)" [scrollable]="true">
   <p-tablist>
-    @for (tab of tabs; track tab.status) {
+    @for (tab of tabs(); track tab.status) {
       <p-tab [value]="tab.status">{{ tab.label }}</p-tab>
     }
   </p-tablist>
@@ -30,54 +43,85 @@
     dataKey="id"
   >
     <ng-template #header>
-      <tr>
-        <th>Quiz</th>
-        <th>Sujet</th>
-        <th class="text-right">Ticket</th>
-        <th class="text-right">Joueurs</th>
-        <th>Echeance</th>
-        <th>Statut</th>
-      </tr>
+      @if (mode() === 'SOLO') {
+        <tr>
+          <th>Quiz</th>
+          <th>Sujet</th>
+          <th class="text-right">Partie</th>
+          <th class="text-right">Sans-faute</th>
+          <th>Deroule</th>
+          <th>Statut</th>
+        </tr>
+      } @else {
+        <tr>
+          <th>Quiz</th>
+          <th>Sujet</th>
+          <th class="text-right">Ticket</th>
+          <th class="text-right">Joueurs</th>
+          <th>Echeance</th>
+          <th>Statut</th>
+        </tr>
+      }
     </ng-template>
     <ng-template #body let-q>
-      <tr>
-        <td>
-          <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
-          @if (q.themeLabel) {
-            <div class="text-xs text-slate-500">{{ q.themeLabel }}</div>
-          }
-        </td>
-        <td>
-          @if (q.selectedCategoryName) {
-            {{ q.selectedCategoryName }}
-          } @else if (q.topicMode === 'VOTE') {
-            <span class="text-slate-500">Vote ({{ q.topics.length }} sujets)</span>
-          } @else {
-            <span class="text-slate-400">—</span>
-          }
-        </td>
-        <td class="text-right">
-          <div>{{ q.ticketPriceHtg | htg }}</div>
-          <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
-        </td>
-        <td class="text-right">
-          <span class="font-medium">{{ q.playersRegistered }}</span>
-          <span class="text-slate-500"> / {{ q.minPlayers }} min.</span>
-          <div class="text-xs text-slate-500">{{ q.ticketsSold }} ticket(s)</div>
-        </td>
-        <td class="text-sm text-slate-500">
-          @switch (q.status) {
-            @case ('SCHEDULED') { Demarrage {{ q.scheduledStartAt | haitiDate }} }
-            @case ('CLOSING') { Cloture {{ q.endsAt | haitiDate }} }
-            @case ('RUNNING') { Depuis {{ q.startedAt | haitiDate }} }
-            @case ('FINISHED') { Termine {{ q.finishedAt | haitiDate }} }
-            @default { — }
-          }
-        </td>
-        <td>
-          <p-tag [value]="quizStatus(q.status).label" [severity]="quizStatus(q.status).severity" />
-        </td>
-      </tr>
+      @if (mode() === 'SOLO') {
+        <tr>
+          <td>
+            <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
+          </td>
+          <td>{{ q.selectedCategoryName ?? '—' }}</td>
+          <td class="text-right">
+            <div>{{ q.ticketPriceHtg | htg }}</div>
+            <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+          </td>
+          <td class="text-right">
+            <div class="font-medium">{{ q.soloPrizeHtg | htg }}</div>
+          </td>
+          <td class="text-sm text-slate-500">{{ q.questionsPerGame }} questions × {{ q.questionDurationSeconds }} s</td>
+          <td>
+            <p-tag [value]="quizStatus(q.status, q.gameMode).label" [severity]="quizStatus(q.status, q.gameMode).severity" />
+          </td>
+        </tr>
+      } @else {
+        <tr>
+          <td>
+            <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
+            @if (q.themeLabel) {
+              <div class="text-xs text-slate-500">{{ q.themeLabel }}</div>
+            }
+          </td>
+          <td>
+            @if (q.selectedCategoryName) {
+              {{ q.selectedCategoryName }}
+            } @else if (q.topicMode === 'VOTE') {
+              <span class="text-slate-500">Vote ({{ q.topics.length }} sujets)</span>
+            } @else {
+              <span class="text-slate-400">—</span>
+            }
+          </td>
+          <td class="text-right">
+            <div>{{ q.ticketPriceHtg | htg }}</div>
+            <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+          </td>
+          <td class="text-right">
+            <span class="font-medium">{{ q.playersRegistered }}</span>
+            <span class="text-slate-500"> / {{ q.minPlayers }} min.</span>
+            <div class="text-xs text-slate-500">{{ q.ticketsSold }} ticket(s)</div>
+          </td>
+          <td class="text-sm text-slate-500">
+            @switch (q.status) {
+              @case ('SCHEDULED') { Demarrage {{ q.scheduledStartAt | haitiDate }} }
+              @case ('CLOSING') { Cloture {{ q.endsAt | haitiDate }} }
+              @case ('RUNNING') { Depuis {{ q.startedAt | haitiDate }} }
+              @case ('FINISHED') { Termine {{ q.finishedAt | haitiDate }} }
+              @default { — }
+            }
+          </td>
+          <td>
+            <p-tag [value]="quizStatus(q.status).label" [severity]="quizStatus(q.status).severity" />
+          </td>
+        </tr>
+      }
     </ng-template>
     <ng-template #emptymessage>
       <tr>

@@ -107,12 +107,18 @@
           <small class="text-slate-500">entre le seuil atteint et le debut du jeu</small>
         </div>
         <div class="flex flex-col gap-2">
-          <label for="duration" class="text-sm font-medium">Duree d'une partie (s)</label>
-          <p-inputnumber inputId="duration" formControlName="gameDurationSeconds" [min]="10" [max]="3600" />
-        </div>
-        <div class="flex flex-col gap-2">
           <label for="perGame" class="text-sm font-medium">Questions par partie</label>
           <p-inputnumber inputId="perGame" formControlName="questionsPerGame" [min]="1" />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="perQuestion" class="text-sm font-medium">Chrono par question (s)</label>
+          <p-inputnumber inputId="perQuestion" formControlName="questionDurationSeconds" [min]="3" [max]="300" />
+          <small class="text-slate-500">partie de {{ maxDurationSeconds() }} s au plus ; on passe a la suivante des la reponse</small>
+        </div>
+        <div class="flex flex-col gap-2 md:col-span-3">
+          <label class="text-sm font-medium">Deroulement</label>
+          <p-selectbutton [options]="playModeOptions" formControlName="playMode" optionLabel="label" optionValue="value" [allowEmpty]="false" />
+          <small class="text-slate-500">{{ playModeHint() }}</small>
         </div>
         <div class="flex flex-col gap-2">
           <label for="points" class="text-sm font-medium">Points par bonne reponse</label>
