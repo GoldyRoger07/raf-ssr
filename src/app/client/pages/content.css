@@ -1,0 +1,107 @@
+/* Mise en forme commune aux pages de contenu du site (fonctionnement, regles, FAQ...). */
+
+.container { max-width: 72rem; margin: 0 auto; padding: 0 18px; }
+.container.narrow { max-width: 52rem; }
+
+.section { padding: 80px 0; }
+.section.tinted {
+  background: linear-gradient(180deg, #fff 0%, var(--raf-p100) 100%);
+  border-block: 3px solid var(--raf-p200);
+}
+.section-head { display: grid; justify-items: center; gap: 12px; margin-bottom: 44px; text-align: center; }
+.h2 {
+  font-family: var(--raf-font-display);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  line-height: 1.12;
+  max-width: 24ch;
+}
+.sub { max-width: 40rem; font-size: 1.1rem; font-weight: 600; color: var(--raf-ink-soft); line-height: 1.6; }
+
+.grid { display: grid; gap: 22px; }
+.tile { padding: 26px 24px; }
+.tile h3 { margin: 14px 0 8px; font-weight: 900; font-size: 1.2rem; }
+.tile p { color: var(--raf-ink-soft); font-weight: 600; line-height: 1.6; }
+
+/* Frise verticale : un trait se remplit au defilement, chaque etape a sa pastille. */
+.timeline { position: relative; display: grid; gap: 30px; padding-left: 74px; }
+.timeline-track {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 29px;
+  width: 8px;
+  border-radius: 999px;
+  background: var(--raf-p200);
+  overflow: hidden;
+}
+.timeline-fill { display: block; height: 100%; background: linear-gradient(180deg, var(--raf-p300), var(--raf-primary)); }
+.event { position: relative; padding: 22px 24px; }
+.event-dot {
+  position: absolute;
+  left: -74px;
+  top: 16px;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid var(--raf-p300);
+  box-shadow: 0 5px 0 var(--raf-p400);
+}
+.event h3 { font-family: var(--raf-font-display); font-weight: 400; font-size: 1.45rem; }
+.event p { margin-top: 6px; color: var(--raf-ink-soft); font-weight: 600; line-height: 1.65; }
+.event .tag {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--raf-p100);
+  color: var(--raf-edge-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.split { display: grid; gap: 36px; align-items: center; }
+.formula {
+  padding: 26px;
+  text-align: center;
+  font-family: var(--raf-font-display);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  line-height: 1.3;
+}
+.formula small { display: block; margin-top: 10px; font-family: var(--raf-font); font-size: 1rem; font-weight: 700; color: var(--raf-ink-soft); }
+
+.checklist { display: grid; gap: 14px; font-weight: 700; line-height: 1.6; }
+.checklist li { display: flex; gap: 12px; align-items: flex-start; }
+.checklist raf-icon { margin-top: 2px; }
+
+/* Pages legales : sommaire a gauche sur grand ecran, texte a droite. */
+.doc { display: grid; gap: 36px; padding: 64px 0 24px; }
+.toc { align-self: start; padding: 22px; }
+.toc h2 { font-family: var(--raf-font-display); font-weight: 400; font-size: 1.2rem; margin-bottom: 10px; }
+.toc a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: var(--raf-ink-soft);
+}
+.toc a:hover { background: var(--raf-p100); color: var(--raf-edge-dark); }
+.doc-body { padding: 32px 26px; }
+.updated { margin-bottom: 26px; font-weight: 800; color: var(--raf-ink-soft); }
+
+@media (min-width: 768px) {
+  .grid.two { grid-template-columns: repeat(2, 1fr); }
+  .grid.three { grid-template-columns: repeat(3, 1fr); }
+  .split { grid-template-columns: 1fr 1fr; }
+  .doc-body { padding: 44px 48px; }
+}
+
+@media (min-width: 1024px) {
+  .doc { grid-template-columns: 260px 1fr; }
+  .toc { position: sticky; top: 96px; }
+}

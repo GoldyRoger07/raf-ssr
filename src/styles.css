@@ -6,6 +6,8 @@
 @layer theme, base, primeng, utilities;
 
 @import "primeicons/primeicons.css";
+@import "@fontsource/lilita-one/latin.css";
+@import "@fontsource-variable/nunito/wght.css";
 @import 'tailwindcss';
 
 
@@ -21,50 +23,208 @@
 }
 
 
-.fade-up{
-    transform: translateY(25%);
-    opacity: 0;
-    transition: all 600ms ease-in-out ;
-    
+
+/* ==========================================================================
+   Site vitrine : identite visuelle de l'app joueur (couleurs, polices, boutons
+   en relief). Le back-office n'utilise aucune de ces classes.
+   ========================================================================== */
+
+:root {
+  --raf-primary: #ff9a1a;
+  --raf-p50: #fff4e6;
+  --raf-p100: #ffe7cc;
+  --raf-p200: #ffd4a3;
+  --raf-p300: #ffc078;
+  --raf-p400: #ffad47;
+  --raf-edge: #e08816;
+  --raf-edge-dark: #b86a00;
+  --raf-ink: #4a2f12;
+  --raf-ink-soft: #8a6a45;
+  --raf-green: #5fd034;
+  --raf-green-dark: #2f8f12;
+  --raf-font-display: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --raf-font: 'Nunito Variable', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-.blur-up{
-    transform: scale(0.9);
-    opacity: 0;
-    filter: blur(3px);
-    transition: all 300ms ease-in-out ;
+.site {
+  font-family: var(--raf-font);
+  color: var(--raf-ink);
+  background: var(--raf-p50);
+  overflow-x: clip;
 }
 
-.blur-up.active{
-    transform: scale(1);
-    filter: blur(0px);
-    opacity: 1;
+.font-display {
+  font-family: var(--raf-font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
-.fade-up.active{
-    transform: translateY(0%) scale(1);
-    opacity: 1;
+/* Titre blanc cerne d'orange, comme dans le jeu. */
+.title-stroke {
+  font-family: var(--raf-font-display);
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 8px var(--raf-primary);
+  paint-order: stroke fill;
+  text-shadow: 0 5px 0 var(--raf-edge);
 }
 
-.fade-right{
-    transform: translateX(-25%);
-    opacity: 0;
-    transition: all 700ms ease-in-out ;
-    /* transition-delay: 500ms; */
+.text-gold {
+  color: #ffe066;
+  -webkit-text-stroke-color: var(--raf-edge-dark);
 }
 
-.fade-left{
-    transform: translateX(25%);
-    opacity: 0;
-    transition: all 700ms ease-in-out ;
-    /* transition-delay: 500ms; */
+/* Bouton en relief : la tranche sombre est une ombre portee, l'appui l'ecrase. */
+.btn3d {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 18px;
+  border: 3px solid #fff;
+  background: linear-gradient(180deg, #ffc078 0%, var(--raf-primary) 55%, #f08400 100%);
+  box-shadow: 0 6px 0 var(--raf-edge-dark), 0 10px 22px rgba(184, 106, 0, 0.3), inset 0 3px 0 rgba(255, 255, 255, 0.45);
+  color: #fff;
+  font-family: var(--raf-font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(150, 70, 0, 0.55);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  white-space: nowrap;
 }
 
-.fade-right.active, .fade-left.active{
-    transform: translateX(0%);
-    opacity: 1;
+.btn3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 var(--raf-edge-dark), 0 14px 26px rgba(184, 106, 0, 0.35), inset 0 3px 0 rgba(255, 255, 255, 0.45);
 }
 
-.fade-up,.blur-up,.fade-right,.fade-left{
-  transition-delay: calc((sibling-index() - 1) * 200ms);
+.btn3d:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 var(--raf-edge-dark), 0 4px 10px rgba(184, 106, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn3d:focus-visible {
+  outline: 3px solid var(--raf-ink);
+  outline-offset: 4px;
+}
+
+.btn3d.light {
+  background: linear-gradient(180deg, #ffffff 0%, var(--raf-p100) 100%);
+  border-color: var(--raf-p300);
+  box-shadow: 0 6px 0 var(--raf-p400), 0 10px 22px rgba(184, 106, 0, 0.18), inset 0 3px 0 #fff;
+  color: var(--raf-edge-dark);
+  text-shadow: none;
+}
+
+.btn3d.green {
+  background: linear-gradient(180deg, #b4f58c 0%, var(--raf-green) 55%, #3fae1c 100%);
+  box-shadow: 0 6px 0 var(--raf-green-dark), 0 10px 22px rgba(47, 143, 18, 0.3), inset 0 3px 0 rgba(255, 255, 255, 0.45);
+  text-shadow: 0 2px 0 rgba(30, 100, 10, 0.55);
+}
+
+.btn3d.sm {
+  padding: 9px 18px;
+  font-size: 0.95rem;
+  border-radius: 14px;
+}
+
+.card-raf {
+  background: #fff;
+  border: 3px solid var(--raf-p100);
+  border-radius: 26px;
+  box-shadow: 0 6px 0 var(--raf-p200), 0 16px 30px rgba(184, 106, 0, 0.1);
+}
+
+.chip-raf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--raf-p200);
+  color: var(--raf-edge-dark);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+/* Fond « rayons de soleil » des ecrans du jeu. */
+.sunburst {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 244, 230, 0.7) 35%, rgba(255, 231, 204, 0) 70%),
+    repeating-conic-gradient(from 0deg at 50% 35%, #ffe7cc 0deg 9deg, #fff4e6 9deg 18deg);
+}
+
+/* Pages de contenu (regles, conditions, confidentialite...). */
+.prose-raf {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--raf-ink);
+}
+
+.prose-raf h2 {
+  margin: 2.4rem 0 0.8rem;
+  font-family: var(--raf-font-display);
+  font-size: 1.65rem;
+  font-weight: 400;
+  color: var(--raf-edge-dark);
+  scroll-margin-top: 96px;
+}
+
+.prose-raf h2:first-child {
+  margin-top: 0;
+}
+
+.prose-raf h3 {
+  margin: 1.6rem 0 0.5rem;
+  font-weight: 900;
+  font-size: 1.15rem;
+}
+
+.prose-raf p,
+.prose-raf ul,
+.prose-raf ol {
+  margin: 0 0 1rem;
+}
+
+.prose-raf ul {
+  list-style: disc;
+  padding-left: 1.4rem;
+}
+
+.prose-raf ol {
+  list-style: decimal;
+  padding-left: 1.4rem;
+}
+
+.prose-raf li {
+  margin-bottom: 0.4rem;
+}
+
+.prose-raf li::marker {
+  color: var(--raf-primary);
+  font-weight: 900;
+}
+
+.prose-raf a {
+  color: var(--raf-edge-dark);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose-raf strong {
+  font-weight: 900;
+}
+
+.prose-raf .note {
+  margin: 1.2rem 0;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--raf-p50);
+  border: 2px solid var(--raf-p200);
 }

@@ -1,0 +1,248 @@
+<!-- Hero ------------------------------------------------------------------ -->
+<section class="hero sunburst">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <p data-hero="chip" class="chip-raf"><raf-icon name="flame" [size]="20" /> Le quiz qui paie, en Haïti</p>
+      <h1 data-hero="title" class="title-stroke">
+        <span>Réponds.</span>
+        <span>Grimpe.</span>
+        <span class="text-gold">Gagne des gourdes&nbsp;!</span>
+      </h1>
+      <p data-hero="lead" class="lead">
+        RAF transforme ta culture générale en argent. Prends ton ticket, bats le chrono, grimpe au classement :
+        les meilleurs repartent avec des gains en HTG.
+      </p>
+      <div data-hero="cta" class="cta-row">
+        <a class="btn3d green" [href]="site.playerAppUrl"><raf-icon name="play" [size]="22" /> Jouer maintenant</a>
+        <a class="btn3d light" routerLink="/comment-ca-marche">Comment ça marche&nbsp;?</a>
+      </div>
+      <ul data-hero="trust" class="trust">
+        <li><raf-icon name="check" [size]="22" /> Inscription gratuite</li>
+        <li><raf-icon name="check" [size]="22" /> Gains en HTG</li>
+        <li><raf-icon name="check" [size]="22" /> Aucun store requis</li>
+      </ul>
+    </div>
+
+    <div class="phone-wrap" aria-hidden="true">
+      <raf-icon class="float f1" name="coin" [size]="64" />
+      <raf-icon class="float f2" name="trophy" [size]="76" />
+      <raf-icon class="float f3" name="ticket" [size]="60" />
+      <raf-icon class="float f4" name="crown" [size]="58" />
+      <raf-icon class="float f5" name="cash" [size]="62" />
+
+      <div class="phone">
+        <div class="screen sunburst">
+          <div class="screen-top">
+            <span class="pill"><raf-icon name="question" [size]="20" /> 3 / 10</span>
+            <span class="pill"><raf-icon name="star" [size]="20" /> 240 pts</span>
+          </div>
+          <div class="timer"><span class="timer-fill"></span></div>
+          <div class="question">
+            <p class="q-label">Culture haïtienne</p>
+            <p class="q-text">Qui a proclamé l’indépendance d’Haïti le 1<sup>er</sup> janvier 1804&nbsp;?</p>
+          </div>
+          <div class="choices">
+            @for (c of choices; track c; let i = $index) {
+              <div class="choice" [class.picked]="i === 1">
+                <span class="letter">{{ letters[i] }}</span>{{ c }}
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bandeau de sujets ------------------------------------------------------- -->
+<div class="marquee" aria-label="Exemples de sujets">
+  <div class="marquee-track">
+    @for (pass of [0, 1]; track pass) {
+      @for (t of topics; track t) {
+        <span class="topic" [attr.aria-hidden]="pass === 1 ? 'true' : null">
+          <raf-icon name="star" [size]="20" /> {{ t }}
+        </span>
+      }
+    }
+  </div>
+</div>
+
+<!-- Deux modes de jeu ------------------------------------------------------- -->
+<section class="section">
+  <div class="container">
+    <header class="section-head">
+      <p reveal class="chip-raf">Deux façons de jouer</p>
+      <h2 reveal class="h2">Joue en groupe ou relève le défi en solo</h2>
+    </header>
+
+    <div class="modes">
+      <article reveal="left" class="mode card-raf">
+        <div class="mode-icon orange"><raf-icon name="users" [size]="56" /></div>
+        <h3>En groupe</h3>
+        <p>
+          Tous les joueurs d’un quiz s’affrontent sur le même sujet. Le classement final décide : les premières places
+          se partagent les récompenses annoncées avant même que tu achètes ton ticket.
+        </p>
+        <ul>
+          <li><raf-icon name="ticket" [size]="22" /> Un ticket = une partie</li>
+          <li><raf-icon name="vote" [size]="22" /> Vote du sujet entre détenteurs de ticket</li>
+          <li><raf-icon name="trophy" [size]="22" /> Récompenses par rang, en gourdes</li>
+        </ul>
+      </article>
+
+      <article reveal="right" class="mode card-raf">
+        <div class="mode-icon red"><raf-icon name="flame" [size]="56" /></div>
+        <h3>Solo</h3>
+        <p>
+          Pas d’adversaire, juste toi et le chrono. Paie ta partie, enchaîne les questions… et réussis le sans-faute
+          pour empocher le prix du quiz, versé aussitôt.
+        </p>
+        <ul>
+          <li><raf-icon name="clock" [size]="22" /> Disponible à toute heure</li>
+          <li><raf-icon name="crown" [size]="22" /> Sans-faute = prix gagné</li>
+          <li><raf-icon name="hourglass" [size]="22" /> Une partie par sujet et par jour</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Etapes ------------------------------------------------------------------ -->
+<section class="section tinted">
+  <div class="container">
+    <header class="section-head">
+      <p reveal class="chip-raf">En 4 étapes</p>
+      <h2 reveal class="h2">De ton téléphone à ton porte-monnaie</h2>
+    </header>
+
+    <div class="steps">
+      <span class="steps-line" aria-hidden="true"><span class="steps-line-fill"></span></span>
+      <ol class="steps-list">
+        @for (s of steps; track s.title; let i = $index) {
+          <li reveal [revealDelay]="i * 0.1" class="step">
+            <span class="step-badge"><raf-icon [name]="s.icon" [size]="44" /><b>{{ i + 1 }}</b></span>
+            <h3>{{ s.title }}</h3>
+            <p>{{ s.text }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+
+    <p reveal class="center">
+      <a class="btn3d light" routerLink="/comment-ca-marche">Voir le fonctionnement détaillé</a>
+    </p>
+  </div>
+</section>
+
+<!-- Avantages --------------------------------------------------------------- -->
+<section class="section">
+  <div class="container">
+    <header class="section-head">
+      <p reveal class="chip-raf">Pourquoi RAF</p>
+      <h2 reveal class="h2">Un vrai jeu, de vraies règles, de vrais gains</h2>
+    </header>
+
+    <div reveal revealStagger class="perks">
+      @for (p of perks; track p.title) {
+        <article class="perk card-raf">
+          <raf-icon [name]="p.icon" [size]="52" />
+          <h3>{{ p.title }}</h3>
+          <p>{{ p.text }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Argent ------------------------------------------------------------------ -->
+<section class="section tinted">
+  <div class="container money">
+    <div class="money-text">
+      <p reveal class="chip-raf">Ton argent, clair et net</p>
+      <h2 reveal class="h2 left">Deux soldes, zéro confusion</h2>
+      <p reveal class="body">
+        Tes <strong>crédits</strong> servent à jouer. Tes <strong>gains</strong>, eux, sont en gourdes et t’appartiennent :
+        tu les retires quand tu veux. La valeur du crédit, les frais et les montants minimums sont toujours affichés dans
+        l’app, à jour.
+      </p>
+      <ul reveal revealStagger class="money-list">
+        <li><raf-icon name="coin" [size]="30" /> Recharge chez un agent RAF, bientôt par MonCash et NatCash</li>
+        <li><raf-icon name="bank" [size]="30" /> Retrait vers MonCash, NatCash ou en espèces au guichet</li>
+        <li><raf-icon name="lock" [size]="30" /> Chaque retrait est confirmé par un code envoyé sur ton téléphone</li>
+      </ul>
+    </div>
+
+    <div class="wallets" aria-hidden="true">
+      <div class="wallet-card credits">
+        <raf-icon name="coin" [size]="62" />
+        <div>
+          <p class="w-label">Crédits de jeu</p>
+          <p class="w-value">Pour jouer</p>
+          <p class="w-sub">Tickets et parties solo</p>
+        </div>
+      </div>
+      <div class="wallet-card winnings">
+        <raf-icon name="cash" [size]="62" />
+        <div>
+          <p class="w-label">Gains</p>
+          <p class="w-value">En HTG</p>
+          <p class="w-sub">Retirables à tout moment</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Installation ------------------------------------------------------------ -->
+<section class="section">
+  <div class="container install">
+    <div reveal="zoom" class="install-card card-raf">
+      <raf-icon class="install-icon" name="phone" [size]="84" />
+      <div>
+        <h2 class="h2 left">Installe RAF en 10 secondes</h2>
+        <p class="body">
+          Pas besoin du Play Store : ouvre RAF dans ton navigateur et ajoute-le à ton écran d’accueil. Il s’ouvre ensuite
+          en plein écran, comme n’importe quelle application, et reçoit les notifications.
+        </p>
+        <div class="cta-row">
+          <a class="btn3d green" [href]="site.playerAppUrl">Ouvrir RAF</a>
+          <a class="btn3d light" routerLink="/installer">Guide Android et iPhone</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ --------------------------------------------------------------------- -->
+<section class="section tinted">
+  <div class="container narrow">
+    <header class="section-head">
+      <p reveal class="chip-raf">Questions fréquentes</p>
+      <h2 reveal class="h2">Tu te demandes peut-être…</h2>
+    </header>
+    <div reveal revealStagger class="faq">
+      @for (f of faq; track f.q) {
+        <details class="faq-item card-raf">
+          <summary>{{ f.q }}</summary>
+          <p>{{ f.a }}</p>
+        </details>
+      }
+    </div>
+    <p reveal class="center"><a class="btn3d light sm" routerLink="/faq">Toutes les questions</a></p>
+  </div>
+</section>
+
+<!-- Jeu responsable --------------------------------------------------------- -->
+<section class="section">
+  <div class="container narrow">
+    <div reveal class="responsible">
+      <span class="age">{{ site.minimumAge }}+</span>
+      <p>
+        RAF est réservé aux personnes majeures. Joue pour le plaisir, fixe-toi une limite et ne mise jamais l’argent dont tu
+        as besoin. <a routerLink="/jeu-responsable">Nos conseils de jeu responsable</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<play-cta />
