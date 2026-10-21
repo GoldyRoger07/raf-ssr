@@ -9,14 +9,17 @@ import {
   AppSetting,
   AuditEntry,
   AuditFilters,
+  GameProfit,
   GameReview,
   ReconciliationRun,
   RoleName,
+  SocialLinks,
   UserResponse,
   UserStatus,
   BalanceType,
   Dashboard,
   PlayerSummary,
+  ProfitPeriod,
   Wallet,
   WalletTransaction,
   Withdrawal,
@@ -35,6 +38,10 @@ export class AdminApi {
     return this.http.get<Dashboard>(`${this.base}/dashboard`);
   }
 
+  profit(period: ProfitPeriod): Observable<GameProfit> {
+    return this.http.get<GameProfit>(`${this.base}/dashboard/profit`, { params: { period } });
+  }
+
   // --- Parametres (super-administrateur) ------------------------------------------
 
   settings(): Observable<AppSetting[]> {
@@ -43,6 +50,15 @@ export class AdminApi {
 
   updateSetting(key: string, value: number): Observable<AppSetting> {
     return this.http.put<AppSetting>(`${this.base}/settings/${encodeURIComponent(key)}`, { value: String(value) });
+  }
+
+  social(): Observable<SocialLinks> {
+    return this.http.get<SocialLinks>(`${this.base}/social`);
+  }
+
+  /** `instagramAccount` : adresse du profil, nom d'utilisateur ou @nom ; vide pour retirer le compte. */
+  updateSocial(instagramEnabled: boolean, instagramAccount: string | null): Observable<SocialLinks> {
+    return this.http.put<SocialLinks>(`${this.base}/social`, { instagramEnabled, instagramAccount });
   }
 
   searchPlayers(query: string, page = 0, size = 20): Observable<Page<PlayerSummary>> {

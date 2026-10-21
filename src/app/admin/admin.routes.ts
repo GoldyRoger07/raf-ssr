@@ -133,6 +133,12 @@ export default [
             loadComponent: () => import('./pages/accounts/accounts'),
           },
           {
+            path: 'reseaux-sociaux',
+            title: 'Reseaux sociaux - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/social/social'),
+          },
+          {
             path: 'parametres',
             title: 'Parametres - RAF Admin',
             canActivate: [superAdminGuard],

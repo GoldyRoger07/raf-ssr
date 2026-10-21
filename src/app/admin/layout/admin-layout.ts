@@ -46,6 +46,7 @@ export default class AdminLayout {
     { label: "Journal d'audit", icon: 'pi pi-history', link: '/admin/journal', adminOnly: true },
     { label: 'Comptes et roles', icon: 'pi pi-shield', link: '/admin/comptes', superAdminOnly: true },
     { label: 'Parametres', icon: 'pi pi-sliders-h', link: '/admin/parametres', superAdminOnly: true },
+    { label: 'Reseaux sociaux', icon: 'pi pi-instagram', link: '/admin/reseaux-sociaux', adminOnly: true, section: 'Communication' },
   ];
 
   protected readonly nav = computed(() =>

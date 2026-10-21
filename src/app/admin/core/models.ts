@@ -23,6 +23,29 @@ export interface TokenResponse {
   user: UserResponse;
 }
 
+export type ProfitPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH' | 'LAST_MONTH' | 'ALL_TIME';
+
+/**
+ * Resultat du jeu sur une periode (GameProfitResponse), en HTG :
+ * resultHtg = salesHtg - refundsHtg - prizesHtg + withdrawalFeesHtg.
+ */
+export interface GameProfit {
+  period: ProfitPeriod;
+  /** Absent pour « depuis le lancement ». */
+  from?: string | null;
+  to: string;
+  htgRate: number;
+  salesCredits: number;
+  salesHtg: number;
+  refundsCredits: number;
+  refundsHtg: number;
+  prizesHtg: number;
+  withdrawalFeesHtg: number;
+  resultHtg: number;
+  ticketsSold: number;
+  soloGames: number;
+}
+
 export interface Dashboard {
   generatedAt: string;
   htgRate: number;
@@ -170,6 +193,8 @@ export interface Quiz {
   selectedCategoryName?: string;
   ticketPriceCredits: number;
   ticketPriceHtg: number;
+  /** Ticket ou partie offerts (prix a 0). */
+  free: boolean;
   minPlayers: number;
   maxTicketsTotal?: number;
   maxTicketsPerPlayer?: number;
@@ -206,6 +231,7 @@ export interface QuizInput {
   topicMode: TopicMode;
   categoryId: number | null;
   bannerMediaId: number | null;
+  /** 0 pour un quiz gratuit. */
   ticketPriceCredits: number;
   minPlayers: number;
   maxTicketsTotal: number | null;
@@ -225,6 +251,7 @@ export interface SoloQuizInput {
   description: string | null;
   categoryId: number;
   bannerMediaId: number | null;
+  /** 0 pour un quiz gratuit. */
   entryPriceCredits: number;
   prizeHtg: number;
   questionsPerGame: number;
@@ -492,4 +519,11 @@ export interface AppSetting {
   description?: string;
   minValue: number;
   updatedAt?: string;
+}
+
+/** Lien Instagram affiche dans l'app joueur et sur le site (SocialService.Social). */
+export interface SocialLinks {
+  instagramEnabled: boolean;
+  instagramUrl?: string | null;
+  instagramHandle?: string | null;
 }

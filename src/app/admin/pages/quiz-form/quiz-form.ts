@@ -11,6 +11,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TextareaModule } from 'primeng/textarea';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { debounceTime, forkJoin, map, of, startWith, switchMap } from 'rxjs';
 
 import { AdminApi } from '../../core/admin-api.service';
@@ -34,6 +35,7 @@ import { QuizApi } from '../../core/quiz-api.service';
     SelectModule,
     SelectButtonModule,
     TextareaModule,
+    ToggleSwitchModule,
     HtgPipe,
   ],
   templateUrl: './quiz-form.html',
@@ -73,6 +75,8 @@ export default class QuizForm implements OnInit {
     topicMode: ['ADMIN' as TopicMode, Validators.required],
     categoryId: [null as number | null],
     topicCategoryIds: [[] as number[]],
+    /** Gratuit : prix a 0 et un seul ticket par joueur (impose par le backend). */
+    free: [false],
     ticketPriceCredits: [20, [Validators.required, Validators.min(1)]],
     minPlayers: [10, [Validators.required, Validators.min(1)]],
     maxTicketsTotal: [null as number | null, Validators.min(1)],
@@ -92,6 +96,7 @@ export default class QuizForm implements OnInit {
   );
 
   protected readonly mode = computed(() => this.values().topicMode);
+  protected readonly free = computed(() => !!this.values().free);
   protected readonly priceHtg = computed(() => {
     const rate = this.htgRate();
     return rate === null ? null : (this.values().ticketPriceCredits ?? 0) * rate;
@@ -109,6 +114,18 @@ export default class QuizForm implements OnInit {
   protected readonly pools = signal<(PoolStatus & { name: string })[]>([]);
 
   ngOnInit(): void {
+    // Gratuit : le prix et le plafond par joueur sont imposes, leurs champs se figent.
+    const { free, ticketPriceCredits, maxTicketsPerPlayer } = this.form.controls;
+    free.valueChanges.pipe(startWith(free.value), takeUntilDestroyed(this.destroyRef)).subscribe((isFree) => {
+      for (const control of [ticketPriceCredits, maxTicketsPerPlayer]) {
+        if (isFree) {
+          control.disable({ emitEvent: false });
+        } else {
+          control.enable({ emitEvent: false });
+        }
+      }
+    });
+
     this.adminApi.dashboard().subscribe({ next: (d) => this.htgRate.set(d.htgRate), error: () => undefined });
     this.questionApi.categories().subscribe({
       // Seuls les sujets proposes en mode En groupe (le backend refuse les autres).
@@ -171,10 +188,10 @@ export default class QuizForm implements OnInit {
       topicMode: v.topicMode!,
       categoryId: v.topicMode === 'ADMIN' ? v.categoryId : null,
       bannerMediaId: null,
-      ticketPriceCredits: v.ticketPriceCredits!,
+      ticketPriceCredits: v.free ? 0 : v.ticketPriceCredits!,
       minPlayers: v.minPlayers!,
       maxTicketsTotal: v.maxTicketsTotal || null,
-      maxTicketsPerPlayer: v.maxTicketsPerPlayer || null,
+      maxTicketsPerPlayer: v.free ? 1 : v.maxTicketsPerPlayer || null,
       startDelayMinutes: v.startDelayMinutes!,
       playMode: v.playMode!,
       questionDurationSeconds: v.questionDurationSeconds!,
@@ -232,7 +249,8 @@ export default class QuizForm implements OnInit {
       topicMode: quiz.topicMode,
       categoryId: quiz.selectedCategoryId ?? null,
       topicCategoryIds: quiz.topics.map((t) => t.categoryId),
-      ticketPriceCredits: quiz.ticketPriceCredits,
+      free: quiz.free,
+      ticketPriceCredits: quiz.free ? 20 : quiz.ticketPriceCredits,
       minPlayers: quiz.minPlayers,
       maxTicketsTotal: quiz.maxTicketsTotal ?? null,
       maxTicketsPerPlayer: quiz.maxTicketsPerPlayer ?? null,

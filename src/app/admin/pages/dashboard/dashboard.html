@@ -76,6 +76,70 @@
     </a>
   </div>
 
+  <!-- Resultat du jeu -->
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Resultat du jeu</h2>
+    <p-selectbutton [options]="periodOptions" [ngModel]="period()" (ngModelChange)="changePeriod($event)"
+                    optionLabel="label" optionValue="value" size="small" [allowEmpty]="false" />
+  </div>
+  <section class="mb-8 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+           [class.opacity-60]="profitLoading()">
+    @if (profitError(); as message) {
+      <p-message severity="error" [text]="message" />
+    } @else if (profit(); as p) {
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <div>
+          <div class="text-sm text-slate-500">
+            @if (p.resultHtg >= 0) { Le jeu a rapporte } @else { Le jeu a coute }
+          </div>
+          <div class="mt-1 text-4xl font-semibold"
+               [class.text-green-600]="p.resultHtg > 0" [class.text-red-600]="p.resultHtg < 0">
+            {{ p.resultHtg > 0 ? '+' : '' }}{{ p.resultHtg | htg }}
+          </div>
+          <div class="mt-2 text-sm text-slate-500">
+            @if (p.from) { Du {{ p.from | haitiDate }} au {{ p.to | haitiDate }} } @else { Depuis le lancement, jusqu'au {{ p.to | haitiDate }} }
+          </div>
+          <div class="mt-1 text-sm text-slate-500">{{ p.ticketsSold }} ticket(s) et {{ p.soloGames }} partie(s) solo</div>
+        </div>
+
+        <table class="w-full text-sm">
+          <tbody>
+            <tr class="border-b border-slate-100 dark:border-slate-800">
+              <td class="py-2">Ventes de jeu <span class="text-slate-500">(tickets et parties solo)</span></td>
+              <td class="py-2 text-right font-medium">+ {{ p.salesHtg | htg }}</td>
+            </tr>
+            <tr class="border-b border-slate-100 dark:border-slate-800">
+              <td class="py-2">Remboursements <span class="text-slate-500">(quiz annules)</span></td>
+              <td class="py-2 text-right font-medium">− {{ p.refundsHtg | htg }}</td>
+            </tr>
+            <tr class="border-b border-slate-100 dark:border-slate-800">
+              <td class="py-2">Gains verses aux joueurs <span class="text-slate-500">(classements et sans-faute)</span></td>
+              <td class="py-2 text-right font-medium">− {{ p.prizesHtg | htg }}</td>
+            </tr>
+            <tr class="border-b border-slate-100 dark:border-slate-800">
+              <td class="py-2">Frais de retrait <span class="text-slate-500">(retraits verses)</span></td>
+              <td class="py-2 text-right font-medium">+ {{ p.withdrawalFeesHtg | htg }}</td>
+            </tr>
+            <tr>
+              <td class="py-2 font-semibold">Resultat</td>
+              <td class="py-2 text-right font-semibold"
+                  [class.text-green-600]="p.resultHtg > 0" [class.text-red-600]="p.resultHtg < 0">
+                {{ p.resultHtg | htg }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4 text-xs text-slate-500">
+        Ventes et remboursements sont en credits, convertis au taux actuel ({{ p.htgRate }} HTG le credit).
+        Les couts hors de l'application (commission des agents, frais MonCash et NatCash, serveurs) n'y figurent pas :
+        c'est la marge du jeu, pas le benefice de l'entreprise.
+      </p>
+    } @else {
+      <p-skeleton height="6rem" />
+    }
+  </section>
+
   <!-- Argent -->
   <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Argent en circulation</h2>
   <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">

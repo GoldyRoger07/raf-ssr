@@ -73,12 +73,6 @@ export default class QuizDetail implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
 
-  /** Taux du credit, deduit du quiz (prix en credits et en gourdes). */
-  protected readonly htgRate = computed(() => {
-    const q = this.quiz();
-    return q && q.ticketPriceCredits ? q.ticketPriceHtg / q.ticketPriceCredits : 0;
-  });
-
   // Recompenses
   protected readonly rewardsOpen = signal(false);
   protected tiers: TierRow[] = [];
@@ -109,11 +103,12 @@ export default class QuizDetail implements OnInit {
       (sum, t) => sum + Math.max(0, (t.rankTo ?? 0) - (t.rankFrom ?? 0) + 1) * (t.amountHtg ?? 0),
       0,
     );
-    const price = q.ticketPriceCredits;
+    // En gourdes, comme les recompenses. Gratuit : pas de point d'equilibre (null).
+    const price = q.ticketPriceHtg;
     const minRevenue = price * q.minPlayers;
     return {
       total,
-      breakEven: price > 0 ? Math.ceil(total / price) : 0,
+      breakEven: price > 0 ? Math.ceil(total / price) : null,
       margin: minRevenue - total,
     };
   });

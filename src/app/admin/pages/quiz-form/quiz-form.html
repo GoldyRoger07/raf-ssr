@@ -73,12 +73,26 @@
     <!-- Tickets -->
     <section class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <h2 class="mb-4 font-semibold">Tickets</h2>
+      <div class="mb-4 flex items-start gap-3">
+        <p-toggleswitch inputId="free" formControlName="free" />
+        <div>
+          <label for="free" class="text-sm font-medium">Quiz gratuit</label>
+          <p class="text-xs text-slate-500">
+            Le ticket ne coute rien et chaque joueur n'en prend qu'un. Les recompenses restent de vrais gains en HTG,
+            payes par RAF sans recette de tickets.
+          </p>
+        </div>
+      </div>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div class="flex flex-col gap-2">
           <label for="price" class="text-sm font-medium">Prix du ticket (credits)</label>
-          <p-inputnumber inputId="price" formControlName="ticketPriceCredits" [min]="1" locale="fr-FR" />
-          @if (priceHtg() !== null) {
-            <small class="text-slate-500">soit {{ priceHtg() | htg }}</small>
+          @if (free()) {
+            <div class="flex h-10 items-center font-semibold text-green-700 dark:text-green-400">Gratuit</div>
+          } @else {
+            <p-inputnumber inputId="price" formControlName="ticketPriceCredits" [min]="1" locale="fr-FR" />
+            @if (priceHtg() !== null) {
+              <small class="text-slate-500">soit {{ priceHtg() | htg }}</small>
+            }
           }
         </div>
         <div class="flex flex-col gap-2">
@@ -92,7 +106,12 @@
         </div>
         <div class="flex flex-col gap-2">
           <label for="maxPlayer" class="text-sm font-medium">Tickets max. par joueur</label>
-          <p-inputnumber inputId="maxPlayer" formControlName="maxTicketsPerPlayer" [min]="1" placeholder="illimite" />
+          @if (free()) {
+            <div class="flex h-10 items-center font-semibold">1</div>
+            <small class="text-slate-500">impose pour un quiz gratuit</small>
+          } @else {
+            <p-inputnumber inputId="maxPlayer" formControlName="maxTicketsPerPlayer" [min]="1" placeholder="illimite" />
+          }
         </div>
       </div>
     </section>

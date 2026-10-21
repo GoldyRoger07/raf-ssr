@@ -71,8 +71,12 @@
           </td>
           <td>{{ q.selectedCategoryName ?? '—' }}</td>
           <td class="text-right">
-            <div>{{ q.ticketPriceHtg | htg }}</div>
-            <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+            @if (q.free) {
+              <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-500/15 dark:text-green-300">Gratuit</span>
+            } @else {
+              <div>{{ q.ticketPriceHtg | htg }}</div>
+              <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+            }
           </td>
           <td class="text-right">
             <div class="font-medium">{{ q.soloPrizeHtg | htg }}</div>
@@ -100,8 +104,12 @@
             }
           </td>
           <td class="text-right">
-            <div>{{ q.ticketPriceHtg | htg }}</div>
-            <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+            @if (q.free) {
+              <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-500/15 dark:text-green-300">Gratuit</span>
+            } @else {
+              <div>{{ q.ticketPriceHtg | htg }}</div>
+              <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
+            }
           </td>
           <td class="text-right">
             <span class="font-medium">{{ q.playersRegistered }}</span>

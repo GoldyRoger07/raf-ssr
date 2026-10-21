@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { debounceTime, map, of, startWith, switchMap } from 'rxjs';
 
 import { AdminApi } from '../../core/admin-api.service';
@@ -33,6 +34,7 @@ import { QuizApi } from '../../core/quiz-api.service';
     MessageModule,
     SelectModule,
     TextareaModule,
+    ToggleSwitchModule,
     HtgPipe,
   ],
   templateUrl: './solo-quiz-form.html',
@@ -59,6 +61,8 @@ export default class SoloQuizForm implements OnInit {
     title: ['', [Validators.required, Validators.maxLength(160)]],
     description: ['', Validators.maxLength(1000)],
     categoryId: [null as number | null, Validators.required],
+    /** Gratuit : la partie ne coute rien (prix a 0). */
+    free: [false],
     entryPriceCredits: [10, [Validators.required, Validators.min(1)]],
     prizeHtg: [200, [Validators.required, Validators.min(1)]],
     questionsPerGame: [10, [Validators.required, Validators.min(1)]],
@@ -70,6 +74,7 @@ export default class SoloQuizForm implements OnInit {
     { requireSync: true },
   );
 
+  protected readonly free = computed(() => !!this.values().free);
   protected readonly entryHtg = computed(() => this.toHtg(this.values().entryPriceCredits));
   protected readonly prizeHtg = computed(() => this.values().prizeHtg ?? null);
   protected readonly maxDurationSeconds = computed(
@@ -87,6 +92,16 @@ export default class SoloQuizForm implements OnInit {
   });
 
   ngOnInit(): void {
+    // Gratuit : le prix est impose, son champ se fige.
+    const { free, entryPriceCredits } = this.form.controls;
+    free.valueChanges.pipe(startWith(free.value), takeUntilDestroyed(this.destroyRef)).subscribe((isFree) => {
+      if (isFree) {
+        entryPriceCredits.disable({ emitEvent: false });
+      } else {
+        entryPriceCredits.enable({ emitEvent: false });
+      }
+    });
+
     this.adminApi.dashboard().subscribe({ next: (d) => this.htgRate.set(d.htgRate), error: () => undefined });
     this.questionApi.categories().subscribe({
       // Seuls les sujets proposes en Solo (le backend refuse les autres).
@@ -129,7 +144,7 @@ export default class SoloQuizForm implements OnInit {
       description: v.description?.trim() || null,
       categoryId: v.categoryId!,
       bannerMediaId: null,
-      entryPriceCredits: v.entryPriceCredits!,
+      entryPriceCredits: v.free ? 0 : v.entryPriceCredits!,
       prizeHtg: v.prizeHtg!,
       questionsPerGame: v.questionsPerGame!,
       questionDurationSeconds: v.questionDurationSeconds!,
@@ -177,7 +192,8 @@ export default class SoloQuizForm implements OnInit {
       title: quiz.title,
       description: quiz.description ?? '',
       categoryId: quiz.selectedCategoryId ?? null,
-      entryPriceCredits: quiz.ticketPriceCredits,
+      free: quiz.free,
+      entryPriceCredits: quiz.free ? 10 : quiz.ticketPriceCredits,
       prizeHtg: quiz.soloPrizeHtg ?? null,
       questionsPerGame: quiz.questionsPerGame,
       questionDurationSeconds: quiz.questionDurationSeconds,

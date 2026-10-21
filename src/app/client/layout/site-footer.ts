@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LEGAL_NAV, MAIN_NAV, SITE } from '../site';
@@ -34,6 +34,9 @@ import { LEGAL_NAV, MAIN_NAV, SITE } from '../site';
           <h2>Nous contacter</h2>
           <a [href]="site.phoneHref">{{ site.phone }}</a>
           <a [href]="site.whatsappHref" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> WhatsApp</a>
+          @if (instagramUrl(); as url) {
+            <a [href]="url" target="_blank" rel="noopener"><i class="pi pi-instagram"></i> Instagram</a>
+          }
         </div>
       </div>
 
@@ -103,4 +106,17 @@ export class SiteFooter {
   protected readonly mainNav = MAIN_NAV;
   protected readonly legalNav = LEGAL_NAV;
   protected readonly year = new Date().getFullYear();
+
+  /** Lien Instagram, affiche seulement quand l'administrateur l'a active. */
+  protected readonly instagramUrl = signal<string | null>(null);
+
+  constructor() {
+    // Lu dans le navigateur : le site est prerendu, le reglage peut changer apres.
+    afterNextRender(() => {
+      fetch(`${SITE.apiUrl}/api/public/social`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((links: { instagramUrl?: string | null } | null) => this.instagramUrl.set(links?.instagramUrl ?? null))
+        .catch(() => undefined);
+    });
+  }
 }

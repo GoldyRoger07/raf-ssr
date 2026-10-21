@@ -16,6 +16,12 @@ export const SITE = {
    */
   playerAppUrl: 'http://localhost:8100',
 
+  /**
+   * Adresse du backend, pour les reglages publics lus dans le navigateur (lien
+   * Instagram). A remplacer par l'URL publique avant la mise en production.
+   */
+  apiUrl: 'http://localhost:8081',
+
   phone: '(509) 34 97 7530',
   phoneHref: 'tel:+50934977530',
   whatsappHref: 'https://wa.me/50934977530',
