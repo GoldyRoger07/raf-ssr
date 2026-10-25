@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
-import { Economics, GameMode, Leaderboard, Quiz, QuizInput, QuizStatus, RewardTier, SoloQuizInput } from './models';
+import { Economics, GameMode, Leaderboard, Quiz, QuizInput, QuizStatus, RewardTier, SoloEconomics, SoloQuizInput } from './models';
 
 /** Quiz : configuration et cycle de vie (administrateurs). */
 @Injectable()
@@ -57,6 +57,25 @@ export class QuizApi {
 
   economics(id: number): Observable<Economics> {
     return this.http.get<Economics>(`${this.base}/${id}/economics`);
+  }
+
+  soloEconomics(id: number): Observable<SoloEconomics> {
+    return this.http.get<SoloEconomics>(`${this.base}/${id}/solo-economics`);
+  }
+
+  /** Simulation pendant la saisie : rien n'est enregistre. */
+  previewSoloEconomics(
+    categoryId: number,
+    entryPriceCredits: number,
+    prizeHtg: number,
+    questionsPerGame: number,
+  ): Observable<SoloEconomics> {
+    const params = new HttpParams()
+      .set('categoryId', categoryId)
+      .set('entryPriceCredits', entryPriceCredits)
+      .set('prizeHtg', prizeHtg)
+      .set('questionsPerGame', questionsPerGame);
+    return this.http.get<SoloEconomics>(`${this.base}/solo/economics`, { params });
   }
 
   publish(id: number, voteDurationMinutes: number | null): Observable<Quiz> {

@@ -15,10 +15,11 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { Observable } from 'rxjs';
 
+import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { PLAY_MODE, quizStatus } from '../../core/labels';
-import { Economics, Leaderboard, Quiz, RewardTier } from '../../core/models';
+import { Economics, Leaderboard, Quiz, RewardTier, SoloEconomics } from '../../core/models';
 import { QuizApi } from '../../core/quiz-api.service';
 
 interface TierRow {
@@ -53,6 +54,7 @@ interface TierRow {
     CreditsPipe,
     HtgPipe,
     HaitiDatePipe,
+    SoloEconomicsPanel,
   ],
   templateUrl: './quiz-detail.html',
 })
@@ -69,6 +71,7 @@ export default class QuizDetail implements OnInit {
 
   protected readonly quiz = signal<Quiz | null>(null);
   protected readonly economics = signal<Economics | null>(null);
+  protected readonly soloEconomics = signal<SoloEconomics | null>(null);
   protected readonly leaderboard = signal<Leaderboard | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
@@ -123,9 +126,13 @@ export default class QuizDetail implements OnInit {
       next: (quiz) => {
         this.quiz.set(quiz);
         this.economics.set(null);
+        this.soloEconomics.set(null);
         this.leaderboard.set(null);
         if (quiz.gameMode === 'GROUP' && quiz.rewards.length) {
           this.api.economics(id).subscribe((e) => this.economics.set(e));
+        }
+        if (quiz.gameMode === 'SOLO') {
+          this.api.soloEconomics(id).subscribe({ next: (e) => this.soloEconomics.set(e), error: () => undefined });
         }
         if (quiz.gameMode === 'GROUP' && quiz.status === 'FINISHED') {
           this.api.leaderboard(id).subscribe((board) => this.leaderboard.set(board));

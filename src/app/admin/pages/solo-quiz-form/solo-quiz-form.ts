@@ -12,10 +12,13 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { debounceTime, map, of, startWith, switchMap } from 'rxjs';
 
+import { MediaPicker } from '../../components/media-picker/media-picker';
+import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
+import { AuthService } from '../../core/auth.service';
 import { HtgPipe } from '../../core/format';
-import { Category, PoolStatus, Quiz, SoloQuizInput } from '../../core/models';
+import { Category, PoolStatus, Quiz, SoloEconomics, SoloQuizInput } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 import { QuizApi } from '../../core/quiz-api.service';
 
@@ -36,6 +39,8 @@ import { QuizApi } from '../../core/quiz-api.service';
     TextareaModule,
     ToggleSwitchModule,
     HtgPipe,
+    SoloEconomicsPanel,
+    MediaPicker,
   ],
   templateUrl: './solo-quiz-form.html',
 })
@@ -47,6 +52,7 @@ export default class SoloQuizForm implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly auth = inject(AuthService);
 
   protected readonly quizId = signal<number | null>(null);
   protected readonly loadError = signal<string | null>(null);
@@ -56,11 +62,16 @@ export default class SoloQuizForm implements OnInit {
   protected readonly categories = signal<Category[]>([]);
   protected readonly htgRate = signal<number | null>(null);
   protected readonly pool = signal<PoolStatus | null>(null);
+  /** Questions par partie pour lesquelles le vivier a ete calcule (requis = ce nombre x game.pool_ratio_min). */
+  protected readonly poolPerGame = signal<number | null>(null);
+  /** Simulation du bilan sur les questions publiees du sujet, recalculee a la saisie. */
+  protected readonly economics = signal<SoloEconomics | null>(null);
 
   protected readonly form = inject(FormBuilder).group({
     title: ['', [Validators.required, Validators.maxLength(160)]],
     description: ['', Validators.maxLength(1000)],
     categoryId: [null as number | null, Validators.required],
+    bannerMediaId: [null as number | null],
     /** Gratuit : la partie ne coute rien (prix a 0). */
     free: [false],
     entryPriceCredits: [10, [Validators.required, Validators.min(1)]],
@@ -116,12 +127,39 @@ export default class SoloQuizForm implements OnInit {
         map(() => this.form.getRawValue()),
         switchMap((v) =>
           v.categoryId && (v.questionsPerGame ?? 0) >= 1
-            ? this.questionApi.poolStatus(v.categoryId, v.questionsPerGame!)
+            ? this.questionApi
+                .poolStatus(v.categoryId, v.questionsPerGame!)
+                .pipe(map((pool) => ({ pool, perGame: v.questionsPerGame! })))
             : of(null),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({ next: (pool) => this.pool.set(pool), error: () => this.pool.set(null) });
+      .subscribe({
+        next: (result) => {
+          this.pool.set(result?.pool ?? null);
+          this.poolPerGame.set(result?.perGame ?? null);
+        },
+        error: () => this.pool.set(null),
+      });
+
+    this.form.valueChanges
+      .pipe(
+        startWith(null),
+        debounceTime(400),
+        map(() => this.form.getRawValue()),
+        switchMap((v) =>
+          v.categoryId && (v.questionsPerGame ?? 0) >= 1 && (v.prizeHtg ?? 0) >= 1
+            ? this.quizApi.previewSoloEconomics(
+                v.categoryId,
+                v.free ? 0 : (v.entryPriceCredits ?? 0),
+                v.prizeHtg!,
+                v.questionsPerGame!,
+              )
+            : of(null),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({ next: (economics) => this.economics.set(economics), error: () => this.economics.set(null) });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -143,7 +181,7 @@ export default class SoloQuizForm implements OnInit {
       title: v.title!.trim(),
       description: v.description?.trim() || null,
       categoryId: v.categoryId!,
-      bannerMediaId: null,
+      bannerMediaId: v.bannerMediaId ?? null,
       entryPriceCredits: v.free ? 0 : v.entryPriceCredits!,
       prizeHtg: v.prizeHtg!,
       questionsPerGame: v.questionsPerGame!,
@@ -192,6 +230,7 @@ export default class SoloQuizForm implements OnInit {
       title: quiz.title,
       description: quiz.description ?? '',
       categoryId: quiz.selectedCategoryId ?? null,
+      bannerMediaId: quiz.bannerMediaId ?? null,
       free: quiz.free,
       entryPriceCredits: quiz.free ? 10 : quiz.ticketPriceCredits,
       prizeHtg: quiz.soloPrizeHtg ?? null,

@@ -186,6 +186,7 @@ export interface Quiz {
   description?: string;
   themeLabel?: string;
   bannerUrl?: string;
+  bannerMediaId?: number;
   status: QuizStatus;
   gameMode: GameMode;
   topicMode: TopicMode;
@@ -277,6 +278,29 @@ export interface Economics {
   rewardedPlaces: number;
 }
 
+/**
+ * Bilan d'un quiz solo. Les taux sont des fractions (0.05 = 5 %). Les champs
+ * observes restent null tant que le quiz est en brouillon.
+ */
+export interface SoloEconomics {
+  entryPriceCredits: number;
+  entryPriceHtg: number;
+  prizeHtg: number;
+  questionsPerGame: number;
+  breakEvenWinRate: number;
+  poolQuestions: number;
+  questionsWithStats: number;
+  estimatedAccuracy: number;
+  estimatedWinRate: number;
+  expectedMarginPerGameHtg: number;
+  breakEvenPrizeHtg: number;
+  profitable: boolean;
+  gamesPlayed: number | null;
+  gamesWon: number | null;
+  observedWinRate: number | null;
+  observedMarginHtg: number | null;
+}
+
 export interface LeaderboardEntry {
   rank: number;
   displayName: string;
@@ -307,6 +331,7 @@ export interface Category {
   description?: string;
   parentId?: number;
   imageUrl?: string;
+  mediaId?: number;
   active: boolean;
   /** Le sujet est propose en mode En groupe. */
   groupEnabled: boolean;
@@ -318,7 +343,7 @@ export interface CategoryInput {
   name: string;
   description: string | null;
   parentId: number | null;
-  mediaId: null;
+  mediaId: number | null;
   active: boolean;
 }
 
@@ -328,6 +353,7 @@ export interface Choice {
   correct: boolean;
   position: number;
   imageUrl?: string;
+  mediaId?: number;
 }
 
 export interface Question {
@@ -340,6 +366,7 @@ export interface Question {
   status: QuestionStatus;
   explanation?: string;
   imageUrl?: string;
+  mediaId?: number;
   timesServed: number;
   timesCorrect: number;
   successRate?: number;
@@ -388,8 +415,8 @@ export interface QuestionInput {
   type: QuestionType;
   difficulty: Difficulty;
   explanation: string | null;
-  mediaId: null;
-  choices: { text: string; correct: boolean; mediaId: null }[];
+  mediaId: number | null;
+  choices: { text: string; correct: boolean; mediaId: number | null }[];
 }
 
 export interface PoolStatus {
@@ -526,4 +553,19 @@ export interface SocialLinks {
   instagramEnabled: boolean;
   instagramUrl?: string | null;
   instagramHandle?: string | null;
+}
+
+/** Image stockee sur le serveur (voir /api/media). */
+export interface MediaFile {
+  id: number;
+  url: string;
+  thumbnailUrl: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  width: number | null;
+  height: number | null;
+  folder: string | null;
+  /** Sujets, questions, choix, bannieres, sujets de vote et avatars qui l'affichent. */
+  usages: number;
+  createdAt: string;
 }

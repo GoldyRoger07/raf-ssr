@@ -12,6 +12,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { of, switchMap } from 'rxjs';
 
+import { MediaPicker } from '../../components/media-picker/media-picker';
 import { errorMessage } from '../../core/api';
 import { questionStatus } from '../../core/labels';
 import { Category, Difficulty, Question, QuestionInput, QuestionStatus, QuestionType } from '../../core/models';
@@ -33,6 +34,7 @@ const TRUE_FALSE = ['Vrai', 'Faux'];
     SelectButtonModule,
     TagModule,
     TextareaModule,
+    MediaPicker,
   ],
   templateUrl: './question-form.html',
 })
@@ -65,6 +67,13 @@ export default class QuestionForm implements OnInit {
   protected difficulty: Difficulty = 'MEDIUM';
   protected explanation = '';
   protected choices: string[] = ['', '', '', ''];
+  /**
+   * Image de chaque proposition, alignee sur {@link choices}. L'ecran ne permet
+   * pas encore d'en choisir : on renvoie celles qui existent pour ne pas les
+   * effacer en enregistrant.
+   */
+  private choiceMediaIds: (number | null)[] = [null, null, null, null];
+  protected mediaId: number | null = null;
   protected correctIndex = 0;
 
   ngOnInit(): void {
@@ -85,17 +94,21 @@ export default class QuestionForm implements OnInit {
     } else if (this.choices.length < 4) {
       this.choices = [...this.choices.filter((c) => !TRUE_FALSE.includes(c)), '', '', '', ''].slice(0, 4);
     }
+    // Les propositions ont change de nature : leurs images ne leur correspondent plus.
+    this.choiceMediaIds = this.choices.map(() => null);
   }
 
   protected addChoice(): void {
     if (this.choices.length < 6) {
       this.choices.push('');
+      this.choiceMediaIds.push(null);
     }
   }
 
   protected removeChoice(index: number): void {
     if (this.choices.length > 2) {
       this.choices.splice(index, 1);
+      this.choiceMediaIds.splice(index, 1);
       if (this.correctIndex >= this.choices.length) {
         this.correctIndex = 0;
       } else if (index < this.correctIndex) {
@@ -122,8 +135,12 @@ export default class QuestionForm implements OnInit {
       type: this.type,
       difficulty: this.difficulty,
       explanation: this.explanation.trim() || null,
-      mediaId: null,
-      choices: this.choices.map((text, i) => ({ text: text.trim(), correct: i === this.correctIndex, mediaId: null })),
+      mediaId: this.mediaId,
+      choices: this.choices.map((text, i) => ({
+        text: text.trim(),
+        correct: i === this.correctIndex,
+        mediaId: this.choiceMediaIds[i] ?? null,
+      })),
     };
 
     this.saving.set(true);
@@ -192,6 +209,8 @@ export default class QuestionForm implements OnInit {
     this.explanation = question.explanation ?? '';
     const sorted = [...question.choices].sort((a, b) => a.position - b.position);
     this.choices = sorted.map((c) => c.text);
+    this.choiceMediaIds = sorted.map((c) => c.mediaId ?? null);
+    this.mediaId = question.mediaId ?? null;
     this.correctIndex = Math.max(0, sorted.findIndex((c) => c.correct));
   }
 }

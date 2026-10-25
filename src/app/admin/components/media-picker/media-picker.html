@@ -1,0 +1,62 @@
+<div class="flex flex-wrap items-start gap-4">
+  <div class="checkerboard flex w-48 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+       [style.aspect-ratio]="aspect()">
+    @if (selected(); as m) {
+      <img [src]="m.thumbnailUrl ?? m.url" alt="Image choisie" class="max-h-full max-w-full object-contain" />
+    } @else {
+      <i class="pi pi-image text-3xl text-slate-400"></i>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <div class="flex flex-wrap gap-2">
+      <p-button [label]="selected() ? 'Changer' : 'Choisir une image'" icon="pi pi-images" size="small"
+                severity="secondary" [outlined]="true" [disabled]="disabled()" (onClick)="openLibrary()" />
+      @if (selected()) {
+        <p-button label="Retirer" icon="pi pi-times" size="small" severity="secondary" [text]="true"
+                  [disabled]="disabled()" (onClick)="clear()" />
+      }
+    </div>
+    @if (missing()) {
+      <small class="text-amber-700 dark:text-amber-400">L'image precedente n'existe plus : choisissez-en une autre.</small>
+    } @else if (selected(); as m) {
+      <small class="text-slate-500">{{ m.width }} × {{ m.height }} px · dossier {{ m.folder ?? '—' }}</small>
+    }
+    @if (hint(); as text) {
+      <small class="max-w-xs text-slate-500">{{ text }}</small>
+    }
+  </div>
+</div>
+
+<p-dialog header="Choisir une image" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true"
+          [style]="{ width: '52rem' }" [breakpoints]="{ '640px': '95vw' }" [draggable]="false" appendTo="body">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <p-select [options]="folderOptions()" [(ngModel)]="filter" (onChange)="onFilter()" optionLabel="label" optionValue="value"
+              styleClass="w-56" ariaLabel="Filtrer par dossier" />
+    <div class="flex items-center gap-2">
+      <small class="text-slate-500">Nouvelle image dans « {{ folder() }} »</small>
+      <p-button label="Envoyer" icon="pi pi-upload" size="small" [loading]="uploading()" (onClick)="picker.click()" />
+      <input #picker type="file" class="hidden" [accept]="accept" (change)="onPick($event)" />
+    </div>
+  </div>
+
+  @if (loading() && !items().length) {
+    <div class="py-12 text-center text-slate-500"><i class="pi pi-spin pi-spinner mr-2"></i>Chargement…</div>
+  } @else if (!items().length) {
+    <div class="py-12 text-center text-slate-500">Aucune image ici : envoyez-en une.</div>
+  } @else {
+    <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6" [class.opacity-60]="loading()">
+      @for (m of items(); track m.id) {
+        <button type="button" (click)="choose(m)"
+                class="checkerboard flex aspect-square items-center justify-center overflow-hidden rounded-lg border-2 transition hover:border-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                [class]="selected()?.id === m.id ? 'border-orange-500' : 'border-transparent'"
+                [attr.aria-label]="'Choisir l\'image ' + m.id" [attr.aria-pressed]="selected()?.id === m.id">
+          <img [src]="m.thumbnailUrl ?? m.url" [alt]="'Image ' + m.id" loading="lazy" class="max-h-full max-w-full object-contain" />
+        </button>
+      }
+    </div>
+    @if (total() > pageSize) {
+      <p-paginator class="mt-3 block" [first]="first()" [rows]="pageSize" [totalRecords]="total()" (onPageChange)="onPage($event)" />
+    }
+  }
+</p-dialog>

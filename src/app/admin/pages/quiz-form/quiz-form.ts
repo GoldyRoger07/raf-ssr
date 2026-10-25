@@ -14,8 +14,10 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { debounceTime, forkJoin, map, of, startWith, switchMap } from 'rxjs';
 
+import { MediaPicker } from '../../components/media-picker/media-picker';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
+import { AuthService } from '../../core/auth.service';
 import { HtgPipe } from '../../core/format';
 import { PLAY_MODE } from '../../core/labels';
 import { Category, PlayMode, PoolStatus, Quiz, QuizInput, TopicMode } from '../../core/models';
@@ -37,6 +39,7 @@ import { QuizApi } from '../../core/quiz-api.service';
     TextareaModule,
     ToggleSwitchModule,
     HtgPipe,
+    MediaPicker,
   ],
   templateUrl: './quiz-form.html',
 })
@@ -48,6 +51,7 @@ export default class QuizForm implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly messages = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly auth = inject(AuthService);
 
   protected readonly quizId = signal<number | null>(null);
   protected readonly loadError = signal<string | null>(null);
@@ -72,6 +76,7 @@ export default class QuizForm implements OnInit {
     title: ['', [Validators.required, Validators.maxLength(160)]],
     description: ['', Validators.maxLength(1000)],
     themeLabel: ['', Validators.maxLength(160)],
+    bannerMediaId: [null as number | null],
     topicMode: ['ADMIN' as TopicMode, Validators.required],
     categoryId: [null as number | null],
     topicCategoryIds: [[] as number[]],
@@ -112,6 +117,8 @@ export default class QuizForm implements OnInit {
 
   /** Etat du vivier de chaque categorie concernee, pour le nombre de questions par partie choisi. */
   protected readonly pools = signal<(PoolStatus & { name: string })[]>([]);
+  /** Multiplicateur applique par le backend (parametre game.pool_ratio_min), deduit du vivier requis. */
+  protected readonly poolRatio = signal<number | null>(null);
 
   ngOnInit(): void {
     // Gratuit : le prix et le plafond par joueur sont imposes, leurs champs se figent.
@@ -144,7 +151,12 @@ export default class QuizForm implements OnInit {
           if (!ids.length || perGame < 1) {
             return of([]);
           }
-          return forkJoin(ids.map((id) => this.questionApi.poolStatus(id, perGame)));
+          return forkJoin(ids.map((id) => this.questionApi.poolStatus(id, perGame))).pipe(
+            map((pools) => {
+              this.poolRatio.set(pools.length ? pools[0].required / perGame : null);
+              return pools;
+            }),
+          );
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -187,7 +199,7 @@ export default class QuizForm implements OnInit {
       themeLabel: v.themeLabel?.trim() || null,
       topicMode: v.topicMode!,
       categoryId: v.topicMode === 'ADMIN' ? v.categoryId : null,
-      bannerMediaId: null,
+      bannerMediaId: v.bannerMediaId ?? null,
       ticketPriceCredits: v.free ? 0 : v.ticketPriceCredits!,
       minPlayers: v.minPlayers!,
       maxTicketsTotal: v.maxTicketsTotal || null,
@@ -246,6 +258,7 @@ export default class QuizForm implements OnInit {
       title: quiz.title,
       description: quiz.description ?? '',
       themeLabel: quiz.themeLabel ?? '',
+      bannerMediaId: quiz.bannerMediaId ?? null,
       topicMode: quiz.topicMode,
       categoryId: quiz.selectedCategoryId ?? null,
       topicCategoryIds: quiz.topics.map((t) => t.categoryId),

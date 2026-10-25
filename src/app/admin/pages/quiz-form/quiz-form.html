@@ -30,6 +30,11 @@
           <label for="description" class="text-sm font-medium">Description</label>
           <textarea pTextarea id="description" formControlName="description" rows="2"></textarea>
         </div>
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <span class="text-sm font-medium">Banniere</span>
+          <media-picker formControlName="bannerMediaId" folder="quiz"
+                        hint="Affichee en tete du quiz. Format paysage, 1600 × 900 px ideal." />
+        </div>
       </div>
     </section>
 
@@ -65,6 +70,16 @@
                 @if (!p.sufficient) { — la publication sera refusee }
               </span>
             </div>
+          }
+          @if (poolRatio(); as ratio) {
+            <p class="text-xs text-slate-500">
+              Requis = {{ form.value.questionsPerGame }} questions par partie × {{ ratio }} (taille minimale du vivier).
+              @if (auth.isSuperAdmin()) {
+                <a routerLink="/admin/parametres" class="text-orange-600 hover:underline">Modifier dans Parametres → Jeu</a>
+              } @else {
+                Un super-administrateur peut modifier ce multiplicateur dans Parametres → Jeu.
+              }
+            </p>
           }
         </div>
       }

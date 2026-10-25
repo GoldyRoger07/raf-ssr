@@ -106,7 +106,10 @@
         <li>Le joueur sait aussitot s'il a gagne. A la fermeture, son corrige montre juste ou fausse par question, jamais les questions ni les reponses.</li>
         <li>Desactiver le sujet en Solo bloque aussitot les nouvelles parties.</li>
       </ul>
-      @if (q.free) {
+      @if (soloEconomics(); as e) {
+        <h3 class="mb-2 mt-5 text-sm font-semibold">Rentabilite</h3>
+        <solo-economics [economics]="e" />
+      } @else if (q.free) {
         <div class="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
           <i class="pi pi-gift mr-1"></i>
           Quiz gratuit : chaque sans-faute coute <strong>{{ q.soloPrizeHtg | htg }}</strong> a RAF, sans recette en face.

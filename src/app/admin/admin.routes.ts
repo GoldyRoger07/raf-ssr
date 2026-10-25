@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { AdminApi } from './core/admin-api.service';
+import { MediaApi } from './core/media-api.service';
 import { QuestionApi } from './core/question-api.service';
 import { QuizApi } from './core/quiz-api.service';
 import { authInterceptor } from './core/auth.interceptor';
@@ -25,6 +26,7 @@ export default [
       AdminApi,
       QuizApi,
       QuestionApi,
+      MediaApi,
       MessageService,
       ConfirmationService,
     ],
@@ -169,6 +171,11 @@ export default [
             path: 'categories',
             title: 'Categories - RAF Admin',
             loadComponent: () => import('./pages/categories/categories'),
+          },
+          {
+            path: 'medias',
+            title: 'Medias - RAF Admin',
+            loadComponent: () => import('./pages/media/media'),
           },
           {
             path: 'import',

@@ -13,6 +13,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
+import { MediaPicker } from '../../components/media-picker/media-picker';
 import { errorMessage } from '../../core/api';
 import { AuthService } from '../../core/auth.service';
 import { Category, CategoryInput, GameMode } from '../../core/models';
@@ -33,6 +34,7 @@ import { QuestionApi } from '../../core/question-api.service';
     TagModule,
     TextareaModule,
     ToggleSwitchModule,
+    MediaPicker,
   ],
   templateUrl: './categories.html',
 })
@@ -56,6 +58,7 @@ export default class Categories {
   protected name = '';
   protected description = '';
   protected parentId: number | null = null;
+  protected mediaId: number | null = null;
   protected active = true;
 
   /** Une categorie ne peut pas etre sa propre parente. */
@@ -76,6 +79,7 @@ export default class Categories {
     this.name = '';
     this.description = '';
     this.parentId = null;
+    this.mediaId = null;
     this.active = true;
     this.editOpen.set(true);
   }
@@ -85,6 +89,7 @@ export default class Categories {
     this.name = category.name;
     this.description = category.description ?? '';
     this.parentId = category.parentId ?? null;
+    this.mediaId = category.mediaId ?? null;
     this.active = category.active;
     this.editOpen.set(true);
   }
@@ -97,7 +102,7 @@ export default class Categories {
       name: this.name.trim(),
       description: this.description.trim() || null,
       parentId: this.parentId,
-      mediaId: null,
+      mediaId: this.mediaId,
       active: this.active,
     };
     const current = this.editing();

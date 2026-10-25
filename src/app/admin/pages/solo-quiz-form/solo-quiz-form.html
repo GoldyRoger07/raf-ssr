@@ -36,6 +36,11 @@
           <label for="description" class="text-sm font-medium">Description</label>
           <textarea pTextarea id="description" formControlName="description" rows="2"></textarea>
         </div>
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <span class="text-sm font-medium">Banniere</span>
+          <media-picker formControlName="bannerMediaId" folder="quiz"
+                        hint="Affichee en tete du quiz. Format paysage, 1600 × 900 px ideal." />
+        </div>
       </div>
 
       @if (pool(); as p) {
@@ -48,6 +53,16 @@
             @if (!p.sufficient) { — l'ouverture sera refusee }
           </span>
         </div>
+        @if (poolPerGame(); as perGame) {
+          <p class="mt-2 text-xs text-slate-500">
+            Requis = {{ perGame }} questions par partie × {{ p.required / perGame }} (taille minimale du vivier).
+            @if (auth.isSuperAdmin()) {
+              <a routerLink="/admin/parametres" class="text-orange-600 hover:underline">Modifier dans Parametres → Jeu</a>
+            } @else {
+              Un super-administrateur peut modifier ce multiplicateur dans Parametres → Jeu.
+            }
+          </p>
+        }
       }
     </section>
 
@@ -84,7 +99,9 @@
           }
         </div>
       </div>
-      @if (free()) {
+      @if (economics(); as e) {
+        <solo-economics class="mt-4 block" [economics]="e" />
+      } @else if (free()) {
         <div class="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
           <i class="pi pi-gift mr-1"></i>
           Sans recette en face : chaque sans-faute coute {{ prizeHtg() | htg }} a RAF.

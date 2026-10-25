@@ -1,0 +1,143 @@
+<p-confirmdialog />
+
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Medias</h1>
+    <p class="text-sm text-slate-500">
+      Images du projet : sujets, questions, bannieres de quiz. Le serveur les verifie, les reduit a 1600 px et retire
+      leurs metadonnees (position GPS comprise).
+    </p>
+  </div>
+  <p-select [options]="folderOptions()" [(ngModel)]="filter" (onChange)="onFilter()" optionLabel="label" optionValue="value"
+            placeholder="Tous les dossiers" styleClass="w-56" ariaLabel="Filtrer par dossier" />
+</div>
+
+<!-- Envoi -->
+<section
+  class="mb-6 rounded-xl border-2 border-dashed p-6 text-center transition-colors"
+  [class]="dragging()
+    ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10'
+    : 'border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900'"
+  (dragover)="onDragOver($event)"
+  (dragleave)="dragging.set(false)"
+  (drop)="onDrop($event)"
+>
+  @if (progress(); as p) {
+    <i class="pi pi-spin pi-spinner mb-2 text-2xl text-orange-600"></i>
+    <p class="font-medium">Envoi {{ p.done + 1 > p.total ? p.total : p.done + 1 }} / {{ p.total }}…</p>
+    <p class="text-xs text-slate-500">Chaque image est traitee par le serveur avant la suivante.</p>
+  } @else {
+    <i class="pi pi-cloud-upload mb-2 text-3xl text-slate-400"></i>
+    <p class="font-medium">Deposez vos images ici</p>
+    <p class="mb-4 text-xs text-slate-500">JPEG, PNG, WebP ou GIF, 5 Mo au plus par image. Le SVG n'est pas accepte.</p>
+    <div class="flex flex-wrap items-center justify-center gap-3">
+      <label for="upload-folder" class="text-sm text-slate-600 dark:text-slate-300">Dossier</label>
+      <input pInputText id="upload-folder" [(ngModel)]="uploadFolder" list="media-folders" maxlength="40" class="w-40" />
+      <datalist id="media-folders">
+        @for (folder of folders(); track folder) {
+          <option [value]="folder"></option>
+        }
+      </datalist>
+      <p-button label="Choisir des images" icon="pi pi-images" (onClick)="picker.click()" />
+      <input #picker type="file" class="hidden" multiple [accept]="accept" (change)="onPick($event)" />
+    </div>
+  }
+</section>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4" [text]="message" />
+}
+
+<!-- Bibliotheque -->
+@if (loading() && !items().length) {
+  <div class="py-16 text-center text-slate-500"><i class="pi pi-spin pi-spinner mr-2"></i>Chargement…</div>
+} @else if (!items().length) {
+  <div class="rounded-xl border border-slate-200 bg-white py-16 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+    {{ filter ? 'Aucune image dans ce dossier.' : 'Aucune image pour l\'instant : deposez-en une ci-dessus.' }}
+  </div>
+} @else {
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" [class.opacity-60]="loading()">
+    @for (m of items(); track m.id) {
+      <button
+        type="button"
+        class="group overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition hover:border-orange-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:border-slate-800 dark:bg-slate-900"
+        (click)="open(m)"
+      >
+        <div class="checkerboard flex aspect-square items-center justify-center overflow-hidden">
+          <img [src]="m.thumbnailUrl ?? m.url" [alt]="'Image ' + m.id" loading="lazy" class="max-h-full max-w-full object-contain" />
+        </div>
+        <div class="space-y-1 p-2 text-xs">
+          <div class="flex items-center justify-between gap-1">
+            <span class="truncate text-slate-500">{{ m.folder ?? '—' }}</span>
+            @if (m.usages) {
+              <span class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-800 dark:bg-green-500/15 dark:text-green-300">
+                {{ m.usages }}×
+              </span>
+            } @else {
+              <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500 dark:bg-slate-800">inutilisee</span>
+            }
+          </div>
+          <div class="text-slate-500">{{ m.width }}×{{ m.height }} · {{ size(m.sizeBytes) }}</div>
+        </div>
+      </button>
+    }
+  </div>
+
+  @if (total() > pageSize) {
+    <p-paginator class="mt-4 block" [first]="first()" [rows]="pageSize" [totalRecords]="total()" (onPageChange)="onPage($event)" />
+  }
+  <p class="mt-2 text-right text-xs text-slate-500">{{ total() }} image(s)</p>
+}
+
+<!-- Detail -->
+<p-dialog header="Image" [(visible)]="detailOpen" [modal]="true" [style]="{ width: '44rem' }" [breakpoints]="{ '640px': '95vw' }" [draggable]="false">
+  @if (selected(); as m) {
+    <div class="checkerboard mb-4 flex max-h-96 items-center justify-center overflow-hidden rounded-lg">
+      <img [src]="m.url" [alt]="'Image ' + m.id" class="max-h-96 max-w-full object-contain" />
+    </div>
+
+    <dl class="mb-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+      <div><dt class="text-slate-500">Dimensions</dt><dd class="font-medium">{{ m.width }} × {{ m.height }} px</dd></div>
+      <div><dt class="text-slate-500">Poids</dt><dd class="font-medium">{{ size(m.sizeBytes) }} · {{ format(m.mimeType) }}</dd></div>
+      <div><dt class="text-slate-500">Dossier</dt><dd class="font-medium">{{ m.folder ?? '—' }}</dd></div>
+      <div><dt class="text-slate-500">Ajoutee le</dt><dd class="font-medium">{{ m.createdAt | haitiDate }}</dd></div>
+    </dl>
+
+    @if (m.usages) {
+      <p-message severity="info" class="mb-4" [text]="'Utilisee ' + m.usages + ' fois (sujets, questions, choix, bannieres, sujets de vote ou avatars).'" />
+    }
+
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <span class="w-24 shrink-0 text-sm text-slate-500">Identifiant</span>
+        <input pInputText [value]="m.id" readonly class="w-full font-mono text-sm" aria-label="Identifiant" />
+        <p-button icon="pi pi-copy" [text]="true" severity="secondary" ariaLabel="Copier l'identifiant" (onClick)="copy('' + m.id, 'Identifiant')" />
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-24 shrink-0 text-sm text-slate-500">Adresse</span>
+        <input pInputText [value]="m.url" readonly class="w-full font-mono text-xs" aria-label="Adresse" />
+        <p-button icon="pi pi-copy" [text]="true" severity="secondary" ariaLabel="Copier l'adresse" (onClick)="copy(m.url, 'Adresse')" />
+      </div>
+      @if (m.thumbnailUrl) {
+        <div class="flex items-center gap-2">
+          <span class="w-24 shrink-0 text-sm text-slate-500">Miniature</span>
+          <input pInputText [value]="m.thumbnailUrl" readonly class="w-full font-mono text-xs" aria-label="Miniature" />
+          <p-button icon="pi pi-copy" [text]="true" severity="secondary" ariaLabel="Copier l'adresse de la miniature" (onClick)="copy(m.thumbnailUrl, 'Adresse de la miniature')" />
+        </div>
+      }
+    </div>
+  }
+  <ng-template #footer>
+    @if (selected(); as m) {
+      <div class="flex w-full justify-between">
+        <p-button label="Supprimer" icon="pi pi-trash" severity="danger" [text]="true" (onClick)="remove(m)" />
+        <div class="flex gap-2">
+          <a [href]="m.url" target="_blank" rel="noopener">
+            <p-button label="Ouvrir" icon="pi pi-external-link" severity="secondary" [outlined]="true" />
+          </a>
+          <p-button label="Fermer" severity="secondary" (onClick)="detailOpen = false" />
+        </div>
+      </div>
+    }
+  </ng-template>
+</p-dialog>

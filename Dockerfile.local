@@ -1,0 +1,18 @@
+# =============================================================================
+# RAF - Image du site, a partir du build fait sur la machine :
+#
+#   npm run build
+#   docker compose up -d --build     (depuis raf-backend-java)
+# =============================================================================
+
+FROM node:lts-alpine3.24
+WORKDIR /app
+
+COPY --chown=node:node dist/raf-ssr ./dist/raf-ssr
+USER node
+
+ENV NODE_ENV=production \
+    PORT=4000
+EXPOSE 4000
+
+CMD ["node", "dist/raf-ssr/server/server.mjs"]

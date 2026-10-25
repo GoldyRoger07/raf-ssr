@@ -1,0 +1,67 @@
+@let e = economics();
+
+@if (free()) {
+  <div class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+    <i class="pi pi-gift mr-1"></i>
+    Quiz gratuit : environ <strong>{{ pct(e.estimatedWinRate) }}</strong> des parties seront des sans-faute, soit un cout
+    moyen de <strong>{{ -e.expectedMarginPerGameHtg | htg }}</strong> par partie pour RAF.
+  </div>
+} @else if (e.profitable) {
+  <div class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800 dark:bg-green-500/10 dark:text-green-300">
+    <i class="pi pi-check-circle mr-1"></i>
+    Rentable : marge attendue de <strong>{{ e.expectedMarginPerGameHtg | htg }}</strong> par partie.
+  </div>
+} @else {
+  <div class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-500/10 dark:text-red-300">
+    <i class="pi pi-exclamation-triangle mr-1"></i>
+    Deficitaire : RAF perdrait en moyenne <strong>{{ -e.expectedMarginPerGameHtg | htg }}</strong> par partie.
+    Baissez le prix sous {{ e.breakEvenPrizeHtg | htg }} (≈ {{ suggestedPrizeHtg() | htg }} pour garder 30 % de marge),
+    ou ajoutez des questions par partie.
+  </div>
+}
+
+<dl class="mt-3 grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
+  <div>
+    <dt class="text-slate-500">Sans-faute estime</dt>
+    <dd class="font-semibold">{{ pct(e.estimatedWinRate) }}</dd>
+  </div>
+  <div>
+    <dt class="text-slate-500">Seuil de rentabilite</dt>
+    <dd class="font-semibold">{{ free() ? '—' : pct(e.breakEvenWinRate) }}</dd>
+  </div>
+  <div>
+    <dt class="text-slate-500">Prix maximal supportable</dt>
+    <dd class="font-semibold">{{ free() ? '—' : (e.breakEvenPrizeHtg | htg) }}</dd>
+  </div>
+  <div>
+    <dt class="text-slate-500">Reussite par question</dt>
+    <dd class="font-semibold">{{ pct(e.estimatedAccuracy) }}</dd>
+  </div>
+</dl>
+
+@if (e.gamesPlayed !== null) {
+  <dl class="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-3 text-sm lg:grid-cols-4 dark:border-slate-800">
+    <div>
+      <dt class="text-slate-500">Parties jouees</dt>
+      <dd class="font-semibold">{{ e.gamesPlayed }}</dd>
+    </div>
+    <div>
+      <dt class="text-slate-500">Sans-faute observes</dt>
+      <dd class="font-semibold">{{ e.gamesWon }} ({{ pct(e.observedWinRate) }})</dd>
+    </div>
+    <div class="col-span-2">
+      <dt class="text-slate-500">Resultat reel</dt>
+      <dd class="font-semibold" [class]="(e.observedMarginHtg ?? 0) < 0 ? 'text-red-700 dark:text-red-400' : ''">
+        {{ e.observedMarginHtg | htg }}
+      </dd>
+    </div>
+  </dl>
+}
+
+<p class="mt-3 text-xs text-slate-500">
+  Estimation : reussite moyenne des {{ e.poolQuestions }} questions du vivier, puissance {{ e.questionsPerGame }}.
+  @if (fewStats()) {
+    Seules {{ e.questionsWithStats }} ont assez d'historique : le reste repose sur la difficulte declaree
+    (facile 85 %, moyenne 70 %, difficile 55 %). A verifier sur les premieres parties.
+  }
+</p>

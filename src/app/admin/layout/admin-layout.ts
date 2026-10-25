@@ -42,6 +42,7 @@ export default class AdminLayout {
     { label: 'Categories', icon: 'pi pi-tags', link: '/admin/categories' },
     { label: 'Import CSV', icon: 'pi pi-upload', link: '/admin/import' },
     { label: 'Generation IA', icon: 'pi pi-sparkles', link: '/admin/generation' },
+    { label: 'Medias', icon: 'pi pi-images', link: '/admin/medias' },
     { label: 'Rapprochement', icon: 'pi pi-calculator', link: '/admin/rapprochement', adminOnly: true, section: 'Controle' },
     { label: "Journal d'audit", icon: 'pi pi-history', link: '/admin/journal', adminOnly: true },
     { label: 'Comptes et roles', icon: 'pi pi-shield', link: '/admin/comptes', superAdminOnly: true },
