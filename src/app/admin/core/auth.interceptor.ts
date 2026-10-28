@@ -17,7 +17,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
   const apiUrl = inject(API_BASE_URL);
 
-  if (!request.url.startsWith(apiUrl) || AUTH_PATHS.some((path) => request.url.includes(path))) {
+  // `${apiUrl}/api/` et non apiUrl seul : en production apiUrl est vide, et tout
+  // appel (y compris vers un autre site) recevrait le jeton.
+  if (!request.url.startsWith(`${apiUrl}/api/`) || AUTH_PATHS.some((path) => request.url.includes(path))) {
     return next(request);
   }
 

@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { InjectionToken } from '@angular/core';
 
-/** Adresse du backend. En dev, le backend tourne sur le port 8081. */
+import { environment } from '../../../environments/environment';
+
+/** Adresse du backend : vide en production (meme origine), port 8081 en dev. */
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL', {
   providedIn: 'root',
-  factory: () => 'http://localhost:8081',
+  factory: () => environment.apiUrl,
 });
 
 /** Page Spring Data, telle que serialisee par le backend. */
