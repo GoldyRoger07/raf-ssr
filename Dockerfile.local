@@ -2,7 +2,7 @@
 # RAF - Image du site, a partir du build fait sur la machine :
 #
 #   npm run build
-#   docker compose up -d --build     (depuis raf-backend-java)
+#   docker compose up -d --build     (depuis raf-deploy)
 # =============================================================================
 
 FROM node:lts-alpine3.24

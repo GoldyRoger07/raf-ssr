@@ -53,7 +53,6 @@ const GUIDES: Guide[] = [
   template: `
     <page-hero
       icon="phone"
-      kicker="Sans Play Store"
       title="Installer l’app RAF"
       lead="RAF s’installe directement depuis ton navigateur. Léger, gratuit, et prêt en quelques secondes."
     />
