@@ -19,6 +19,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+      COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -49,8 +52,6 @@ jobs:
       #   COOLIFY_TOKEN   : jeton API Coolify (Keys & Tokens, droit "deploy")
       # Sans ces secrets, l'etape est sautee : redeployer a la main dans Coolify.
       - name: Redeployer sur Coolify
-        env:
-          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         if: env.COOLIFY_WEBHOOK != ''
-        run: curl --fail -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_WEBHOOK"
+        run: |
+          curl --fail -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_WEBHOOK"
