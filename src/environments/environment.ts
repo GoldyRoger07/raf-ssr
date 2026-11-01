@@ -1,8 +1,9 @@
 // Production (npm run build). Remplace par environment.development.ts sous ng serve.
 export const environment = {
   /**
-   * Adresse du backend. Vide = meme origine : le reverse proxy relaie /api du
-   * domaine du site vers le backend, sans CORS ni adresse en dur.
+   * Adresse du backend, appele directement (CORS : CORS_ALLOWED_ORIGINS du
+   * backend doit contenir https://rafhaiti.com). Pas de relais /api par le
+   * domaine du site : Coolify retire le prefixe /api au passage.
    */
   apiUrl: 'https://api.rafhaiti.com',
 
