@@ -54,4 +54,12 @@ jobs:
       - name: Redeployer sur Coolify
         if: env.COOLIFY_WEBHOOK != ''
         run: |
-          curl --fail -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_WEBHOOK"
+          # Adresse appelee sans la query (uuid), pour le diagnostic : GitHub
+          # masque la valeur entiere du secret, pas ce morceau.
+          echo "Appel de : ${COOLIFY_WEBHOOK%%\?*}"
+          status=$(curl -sS -o response.txt -w '%{http_code}' \
+            -H "Accept: application/json" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_WEBHOOK")
+          echo "HTTP $status"
+          cat response.txt; echo
+          [ "$status" -lt 400 ]
