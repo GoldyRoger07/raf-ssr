@@ -57,7 +57,8 @@ jobs:
           # Adresse appelee sans la query (uuid), pour le diagnostic : GitHub
           # masque la valeur entiere du secret, pas ce morceau.
           echo "Appel de : ${COOLIFY_WEBHOOK%%\?*}"
-          status=$(curl -sS -o response.txt -w '%{http_code}' \
+          # Coolify n'accepte plus que POST sur /api/v1/deploy (405 en GET).
+          status=$(curl -sS -X POST -o response.txt -w '%{http_code}' \
             -H "Accept: application/json" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_WEBHOOK")
           echo "HTTP $status"
