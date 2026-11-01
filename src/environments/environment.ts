@@ -4,7 +4,7 @@ export const environment = {
    * Adresse du backend. Vide = meme origine : le reverse proxy relaie /api du
    * domaine du site vers le backend, sans CORS ni adresse en dur.
    */
-  apiUrl: '',
+  apiUrl: 'https://api.rafhaiti.com',
 
   /** App joueur (PWA) : tous les boutons « Jouer » et « Installer » y menent. */
   playerAppUrl: 'https://app.rafhaiti.com',
