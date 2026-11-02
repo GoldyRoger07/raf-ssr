@@ -2,8 +2,11 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../core/auth.service';
+import { TopUpPresence } from '../core/topup-presence.service';
 import { ThemeService } from '../../theme/theme.service';
 
 interface NavItem {
@@ -20,12 +23,15 @@ interface NavItem {
 /** Cadre du back-office : barre laterale, barre du haut, zone de contenu. */
 @Component({
   selector: 'admin-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, ToastModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, ToastModule, ToggleSwitchModule, FormsModule],
   templateUrl: './admin-layout.html',
+  providers: [TopUpPresence],
 })
 export default class AdminLayout {
   private readonly auth = inject(AuthService);
   private readonly themeService = inject(ThemeService);
+  protected readonly presence = inject(TopUpPresence);
+  protected readonly isAdmin = this.auth.isAdmin;
 
   protected readonly user = this.auth.user;
   protected readonly theme = this.themeService.theme;
@@ -35,6 +41,7 @@ export default class AdminLayout {
     { label: 'Tableau de bord', icon: 'pi pi-home', link: '/admin', exact: true },
     { label: 'Retraits', icon: 'pi pi-wallet', link: '/admin/retraits', adminOnly: true },
     { label: 'Guichet', icon: 'pi pi-money-bill', link: '/admin/guichet', adminOnly: true },
+    { label: 'Recharge a distance', icon: 'pi pi-mobile', link: '/admin/recharge-distance', adminOnly: true },
     { label: 'Joueurs', icon: 'pi pi-users', link: '/admin/joueurs', adminOnly: true },
     { label: 'Quiz', icon: 'pi pi-trophy', link: '/admin/quiz', adminOnly: true, section: 'Jeu' },
     { label: 'Parties signalees', icon: 'pi pi-flag', link: '/admin/parties', adminOnly: true },
@@ -62,11 +69,18 @@ export default class AdminLayout {
     return user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : '';
   });
 
+  constructor() {
+    if (this.auth.isAdmin()) {
+      this.presence.restore();
+    }
+  }
+
   protected toggleTheme(): void {
     this.themeService.toggle();
   }
 
   protected logout(): void {
+    this.presence.signOff();
     this.auth.logout();
   }
 }

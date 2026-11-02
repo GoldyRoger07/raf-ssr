@@ -549,6 +549,14 @@ export interface AppSetting {
 }
 
 /** Lien Instagram affiche dans l'app joueur et sur le site (SocialService.Social). */
+/** Numeros MonCash / NatCash ou les joueurs envoient leurs recharges a distance (+509XXXXXXXX). */
+export interface DepositNumbers {
+  moncashEnabled: boolean;
+  moncashNumber?: string | null;
+  natcashEnabled: boolean;
+  natcashNumber?: string | null;
+}
+
 export interface SocialLinks {
   instagramEnabled: boolean;
   instagramUrl?: string | null;

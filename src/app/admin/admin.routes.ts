@@ -135,6 +135,12 @@ export default [
             loadComponent: () => import('./pages/accounts/accounts'),
           },
           {
+            path: 'recharge-distance',
+            title: 'Recharge a distance - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/deposit-numbers/deposit-numbers'),
+          },
+          {
             path: 'reseaux-sociaux',
             title: 'Reseaux sociaux - RAF Admin',
             canActivate: [adminGuard],

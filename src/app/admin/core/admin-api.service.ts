@@ -18,6 +18,7 @@ import {
   UserStatus,
   BalanceType,
   Dashboard,
+  DepositNumbers,
   PlayerSummary,
   ProfitPeriod,
   Wallet,
@@ -59,6 +60,15 @@ export class AdminApi {
   /** `instagramAccount` : adresse du profil, nom d'utilisateur ou @nom ; vide pour retirer le compte. */
   updateSocial(instagramEnabled: boolean, instagramAccount: string | null): Observable<SocialLinks> {
     return this.http.put<SocialLinks>(`${this.base}/social`, { instagramEnabled, instagramAccount });
+  }
+
+  depositNumbers(): Observable<DepositNumbers> {
+    return this.http.get<DepositNumbers>(`${this.base}/deposit-numbers`);
+  }
+
+  /** Numeros vides pour les retirer ; le backend les ramene au format +509XXXXXXXX. */
+  updateDepositNumbers(numbers: DepositNumbers): Observable<DepositNumbers> {
+    return this.http.put<DepositNumbers>(`${this.base}/deposit-numbers`, numbers);
   }
 
   searchPlayers(query: string, page = 0, size = 20): Observable<Page<PlayerSummary>> {

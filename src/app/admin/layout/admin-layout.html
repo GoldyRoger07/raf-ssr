@@ -56,6 +56,36 @@
         (onClick)="menuOpen.set(true)"
       />
       <div class="flex-1"></div>
+      @if (isAdmin()) {
+        <!-- Les joueurs voient « agent en ligne » sur la page Recharger tant que l'interrupteur est actif. -->
+        <div
+          class="flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm
+                 dark:border-slate-700"
+          title="Les joueurs voient qu'un agent est en ligne pour crediter leurs recharges"
+        >
+          <span
+            class="h-2.5 w-2.5 rounded-full"
+            [class.bg-green-500]="presence.online()"
+            [class.bg-amber-500]="presence.enabled() && !presence.online()"
+            [class.bg-slate-300]="!presence.enabled()"
+          ></span>
+          <label for="topupAvailable" class="cursor-pointer">
+            <span class="hidden font-medium md:inline">
+              @if (presence.enabled() && presence.failing()) {
+                Connexion perdue
+              } @else {
+                Disponible pour les recharges
+              }
+            </span>
+            <span class="font-medium md:hidden">Recharges</span>
+          </label>
+          <p-toggleswitch
+            inputId="topupAvailable"
+            [ngModel]="presence.enabled()"
+            (ngModelChange)="presence.setEnabled($event)"
+          />
+        </div>
+      }
       <p-button
         [icon]="theme() === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
         [text]="true"
