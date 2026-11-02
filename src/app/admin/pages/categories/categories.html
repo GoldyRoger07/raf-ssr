@@ -15,7 +15,15 @@
 }
 
 <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-  <p-table [value]="categories()" [loading]="loading()" dataKey="id">
+  <p-table
+    [value]="categories()"
+    [loading]="loading()"
+    [paginator]="categories().length > 0"
+    [rows]="20"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+    dataKey="id"
+  >
     <ng-template #header>
       <tr>
         <th>Categorie</th>

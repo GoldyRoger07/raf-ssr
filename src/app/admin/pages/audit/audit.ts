@@ -40,7 +40,7 @@ export default class Audit {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly expanded = signal<number | null>(null);
-  private page = 0;
+  protected page = 0;
 
   constructor() {
     this.api.auditFilters().subscribe((filters) => {

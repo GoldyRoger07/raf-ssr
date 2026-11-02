@@ -72,7 +72,7 @@ export default class Questions {
   protected readonly total = signal(0);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-  private page = 0;
+  protected page = 0;
   private readonly typed = new Subject<void>();
 
   constructor() {

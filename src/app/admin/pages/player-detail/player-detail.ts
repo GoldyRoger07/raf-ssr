@@ -61,8 +61,11 @@ export default class PlayerDetail implements OnInit {
   protected readonly transactions = signal<WalletTransaction[]>([]);
   protected readonly transactionsTotal = signal(0);
   protected readonly withdrawals = signal<AdminWithdrawal[]>([]);
+  protected readonly withdrawalsTotal = signal(0);
+  protected readonly loadingWithdrawals = signal(false);
+  protected withdrawalsPage = 0;
   protected readonly loadingTransactions = signal(false);
-  private transactionsPage = 0;
+  protected transactionsPage = 0;
 
   // Recharge manuelle
   protected readonly topUpOpen = signal(false);
@@ -88,6 +91,7 @@ export default class PlayerDetail implements OnInit {
       this.player.set(null);
       this.error.set(null);
       this.transactionsPage = 0;
+      this.withdrawalsPage = 0;
       this.reload();
     });
   }
@@ -98,9 +102,30 @@ export default class PlayerDetail implements OnInit {
       error: (error) => this.error.set(errorMessage(error)),
     });
     this.loadTransactions();
-    this.api.playerWithdrawals(this.id(), 0, 50).subscribe({
-      next: (page) => this.withdrawals.set(page.content),
-      error: () => this.withdrawals.set([]),
+    this.loadWithdrawals();
+  }
+
+  protected onWithdrawalsPage(event: TableLazyLoadEvent): void {
+    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
+    if (page !== this.withdrawalsPage) {
+      this.withdrawalsPage = page;
+      this.loadWithdrawals();
+    }
+  }
+
+  private loadWithdrawals(): void {
+    this.loadingWithdrawals.set(true);
+    this.api.playerWithdrawals(this.id(), this.withdrawalsPage, PAGE_SIZE).subscribe({
+      next: (page) => {
+        this.withdrawals.set(page.content);
+        this.withdrawalsTotal.set(page.totalElements);
+        this.loadingWithdrawals.set(false);
+      },
+      error: () => {
+        this.withdrawals.set([]);
+        this.withdrawalsTotal.set(0);
+        this.loadingWithdrawals.set(false);
+      },
     });
   }
 

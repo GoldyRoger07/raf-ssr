@@ -58,7 +58,7 @@ export default class Withdrawals {
   protected readonly total = signal(0);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-  private page = 0;
+  protected page = 0;
 
   // Dialogues
   protected readonly selected = signal<AdminWithdrawal | null>(null);

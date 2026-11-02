@@ -45,7 +45,10 @@
         <p-table
           [value]="transactions()"
           [lazy]="true"
-          [paginator]="transactionsTotal() > pageSize"
+          [paginator]="transactionsTotal() > 0"
+          [first]="transactionsPage * pageSize"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first} - {last} sur {totalRecords}"
           [rows]="pageSize"
           [totalRecords]="transactionsTotal()"
           [loading]="loadingTransactions()"
@@ -84,7 +87,19 @@
       </p-tabpanel>
 
       <p-tabpanel value="withdrawals">
-        <p-table [value]="withdrawals()" dataKey="withdrawal.id">
+        <p-table
+          [value]="withdrawals()"
+          [lazy]="true"
+          [paginator]="withdrawalsTotal() > 0"
+          [first]="withdrawalsPage * pageSize"
+          [rows]="pageSize"
+          [totalRecords]="withdrawalsTotal()"
+          [loading]="loadingWithdrawals()"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+          (onLazyLoad)="onWithdrawalsPage($event)"
+          dataKey="withdrawal.id"
+        >
           <ng-template #header>
             <tr>
               <th>Demande</th>

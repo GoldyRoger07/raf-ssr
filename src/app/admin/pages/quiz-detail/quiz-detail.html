@@ -259,7 +259,19 @@
   @if (leaderboard(); as board) {
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <h2 class="mb-3 font-semibold">Classement final ({{ board.totalRanked }} joueurs)</h2>
-      <p-table [value]="board.entries" dataKey="rank" [scrollable]="true" scrollHeight="400px">
+      <p-table
+        [value]="board.entries"
+        [lazy]="true"
+        [paginator]="board.totalRanked > 0"
+        [first]="leaderboardPage * leaderboardSize"
+        [rows]="leaderboardSize"
+        [totalRecords]="board.totalRanked"
+        [loading]="loadingLeaderboard()"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+        (onLazyLoad)="onLeaderboardPage($event)"
+        dataKey="rank"
+      >
         <ng-template #header>
           <tr><th>Rang</th><th>Joueur</th><th class="text-right">Score</th><th class="text-right">Gain</th></tr>
         </ng-template>

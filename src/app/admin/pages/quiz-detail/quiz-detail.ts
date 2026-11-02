@@ -10,7 +10,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { Observable } from 'rxjs';
@@ -73,6 +73,9 @@ export default class QuizDetail implements OnInit {
   protected readonly economics = signal<Economics | null>(null);
   protected readonly soloEconomics = signal<SoloEconomics | null>(null);
   protected readonly leaderboard = signal<Leaderboard | null>(null);
+  protected readonly leaderboardSize = 50;
+  protected readonly loadingLeaderboard = signal(false);
+  protected leaderboardPage = 0;
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
 
@@ -128,6 +131,7 @@ export default class QuizDetail implements OnInit {
         this.economics.set(null);
         this.soloEconomics.set(null);
         this.leaderboard.set(null);
+        this.leaderboardPage = 0;
         if (quiz.gameMode === 'GROUP' && quiz.rewards.length) {
           this.api.economics(id).subscribe((e) => this.economics.set(e));
         }
@@ -135,10 +139,30 @@ export default class QuizDetail implements OnInit {
           this.api.soloEconomics(id).subscribe({ next: (e) => this.soloEconomics.set(e), error: () => undefined });
         }
         if (quiz.gameMode === 'GROUP' && quiz.status === 'FINISHED') {
-          this.api.leaderboard(id).subscribe((board) => this.leaderboard.set(board));
+          this.loadLeaderboard(id);
         }
       },
       error: (error) => this.error.set(errorMessage(error)),
+    });
+  }
+
+  protected onLeaderboardPage(event: TableLazyLoadEvent): void {
+    const page = Math.floor((event.first ?? 0) / this.leaderboardSize);
+    const quiz = this.quiz();
+    if (quiz && page !== this.leaderboardPage) {
+      this.leaderboardPage = page;
+      this.loadLeaderboard(quiz.id);
+    }
+  }
+
+  private loadLeaderboard(id: number): void {
+    this.loadingLeaderboard.set(true);
+    this.api.leaderboard(id, this.leaderboardPage, this.leaderboardSize).subscribe({
+      next: (board) => {
+        this.leaderboard.set(board);
+        this.loadingLeaderboard.set(false);
+      },
+      error: () => this.loadingLeaderboard.set(false),
     });
   }
 

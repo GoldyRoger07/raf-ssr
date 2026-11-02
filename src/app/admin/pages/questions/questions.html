@@ -44,7 +44,10 @@
   <p-table
     [value]="rows()"
     [lazy]="true"
-    [paginator]="total() > pageSize"
+    [paginator]="total() > 0"
+    [first]="page * pageSize"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [rows]="pageSize"
     [totalRecords]="total()"
     [loading]="loading()"
