@@ -19,6 +19,21 @@ import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { TRANSACTION_TYPE, providerLabel, withdrawalStatus } from '../../core/labels';
 import { AdminWithdrawal, BalanceType, PlayerSummary, WalletTransaction } from '../../core/models';
 
+/** « 3712 3456 » -> « +50937123456 » ; un numero deja international est garde. */
+function normalizePhone(raw: string): string {
+  const compact = raw.replace(/[\s().-]/g, '');
+  if (compact.startsWith('+')) {
+    return compact;
+  }
+  if (compact.startsWith('00')) {
+    return '+' + compact.slice(2);
+  }
+  if (compact.startsWith('509') && compact.length === 11) {
+    return '+' + compact;
+  }
+  return '+509' + compact;
+}
+
 const PAGE_SIZE = 15;
 
 @Component({
@@ -75,6 +90,9 @@ export default class PlayerDetail implements OnInit {
   protected topUpNote = '';
 
   // Ajustement
+  protected readonly phoneOpen = signal(false);
+  protected readonly phoneError = signal<string | null>(null);
+  protected newPhone = '';
   protected readonly emailOpen = signal(false);
   protected readonly emailError = signal<string | null>(null);
   protected newEmail = '';
@@ -185,6 +203,38 @@ export default class PlayerDetail implements OnInit {
         this.done('Recharge enregistree', `${this.topUpAmount} HTG credites.`);
       },
       error: (error) => this.fail(error),
+    });
+  }
+
+  protected openPhone(): void {
+    this.newPhone = this.player()?.phone ?? '';
+    this.phoneError.set(null);
+    this.phoneOpen.set(true);
+  }
+
+  protected changePhone(): void {
+    const p = this.player();
+    const phone = normalizePhone(this.newPhone);
+    if (!p) {
+      return;
+    }
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+      this.phoneError.set('Numero invalide : 8 chiffres (Haiti) ou format international, ex. +50937123456.');
+      return;
+    }
+    this.busy.set(true);
+    this.phoneError.set(null);
+    this.api.changePlayerPhone(p.id, phone).subscribe({
+      next: (user) => {
+        this.busy.set(false);
+        this.phoneOpen.set(false);
+        this.player.set({ ...p, phone: user.phone, phoneVerified: user.phoneVerified });
+        this.messages.add({ severity: 'success', summary: 'Numero modifie', detail: `${user.phone}, a verifier par le joueur.` });
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.phoneError.set(errorMessage(error));
+      },
     });
   }
 

@@ -232,6 +232,11 @@ export class AdminApi {
     return this.http.post<UserResponse>(`${this.base}/players/${userId}/test`, { test });
   }
 
+  /** Corrige le numero d'un joueur : il repasse non verifie. */
+  changePlayerPhone(userId: number, phone: string): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.base}/players/${userId}/phone`, { phone });
+  }
+
   /** Corrige l'email d'un joueur : il repasse non verifie et un nouveau lien part. */
   changePlayerEmail(userId: number, email: string): Observable<UserResponse> {
     return this.http.post<UserResponse>(`${this.base}/players/${userId}/email`, { email });
