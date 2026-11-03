@@ -248,6 +248,39 @@ export default class QuizDetail implements OnInit {
    * et l'ouvre : on corrige ce qui doit l'etre, puis on publie. L'original garde
    * son historique.
    */
+  /** Marque ou demarque le quiz comme test, apres confirmation. */
+  protected toggleTest(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    const test = !q.test;
+    this.confirmation.confirm({
+      header: test ? 'Marquer comme quiz de test' : 'Ce quiz n\'est plus un test',
+      message: test
+        ? 'Le quiz disparait de l\'app pour les joueurs (seuls le staff et les comptes de test le voient), '
+          + 'et ses ventes, remboursements et gains sortent du resultat du jeu. Impossible si de vrais joueurs y ont deja un ticket ou une partie.'
+        : 'Le quiz redevient visible de tous les joueurs, et son activite compte de nouveau dans le resultat du jeu.',
+      acceptLabel: test ? 'Marquer comme test' : 'Confirmer',
+      rejectLabel: 'Annuler',
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => {
+        this.busy.set(true);
+        this.api.setTest(q.id, test).subscribe({
+          next: (updated) => {
+            this.busy.set(false);
+            this.quiz.set(updated);
+            this.messages.add({ severity: 'success', summary: test ? 'Quiz marque comme test' : 'Quiz de nouveau reel' });
+          },
+          error: (error) => {
+            this.busy.set(false);
+            this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+          },
+        });
+      },
+    });
+  }
+
   protected duplicate(): void {
     const q = this.quiz();
     if (!q) {

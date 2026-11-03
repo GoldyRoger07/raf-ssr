@@ -227,6 +227,11 @@ export class AdminApi {
     return this.http.post<UserResponse>(`${this.base}/users/${userId}/roles`, roles);
   }
 
+  /** Marque (ou demarque) un compte de test : son activite sort du tableau de bord. */
+  setUserTest(userId: number, test: boolean): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.base}/users/${userId}/test`, { test });
+  }
+
   setStatus(userId: number, status: UserStatus): Observable<UserResponse> {
     return this.http.post<UserResponse>(`${this.base}/users/${userId}/status`, JSON.stringify(status), {
       headers: { 'Content-Type': 'application/json' },

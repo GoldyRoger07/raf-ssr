@@ -4,6 +4,7 @@ export type RoleName = 'PLAYER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
 
 export interface UserResponse {
   id: number;
+  test: boolean;
   email: string;
   phone: string;
   firstName: string;
@@ -77,6 +78,8 @@ export interface Dashboard {
 
 export interface PlayerSummary {
   id: number;
+  /** Compte de test : son activite est exclue du tableau de bord. */
+  test: boolean;
   email: string;
   phone: string;
   firstName: string;
@@ -182,6 +185,8 @@ export interface TopicView {
 export interface Quiz {
   id: number;
   title: string;
+  /** Quiz de test : invisible des joueurs, exclu du resultat du jeu. */
+  test: boolean;
   slug: string;
   description?: string;
   themeLabel?: string;

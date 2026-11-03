@@ -14,7 +14,15 @@
         <h1 class="text-2xl font-semibold">{{ q.title }}</h1>
         <p-tag [value]="quizStatus(q.status, q.gameMode).label" [severity]="quizStatus(q.status, q.gameMode).severity" />
         <p-tag [value]="q.gameMode === 'SOLO' ? 'Solo' : 'En groupe'" severity="secondary" />
+        @if (q.test) {
+          <p-tag value="Test" severity="warn" icon="pi pi-flask" />
+        }
       </div>
+      @if (q.test) {
+        <p class="mt-1 text-sm text-amber-700 dark:text-amber-400">
+          Quiz de test : seuls le staff et les comptes de test le voient, et il ne compte pas dans le resultat du jeu.
+        </p>
+      }
       @if (q.themeLabel) {
         <p class="text-sm text-slate-500">Theme annonce : {{ q.themeLabel }}</p>
       }
@@ -51,6 +59,8 @@
           <p-button label="Figer le classement" icon="pi pi-lock" [loading]="busy()" (onClick)="finalize()" />
         }
       }
+      <p-button [label]="q.test ? 'Ce n\'est plus un test' : 'Marquer comme test'" icon="pi pi-flask" severity="secondary"
+                [outlined]="true" [loading]="busy()" (onClick)="toggleTest()" />
       <p-button label="Dupliquer" icon="pi pi-copy" severity="secondary" [outlined]="true" [loading]="busy()"
                 ariaLabel="Copier ce quiz dans un nouveau brouillon" (onClick)="duplicate()" />
       @if (q.status === 'RUNNING' || q.status === 'CLOSING' || q.status === 'COMPUTING' || q.status === 'FINISHED') {

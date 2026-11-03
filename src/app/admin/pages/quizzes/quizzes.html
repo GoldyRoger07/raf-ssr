@@ -71,6 +71,9 @@
         <tr>
           <td>
             <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
+            @if (q.test) {
+              <p-tag value="Test" severity="warn" class="ml-2" />
+            }
           </td>
           <td>{{ q.selectedCategoryName ?? '—' }}</td>
           <td class="text-right">
@@ -93,6 +96,9 @@
         <tr>
           <td>
             <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
+            @if (q.test) {
+              <p-tag value="Test" severity="warn" class="ml-2" />
+            }
             @if (q.themeLabel) {
               <div class="text-xs text-slate-500">{{ q.themeLabel }}</div>
             }

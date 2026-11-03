@@ -42,6 +42,11 @@ export class QuizApi {
     return this.http.post<Quiz>(`${this.base}/${id}/duplicate`, {});
   }
 
+  /** Marque (ou demarque) un quiz de test : invisible des joueurs, hors resultat du jeu. */
+  setTest(id: number, test: boolean): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/test`, { test });
+  }
+
   /** Solo : plus aucune partie ne peut etre lancee. */
   close(id: number): Observable<Quiz> {
     return this.http.post<Quiz>(`${this.base}/${id}/close`, {});

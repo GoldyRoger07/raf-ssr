@@ -13,12 +13,18 @@
         <p-tag [value]="p.status" [severity]="p.status === 'ACTIVE' ? 'success' : 'danger'" />
         <p-tag [value]="p.emailVerified ? 'Email verifie' : 'Email non verifie'" [severity]="p.emailVerified ? 'success' : 'secondary'" />
         <p-tag [value]="p.phoneVerified ? 'Telephone verifie' : 'Telephone non verifie'" [severity]="p.phoneVerified ? 'success' : 'secondary'" />
+        @if (p.test) {
+          <p-tag value="Compte de test" severity="warn" icon="pi pi-flask" />
+        }
         <span class="text-xs text-slate-500">Inscrit le {{ p.createdAt | haitiDate }}</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
       <p-button label="Historique" icon="pi pi-history" severity="secondary" [text]="true" routerLink="/admin/journal"
                 [queryParams]="{ entityType: 'User', entityId: p.id }" />
+      <p-button [label]="p.test ? 'Ce n\'est plus un test' : 'Compte de test'" icon="pi pi-flask" severity="secondary"
+                [outlined]="true" [loading]="testBusy()" (onClick)="toggleTest()"
+                [title]="p.test ? '' : 'Son activite sortira du tableau de bord, et il verra les quiz de test'" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
       <p-button label="Recharge manuelle" icon="pi pi-plus" (onClick)="openTopUp()" />
     </div>

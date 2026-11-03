@@ -57,6 +57,7 @@ export default class PlayerDetail implements OnInit {
   protected readonly providerLabel = providerLabel;
 
   protected readonly player = signal<PlayerSummary | null>(null);
+  protected readonly testBusy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly transactions = signal<WalletTransaction[]>([]);
   protected readonly transactionsTotal = signal(0);
@@ -93,6 +94,31 @@ export default class PlayerDetail implements OnInit {
       this.transactionsPage = 0;
       this.withdrawalsPage = 0;
       this.reload();
+    });
+  }
+
+  /** Compte de test : son activite sort du tableau de bord, il voit les quiz de test. */
+  protected toggleTest(): void {
+    const p = this.player();
+    if (!p) {
+      return;
+    }
+    const test = !p.test;
+    this.testBusy.set(true);
+    this.api.setUserTest(p.id, test).subscribe({
+      next: () => {
+        this.testBusy.set(false);
+        this.player.set({ ...p, test });
+        this.messages.add({
+          severity: 'success',
+          summary: test ? 'Compte marque comme test' : 'Compte de nouveau reel',
+          detail: test ? 'Son activite ne compte plus dans le tableau de bord.' : undefined,
+        });
+      },
+      error: (error) => {
+        this.testBusy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+      },
     });
   }
 

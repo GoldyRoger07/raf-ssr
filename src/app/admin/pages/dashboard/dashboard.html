@@ -78,7 +78,10 @@
 
   <!-- Resultat du jeu -->
   <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Resultat du jeu</h2>
+    <div>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Resultat du jeu</h2>
+      <p class="text-xs text-slate-400">Hors quiz et comptes de test</p>
+    </div>
     <p-selectbutton [options]="periodOptions" [ngModel]="period()" (ngModelChange)="changePeriod($event)"
                     optionLabel="label" optionValue="value" size="small" [allowEmpty]="false" />
   </div>
@@ -155,7 +158,9 @@
   </div>
 
   <!-- 30 jours -->
-  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">30 derniers jours</h2>
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+    30 derniers jours <span class="font-normal normal-case tracking-normal text-slate-400">· hors quiz et comptes de test</span>
+  </h2>
   <div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
     <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div class="text-sm text-slate-500">Ventes de jeu</div>
