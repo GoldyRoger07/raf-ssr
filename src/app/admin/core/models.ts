@@ -356,6 +356,14 @@ export interface Choice {
   mediaId?: number;
 }
 
+/** Voisines d'une question dans la liste (meme categorie, meme statut, recentes d'abord). */
+export interface QuestionNeighbors {
+  previousId: number | null;
+  nextId: number | null;
+  position: number;
+  total: number;
+}
+
 export interface Question {
   id: number;
   categoryId: number;

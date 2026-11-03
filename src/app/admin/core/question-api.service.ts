@@ -3,19 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
-import {
-  AiStatus,
-  Category,
-  CategoryInput,
-  GenerateInput,
-  GenerationReport,
-  ImportReport,
-  PoolStatus,
-  Question,
-  QuestionInput,
-  QuestionSource,
-  QuestionStatus,
-} from './models';
+import { AiStatus, Category, CategoryInput, GenerateInput, GenerationReport, ImportReport, PoolStatus, Question, QuestionInput, QuestionNeighbors, QuestionSource, QuestionStatus } from './models';
 
 /** Banque de questions et categories (moderateurs et administrateurs). */
 @Injectable()
@@ -48,6 +36,10 @@ export class QuestionApi {
 
   get(id: number): Observable<Question> {
     return this.http.get<Question>(`${this.base}/${id}`);
+  }
+
+  neighbors(id: number): Observable<QuestionNeighbors> {
+    return this.http.get<QuestionNeighbors>(`${this.base}/${id}/neighbors`);
   }
 
   create(input: QuestionInput): Observable<Question> {

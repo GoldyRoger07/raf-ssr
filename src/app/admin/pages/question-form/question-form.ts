@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -15,7 +17,7 @@ import { of, switchMap } from 'rxjs';
 import { MediaPicker } from '../../components/media-picker/media-picker';
 import { errorMessage } from '../../core/api';
 import { questionStatus } from '../../core/labels';
-import { Category, Difficulty, Question, QuestionInput, QuestionStatus, QuestionType } from '../../core/models';
+import { Category, Difficulty, Question, QuestionInput, QuestionNeighbors, QuestionStatus, QuestionType } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 
 const TRUE_FALSE = ['Vrai', 'Faux'];
@@ -27,6 +29,7 @@ const TRUE_FALSE = ['Vrai', 'Faux'];
     FormsModule,
     RouterLink,
     ButtonModule,
+    ConfirmDialogModule,
     InputTextModule,
     MessageModule,
     RadioButtonModule,
@@ -43,6 +46,8 @@ export default class QuestionForm implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly messages = inject(MessageService);
+  private readonly confirmation = inject(ConfirmationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly questionStatus = questionStatus;
   protected readonly typeOptions = [
@@ -60,6 +65,9 @@ export default class QuestionForm implements OnInit {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly loadError = signal<string | null>(null);
+  protected readonly neighbors = signal<QuestionNeighbors | null>(null);
+  /** Etat du formulaire au dernier chargement ou enregistrement, pour detecter les modifications. */
+  private savedSnapshot = '';
 
   protected categoryId: number | null = Number(this.route.snapshot.queryParamMap.get('categorie')) || null;
   protected text = '';
@@ -78,13 +86,57 @@ export default class QuestionForm implements OnInit {
 
   ngOnInit(): void {
     this.api.categories().subscribe((categories) => this.categories.set(categories));
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.api.get(Number(id)).subscribe({
-        next: (question) => this.fill(question),
-        error: (error) => this.loadError.set(errorMessage(error)),
-      });
+    // Precedente / suivante reutilisent ce composant : on recharge a chaque changement d'id.
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = params.get('id');
+      if (id) {
+        this.load(Number(id));
+      }
+    });
+  }
+
+  private load(id: number): void {
+    this.loadError.set(null);
+    this.error.set(null);
+    this.neighbors.set(null);
+    this.api.get(id).subscribe({
+      next: (question) => this.fill(question),
+      error: (error) => this.loadError.set(errorMessage(error)),
+    });
+  }
+
+  /** Va a la question voisine, apres confirmation si des modifications ne sont pas enregistrees. */
+  protected goTo(id: number | null): void {
+    if (id == null) {
+      return;
     }
+    const navigate = () => this.router.navigate(['/admin/questions', id]);
+    if (this.snapshot() === this.savedSnapshot) {
+      navigate();
+      return;
+    }
+    this.confirmation.confirm({
+      header: 'Modifications non enregistrees',
+      message: 'Quitter cette question sans enregistrer ? Vos modifications seront perdues.',
+      acceptLabel: 'Quitter sans enregistrer',
+      rejectLabel: 'Rester',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: navigate,
+    });
+  }
+
+  private loadNeighbors(id: number): void {
+    this.api.neighbors(id).subscribe({
+      next: (neighbors) => this.neighbors.set(neighbors),
+      // Sans voisins, l'ecran reste utilisable : seuls les boutons manquent.
+      error: () => this.neighbors.set(null),
+    });
+  }
+
+  private snapshot(): string {
+    return JSON.stringify([this.categoryId, this.text, this.type, this.difficulty, this.explanation,
+      this.choices, this.choiceMediaIds, this.mediaId, this.correctIndex]);
   }
 
   protected onTypeChange(): void {
@@ -212,5 +264,8 @@ export default class QuestionForm implements OnInit {
     this.choiceMediaIds = sorted.map((c) => c.mediaId ?? null);
     this.mediaId = question.mediaId ?? null;
     this.correctIndex = Math.max(0, sorted.findIndex((c) => c.correct));
+    this.savedSnapshot = this.snapshot();
+    // Le statut ou la categorie ont pu changer : les voisines aussi.
+    this.loadNeighbors(question.id);
   }
 }

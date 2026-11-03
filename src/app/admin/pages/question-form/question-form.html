@@ -1,3 +1,5 @@
+<p-confirmdialog />
+
 <a routerLink="/admin/questions" class="mb-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600">
   <i class="pi pi-arrow-left"></i> Questions
 </a>
@@ -13,7 +15,18 @@
       }
     </div>
     @if (existing(); as q) {
-      <div class="flex gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        @if (neighbors(); as n) {
+          <div class="flex items-center gap-1" role="group" aria-label="Questions de la meme categorie">
+            <p-button icon="pi pi-chevron-left" label="Precedente" severity="secondary" [text]="true"
+                      [disabled]="n.previousId == null" (onClick)="goTo(n.previousId)" />
+            <span class="px-1 text-sm text-slate-500" title="Rang dans la liste : meme categorie, meme statut">
+              {{ n.position }} / {{ n.total }}
+            </span>
+            <p-button icon="pi pi-chevron-right" iconPos="right" label="Suivante" severity="secondary" [text]="true"
+                      [disabled]="n.nextId == null" (onClick)="goTo(n.nextId)" />
+          </div>
+        }
         @if (q.status === 'PUBLISHED') {
           <p-button label="Archiver" severity="secondary" [outlined]="true" (onClick)="setStatus('ARCHIVED')" />
         } @else {
