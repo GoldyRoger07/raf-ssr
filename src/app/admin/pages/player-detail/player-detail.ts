@@ -75,6 +75,9 @@ export default class PlayerDetail implements OnInit {
   protected topUpNote = '';
 
   // Ajustement
+  protected readonly emailOpen = signal(false);
+  protected readonly emailError = signal<string | null>(null);
+  protected newEmail = '';
   protected readonly adjustOpen = signal(false);
   protected readonly balanceOptions = [
     { label: 'Credits', value: 'CREDIT' },
@@ -182,6 +185,34 @@ export default class PlayerDetail implements OnInit {
         this.done('Recharge enregistree', `${this.topUpAmount} HTG credites.`);
       },
       error: (error) => this.fail(error),
+    });
+  }
+
+  protected openEmail(): void {
+    this.newEmail = this.player()?.email ?? '';
+    this.emailError.set(null);
+    this.emailOpen.set(true);
+  }
+
+  protected changeEmail(): void {
+    const p = this.player();
+    const email = this.newEmail.trim();
+    if (!p || !email) {
+      return;
+    }
+    this.busy.set(true);
+    this.emailError.set(null);
+    this.api.changePlayerEmail(p.id, email).subscribe({
+      next: (user) => {
+        this.busy.set(false);
+        this.emailOpen.set(false);
+        this.player.set({ ...p, email: user.email, emailVerified: user.emailVerified });
+        this.messages.add({ severity: 'success', summary: 'Email modifie', detail: `Lien de confirmation envoye a ${user.email}.` });
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.emailError.set(errorMessage(error));
+      },
     });
   }
 

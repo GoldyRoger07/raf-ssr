@@ -229,7 +229,12 @@ export class AdminApi {
 
   /** Marque (ou demarque) un compte de test : son activite sort du tableau de bord. */
   setUserTest(userId: number, test: boolean): Observable<UserResponse> {
-    return this.http.post<UserResponse>(`${this.base}/users/${userId}/test`, { test });
+    return this.http.post<UserResponse>(`${this.base}/players/${userId}/test`, { test });
+  }
+
+  /** Corrige l'email d'un joueur : il repasse non verifie et un nouveau lien part. */
+  changePlayerEmail(userId: number, email: string): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.base}/players/${userId}/email`, { email });
   }
 
   setStatus(userId: number, status: UserStatus): Observable<UserResponse> {

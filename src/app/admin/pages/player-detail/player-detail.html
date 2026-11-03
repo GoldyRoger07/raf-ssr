@@ -25,6 +25,7 @@
       <p-button [label]="p.test ? 'Ce n\'est plus un test' : 'Compte de test'" icon="pi pi-flask" severity="secondary"
                 [outlined]="true" [loading]="testBusy()" (onClick)="toggleTest()"
                 [title]="p.test ? '' : 'Son activite sortira du tableau de bord, et il verra les quiz de test'" />
+      <p-button label="Modifier l'email" icon="pi pi-envelope" severity="secondary" [outlined]="true" (onClick)="openEmail()" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
       <p-button label="Recharge manuelle" icon="pi pi-plus" (onClick)="openTopUp()" />
     </div>
@@ -180,5 +181,24 @@
   <ng-template #footer>
     <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="adjustOpen.set(false)" />
     <p-button label="Appliquer" [loading]="busy()" [disabled]="!adjustAmount || !adjustReason.trim()" (onClick)="adjust()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Correction de l'email -->
+<p-dialog header="Modifier l'email" [(visible)]="emailOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+    Pour une adresse mal saisie a l'inscription. L'adresse repasse non verifiee et un nouveau lien de confirmation
+    est envoye. Si l'ancienne etait verifiee, elle est prevenue du changement.
+  </p>
+  <div class="flex flex-col gap-2">
+    <label for="new-email" class="text-sm font-medium">Nouvelle adresse</label>
+    <input pInputText id="new-email" type="email" [(ngModel)]="newEmail" maxlength="180" autocomplete="off" />
+  </div>
+  @if (emailError(); as message) {
+    <p-message severity="error" [text]="message" class="mt-3" />
+  }
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="emailOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" [disabled]="!newEmail.trim()" (onClick)="changeEmail()" />
   </ng-template>
 </p-dialog>
