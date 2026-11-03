@@ -24,7 +24,7 @@
                 [queryParams]="{ entityType: 'User', entityId: p.id }" />
       <p-button [label]="p.test ? 'Ce n\'est plus un test' : 'Compte de test'" icon="pi pi-flask" severity="secondary"
                 [outlined]="true" [loading]="testBusy()" (onClick)="toggleTest()"
-                [title]="p.test ? '' : 'Son activite sortira du tableau de bord, et il verra les quiz de test'" />
+                [title]="p.test ? '' : 'Il jouera gratuitement et sans limite, sans rien gagner ; ses parties ne compteront pas pour les vrais joueurs ni au tableau de bord, et il verra les quiz de test'" />
       <p-button label="Modifier l'email" icon="pi pi-envelope" severity="secondary" [outlined]="true" (onClick)="openEmail()" />
       <p-button label="Modifier le numero" icon="pi pi-phone" severity="secondary" [outlined]="true" (onClick)="openPhone()" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />

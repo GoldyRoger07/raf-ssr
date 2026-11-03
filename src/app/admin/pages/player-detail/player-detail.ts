@@ -133,7 +133,7 @@ export default class PlayerDetail implements OnInit {
         this.messages.add({
           severity: 'success',
           summary: test ? 'Compte marque comme test' : 'Compte de nouveau reel',
-          detail: test ? 'Son activite ne compte plus dans le tableau de bord.' : undefined,
+          detail: test ? 'Il joue gratuitement et sans gain ; son activite ne compte plus.' : undefined,
         });
       },
       error: (error) => {
