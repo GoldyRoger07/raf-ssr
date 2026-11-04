@@ -1,0 +1,41 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">App joueur</h1>
+  <p class="text-sm text-slate-500">
+    Comportements de l'application des joueurs. Enregistre aussitot, trace au journal d'audit.
+  </p>
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (loading()) {
+  <p class="text-sm text-slate-500">Chargement…</p>
+} @else if (config(); as c) {
+  <section class="max-w-3xl rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <i class="pi pi-envelope text-2xl text-violet-600"></i>
+      <div class="flex-1">
+        <h2 class="font-semibold">Rappel de confirmation de l'email</h2>
+        <p class="text-sm text-slate-500">
+          Fenetre « Confirme ton email » affichee toutes les 10 secondes au joueur dont l'email n'est pas confirme.
+        </p>
+      </div>
+      <p-toggleswitch
+        inputId="email-reminder"
+        [ngModel]="c.emailReminderEnabled"
+        [disabled]="saving()"
+        (ngModelChange)="setEmailReminder($event)"
+      />
+      <label for="email-reminder" class="w-16 text-sm font-medium">{{ c.emailReminderEnabled ? 'Active' : 'Coupe' }}</label>
+    </div>
+
+    <div class="px-5 py-4">
+      <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+        <ul class="list-disc space-y-1 pl-5">
+          <li>Coupe, la fenetre ne s'affiche plus ; si elle est ouverte chez un joueur, elle se ferme a la verification suivante (10 secondes au plus).</li>
+          <li>L'email reste obligatoire : sans email confirme, le joueur ne peut toujours pas verifier son telephone ni retirer ses gains.</li>
+          <li>Le joueur peut toujours confirmer son email ou renvoyer le lien depuis son profil.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+}

@@ -19,6 +19,7 @@ import {
   ReconciliationRun,
   RoleName,
   SocialLinks,
+  PlayerAppConfig,
   UserResponse,
   UserStatus,
   BalanceType,
@@ -56,6 +57,14 @@ export class AdminApi {
 
   updateSetting(key: string, value: number): Observable<AppSetting> {
     return this.http.put<AppSetting>(`${this.base}/settings/${encodeURIComponent(key)}`, { value: String(value) });
+  }
+
+  playerApp(): Observable<PlayerAppConfig> {
+    return this.http.get<PlayerAppConfig>(`${this.base}/player-app`);
+  }
+
+  updatePlayerApp(config: PlayerAppConfig): Observable<PlayerAppConfig> {
+    return this.http.put<PlayerAppConfig>(`${this.base}/player-app`, config);
   }
 
   social(): Observable<SocialLinks> {

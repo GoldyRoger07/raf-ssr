@@ -669,3 +669,9 @@ export interface AnnouncementTestResult {
   pushSent: boolean;
   email: string;
 }
+
+/** Comportements de l'app joueur pilotes depuis le back-office (PlayerAppService). */
+export interface PlayerAppConfig {
+  /** Fenetre de rappel de confirmation de l'email, toutes les 10 secondes. */
+  emailReminderEnabled: boolean;
+}
