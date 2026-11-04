@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
 import {
+  Announcement,
+  AnnouncementAudience,
+  AnnouncementAudienceCount,
+  AnnouncementRequest,
+  AnnouncementTestResult,
   AdminGameSession,
   AdminWithdrawal,
   AppSetting,
@@ -246,5 +251,44 @@ export class AdminApi {
     return this.http.post<UserResponse>(`${this.base}/users/${userId}/status`, JSON.stringify(status), {
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  // --- Messages aux joueurs ------------------------------------------------------
+
+  announcements(page = 0, size = 20): Observable<Page<Announcement>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<Announcement>>(`${this.base}/announcements`, { params });
+  }
+
+  announcementAudience(
+    audience: AnnouncementAudience,
+    targetUserId: number | null,
+    includeTest: boolean,
+  ): Observable<AnnouncementAudienceCount> {
+    let params = new HttpParams().set('audience', audience).set('includeTest', includeTest);
+    if (targetUserId !== null) {
+      params = params.set('targetUserId', targetUserId);
+    }
+    return this.http.get<AnnouncementAudienceCount>(`${this.base}/announcements/audience`, { params });
+  }
+
+  createAnnouncement(request: AnnouncementRequest): Observable<Announcement> {
+    return this.http.post<Announcement>(`${this.base}/announcements`, request);
+  }
+
+  cancelAnnouncement(id: number): Observable<Announcement> {
+    return this.http.post<Announcement>(`${this.base}/announcements/${id}/cancel`, {});
+  }
+
+  /** Envoie le message au compte connecte, pour verifier son rendu. */
+  testAnnouncement(request: {
+    popup: boolean;
+    push: boolean;
+    email: boolean;
+    title: string;
+    body: string;
+    linkPath: string | null;
+  }): Observable<AnnouncementTestResult> {
+    return this.http.post<AnnouncementTestResult>(`${this.base}/announcements/test`, request);
   }
 }

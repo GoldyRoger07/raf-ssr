@@ -141,6 +141,12 @@ export default [
             loadComponent: () => import('./pages/deposit-numbers/deposit-numbers'),
           },
           {
+            path: 'messages',
+            title: 'Messages aux joueurs - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/announcements/announcements'),
+          },
+          {
             path: 'reseaux-sociaux',
             title: 'Reseaux sociaux - RAF Admin',
             canActivate: [adminGuard],

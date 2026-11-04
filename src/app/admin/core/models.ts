@@ -590,3 +590,82 @@ export interface MediaFile {
   usages: number;
   createdAt: string;
 }
+
+
+// --- Messages aux joueurs (annonces) ---------------------------------------------
+
+export type AnnouncementAudience = 'ONE_PLAYER' | 'ALL_PLAYERS';
+export type AnnouncementStatus = 'SCHEDULED' | 'SENDING' | 'SENT' | 'CANCELLED';
+
+export interface AnnouncementRequest {
+  audience: AnnouncementAudience;
+  targetUserId: number | null;
+  includeTest: boolean;
+  /** Message de service : passe outre les preferences email / push du joueur. */
+  important: boolean;
+  popup: boolean;
+  push: boolean;
+  email: boolean;
+  title: string;
+  body: string;
+  linkPath: string | null;
+  /** Vide : envoi immediat. */
+  scheduledAt: string | null;
+  /** Vide : 7 jours apres l'envoi. */
+  popupExpiresAt: string | null;
+}
+
+export interface AnnouncementPerson {
+  id: number;
+  name: string | null;
+  email: string | null;
+}
+
+export interface AnnouncementStats {
+  total: number;
+  pending: number;
+  delivered: number;
+  failed: number;
+  skipped: number;
+  emailSent: number;
+  pushSent: number;
+  acknowledged: number;
+  opened: number;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  body: string;
+  linkPath: string | null;
+  audience: AnnouncementAudience;
+  target: AnnouncementPerson | null;
+  includeTest: boolean;
+  important: boolean;
+  popup: boolean;
+  push: boolean;
+  email: boolean;
+  status: AnnouncementStatus;
+  scheduledAt: string;
+  popupExpiresAt: string | null;
+  createdBy: AnnouncementPerson | null;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  stats: AnnouncementStats;
+}
+
+/** Portee d'un envoi : destinataires, dont email verifie et abonnes au push. */
+export interface AnnouncementAudienceCount {
+  total: number;
+  withEmail: number;
+  withPush: number;
+}
+
+export interface AnnouncementTestResult {
+  popup: boolean;
+  emailSent: boolean;
+  pushSent: boolean;
+  email: string;
+}

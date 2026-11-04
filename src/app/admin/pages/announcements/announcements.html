@@ -1,0 +1,351 @@
+<p-confirmdialog />
+
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Messages aux joueurs</h1>
+  <p class="text-sm text-slate-500">
+    Popup dans l'app avec un bouton « J'ai compris », notification push et/ou email. Chaque envoi est trace au journal d'audit.
+  </p>
+</div>
+
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+  <!-- Formulaire -->
+  <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <!-- Destinataires -->
+    <div class="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <h2 class="mb-3 font-semibold">1. Destinataires</h2>
+      <p-selectbutton
+        [options]="audienceOptions()"
+        optionLabel="label"
+        optionValue="value"
+        optionDisabled="disabled"
+        [allowEmpty]="false"
+        [ngModel]="audience()"
+        (ngModelChange)="chooseAudience($event)"
+      />
+      @if (!superAdmin()) {
+        <p class="mt-2 text-xs text-slate-500">L'envoi a tous les joueurs est reserve aux super-administrateurs.</p>
+      }
+
+      @if (audience() === 'ONE_PLAYER') {
+        <div class="mt-4">
+          @if (target(); as t) {
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
+              <div>
+                <a [routerLink]="['/admin/joueurs', t.id]" class="font-medium hover:text-orange-600">{{ t.firstName }} {{ t.lastName }}</a>
+                <div class="text-xs text-slate-500">
+                  {{ t.phone }} - {{ t.email }}
+                  @if (!t.emailVerified) { <span class="text-amber-600">(email non verifie)</span> }
+                </div>
+              </div>
+              <p-button label="Changer" severity="secondary" [text]="true" size="small" (onClick)="target.set(null)" />
+            </div>
+          } @else {
+            <player-search (selected)="target.set($event)" />
+          }
+        </div>
+      } @else {
+        <div class="mt-4 flex items-center gap-3">
+          <p-toggleswitch inputId="includeTest" [ngModel]="includeTest()" (ngModelChange)="includeTest.set($event)" />
+          <label for="includeTest" class="text-sm">Inclure les comptes de test</label>
+        </div>
+        <p class="mt-2 text-xs text-slate-500">
+          Comptes actifs sans role d'equipe. Les destinataires sont figes au depart de l'envoi.
+        </p>
+      }
+
+      @if (counts(); as c) {
+        <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          <span><span class="font-semibold">{{ format(c.total) }}</span> destinataire{{ c.total > 1 ? 's' : '' }}</span>
+          <span class="text-slate-500"><i class="pi pi-envelope mr-1"></i>{{ format(c.withEmail) }} email verifie{{ c.withEmail > 1 ? 's' : '' }}</span>
+          <span class="text-slate-500"><i class="pi pi-bell mr-1"></i>{{ format(c.withPush) }} abonne{{ c.withPush > 1 ? 's' : '' }} au push</span>
+        </div>
+      } @else if (countsLoading()) {
+        <p class="mt-4 text-sm text-slate-500">Calcul des destinataires…</p>
+      }
+    </div>
+
+    <!-- Canaux -->
+    <div class="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <h2 class="mb-3 font-semibold">2. Moyens d'envoi</h2>
+      <div class="grid gap-3 md:grid-cols-3">
+        <label class="flex cursor-pointer gap-3 rounded-lg border p-3" [class]="popup() ? 'border-orange-400 bg-orange-50/60 dark:bg-orange-500/10' : 'border-slate-200 dark:border-slate-700'">
+          <p-toggleswitch [ngModel]="popup()" (ngModelChange)="popup.set($event)" />
+          <span>
+            <span class="block font-medium"><i class="pi pi-window-maximize mr-1"></i>Popup dans l'app</span>
+            <span class="block text-xs text-slate-500">A l'ouverture de l'app, bouton « J'ai compris ».</span>
+          </span>
+        </label>
+        <label class="flex cursor-pointer gap-3 rounded-lg border p-3" [class]="push() ? 'border-orange-400 bg-orange-50/60 dark:bg-orange-500/10' : 'border-slate-200 dark:border-slate-700'">
+          <p-toggleswitch [ngModel]="push()" (ngModelChange)="push.set($event)" />
+          <span>
+            <span class="block font-medium"><i class="pi pi-bell mr-1"></i>Notification push</span>
+            <span class="block text-xs text-slate-500">Sur les appareils abonnes, meme app fermee.</span>
+          </span>
+        </label>
+        <label class="flex cursor-pointer gap-3 rounded-lg border p-3" [class]="email() ? 'border-orange-400 bg-orange-50/60 dark:bg-orange-500/10' : 'border-slate-200 dark:border-slate-700'">
+          <p-toggleswitch [ngModel]="email()" (ngModelChange)="email.set($event)" />
+          <span>
+            <span class="block font-medium"><i class="pi pi-envelope mr-1"></i>Email</span>
+            <span class="block text-xs text-slate-500">Aux seules adresses verifiees.</span>
+          </span>
+        </label>
+      </div>
+      <p class="mt-3 text-xs text-slate-500">
+        Le message est toujours ajoute aux notifications du joueur, dans l'app.
+      </p>
+
+      <div class="mt-4 flex items-start gap-3">
+        <p-toggleswitch inputId="important" [ngModel]="important()" (ngModelChange)="important.set($event)" />
+        <label for="important" class="text-sm">
+          <span class="font-medium">Message important</span>
+          <span class="block text-xs text-slate-500">
+            Compte, argent, securite, interruption de service : envoye par push et email meme au joueur qui a coupe les annonces.
+            A ne pas utiliser pour une promotion.
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Contenu -->
+    <div class="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <h2 class="mb-3 font-semibold">3. Message</h2>
+      <div class="flex flex-col gap-1">
+        <div class="flex justify-between text-sm">
+          <label for="title" class="font-medium">Titre</label>
+          <span class="text-xs text-slate-500">{{ title().length }}/120</span>
+        </div>
+        <input pInputText id="title" maxlength="120" [ngModel]="title()" (ngModelChange)="title.set($event)" placeholder="Ex. Maintenance ce soir" />
+      </div>
+      <div class="mt-4 flex flex-col gap-1">
+        <div class="flex justify-between text-sm">
+          <label for="body" class="font-medium">Message</label>
+          <span class="text-xs text-slate-500">{{ content().length }}/1000</span>
+        </div>
+        <textarea pTextarea id="body" rows="5" maxlength="1000" [ngModel]="content()" (ngModelChange)="content.set($event)"
+          placeholder="Bonjour {prenom}, ..."></textarea>
+        <div class="text-xs text-slate-500">
+          <button type="button" class="font-mono text-orange-600 hover:underline" (click)="insertFirstName()">{{ firstNameVariable }}</button>
+          est remplace par le prenom de chaque joueur.
+        </div>
+      </div>
+      <div class="mt-4 flex flex-col gap-1">
+        <label for="link" class="text-sm font-medium">Lien dans l'app <span class="font-normal text-slate-500">(facultatif)</span></label>
+        <input pInputText id="link" maxlength="255" [ngModel]="linkPath()" (ngModelChange)="linkPath.set($event)" placeholder="/quiz/12" [class.ng-invalid]="linkInvalid()" [class.ng-dirty]="linkInvalid()" />
+        <span class="text-xs" [class]="linkInvalid() ? 'text-red-600' : 'text-slate-500'">
+          Ecran ouvert par le bouton « Voir » du popup, le clic sur le push et le bouton de l'email. Jamais un site externe.
+        </span>
+      </div>
+    </div>
+
+    <!-- Date -->
+    <div class="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <h2 class="mb-3 font-semibold">4. Envoi</h2>
+      <p-selectbutton
+        [options]="whenOptions"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="when()"
+        (ngModelChange)="chooseWhen($event)"
+      />
+      <div class="mt-4 grid gap-4 md:grid-cols-2">
+        @if (when() === 'later') {
+          <div class="flex flex-col gap-1">
+            <label for="scheduledAt" class="text-sm font-medium">Date d'envoi (heure d'Haiti)</label>
+            <input pInputText id="scheduledAt" type="datetime-local" [min]="minLocal()" [ngModel]="scheduledLocal()" (ngModelChange)="scheduledLocal.set($event)" />
+          </div>
+        }
+        @if (popup()) {
+          <div class="flex flex-col gap-1">
+            <label for="popupExpiresAt" class="text-sm font-medium">Popup visible jusqu'au <span class="font-normal text-slate-500">(facultatif)</span></label>
+            <input pInputText id="popupExpiresAt" type="datetime-local" [min]="scheduledLocal() || minLocal()" [ngModel]="popupExpiresLocal()" (ngModelChange)="popupExpiresLocal.set($event)" />
+            <span class="text-xs text-slate-500">Sans date : 7 jours apres l'envoi. Le message reste ensuite dans les notifications.</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-end gap-2 px-5 py-3">
+      @if (problem(); as p) {
+        <span class="mr-auto text-xs text-slate-500">{{ p }}</span>
+      }
+      <p-button label="M'envoyer un test" icon="pi pi-eye" severity="secondary" [outlined]="true" [loading]="testing()" (onClick)="sendTest()" />
+      <p-button
+        [label]="when() === 'later' ? 'Programmer' : 'Envoyer'"
+        [icon]="when() === 'later' ? 'pi pi-clock' : 'pi pi-send'"
+        [disabled]="!!problem()"
+        (onClick)="openConfirm()"
+      />
+    </div>
+  </section>
+
+  <!-- Apercu -->
+  <aside class="flex flex-col gap-4">
+    <h2 class="font-semibold">Apercu</h2>
+
+    @if (popup()) {
+      <div>
+        <div class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">Popup dans l'app</div>
+        <div class="rounded-2xl bg-slate-800/80 p-4">
+          <div class="rounded-xl bg-white p-5 text-slate-900 shadow-lg">
+            <div class="mb-2 flex items-center gap-2">
+              <i class="pi pi-megaphone text-orange-500"></i>
+              <span class="font-semibold">{{ previewTitle() }}</span>
+            </div>
+            <p class="whitespace-pre-line text-sm text-slate-600">{{ previewBody() }}</p>
+            <div class="mt-4 flex justify-end gap-2">
+              @if (linkPath().trim() && !linkInvalid()) {
+                <span class="rounded-lg px-3 py-2 text-sm font-medium text-orange-600">Voir</span>
+              }
+              <span class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white">J'ai compris</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (push()) {
+      <div>
+        <div class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">Notification push</div>
+        <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500 text-sm font-bold text-white">R</div>
+          <div class="min-w-0">
+            <div class="truncate text-sm font-semibold">{{ previewTitle() }}</div>
+            <div class="line-clamp-2 text-xs text-slate-500">{{ previewBody() }}</div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (email()) {
+      <div>
+        <div class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">Email</div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-900 dark:border-slate-700">
+          <div class="mb-2 text-xs text-slate-500">Objet : {{ previewTitle() }} - RAF</div>
+          <div class="mb-2 font-semibold">{{ previewTitle() }}</div>
+          <p class="mb-1">Bonjour {{ target()?.firstName ?? 'Jean' }},</p>
+          <p class="whitespace-pre-line text-slate-600">{{ previewBody() }}</p>
+          @if (linkPath().trim() && !linkInvalid()) {
+            <span class="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-xs text-white">Voir dans RAF</span>
+          }
+        </div>
+      </div>
+    }
+  </aside>
+</div>
+
+<!-- Historique -->
+<div class="mt-10">
+  <h2 class="mb-3 text-lg font-semibold">Messages envoyes et programmes</h2>
+  <p-table
+    [value]="rows()"
+    [lazy]="true"
+    [paginator]="total() > pageSize"
+    [first]="page * pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [loading]="loading()"
+    (onLazyLoad)="onLazyLoad($event)"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Envoi</th>
+        <th>Message</th>
+        <th>Destinataires</th>
+        <th>Moyens</th>
+        <th>Statut</th>
+        <th>Suivi</th>
+        <th class="text-right"></th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-a>
+      <tr>
+        <td class="whitespace-nowrap">
+          <div>{{ a.scheduledAt | haitiDate }}</div>
+          <div class="text-xs text-slate-500">par {{ a.createdBy?.name ?? '—' }}</div>
+        </td>
+        <td class="max-w-xs">
+          <div class="truncate font-medium" [title]="a.title">
+            @if (a.important) { <i class="pi pi-exclamation-circle mr-1 text-amber-600" title="Message important"></i> }
+            {{ a.title }}
+          </div>
+          <div class="truncate text-xs text-slate-500" [title]="a.body">{{ a.body }}</div>
+        </td>
+        <td>
+          @if (a.audience === 'ALL_PLAYERS') {
+            <span class="font-medium">Tous les joueurs</span>
+            @if (a.includeTest) { <div class="text-xs text-slate-500">comptes de test inclus</div> }
+          } @else if (a.target) {
+            <a [routerLink]="['/admin/joueurs', a.target.id]" class="font-medium hover:text-orange-600">{{ a.target.name ?? 'Joueur #' + a.target.id }}</a>
+          }
+        </td>
+        <td class="text-sm">{{ channelsLabel(a) }}</td>
+        <td><p-tag [value]="statusLabel(a.status, a)" [severity]="statusSeverity(a.status)" /></td>
+        <td class="text-xs text-slate-600 dark:text-slate-300">
+          @if (a.stats.total > 0) {
+            <div>{{ format(a.stats.delivered) }}/{{ format(a.stats.total) }} remis
+              @if (a.stats.failed > 0) { <span class="text-red-600">· {{ format(a.stats.failed) }} en echec</span> }
+            </div>
+            @if (a.push) { <div>{{ format(a.stats.pushSent) }} push</div> }
+            @if (a.email) { <div>{{ format(a.stats.emailSent) }} email{{ a.stats.emailSent > 1 ? 's' : '' }}</div> }
+            @if (a.popup) { <div>{{ format(a.stats.acknowledged) }} « J'ai compris »</div> }
+          } @else {
+            <span class="text-slate-400">—</span>
+          }
+        </td>
+        <td class="text-right">
+          @if (canCancel(a)) {
+            <p-button label="Annuler" severity="danger" [text]="true" size="small" (onClick)="cancel(a)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="7" class="py-6 text-center text-sm text-slate-500">Aucun message pour le moment.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Confirmation -->
+<p-dialog
+  [header]="when() === 'later' ? 'Programmer le message' : 'Envoyer le message'"
+  [visible]="confirmOpen()"
+  (visibleChange)="confirmOpen.set($event)"
+  [modal]="true"
+  [style]="{ width: '30rem' }"
+  [draggable]="false"
+>
+  <dl class="mb-4 grid grid-cols-[8rem_1fr] gap-y-2 text-sm">
+    <dt class="text-slate-500">A</dt>
+    <dd class="font-medium">{{ audienceLabel() }}</dd>
+    <dt class="text-slate-500">Par</dt>
+    <dd>{{ channelsLabel({ popup: popup(), push: push(), email: email() }) }}{{ important() ? ' — important' : '' }}</dd>
+    <dt class="text-slate-500">Envoi</dt>
+    <dd>{{ whenLabel() }}</dd>
+    <dt class="text-slate-500">Titre</dt>
+    <dd>{{ title() }}</dd>
+  </dl>
+
+  @if (audience() === 'ALL_PLAYERS') {
+    @if (counts(); as c) {
+      <p-message severity="warn" styleClass="mb-3 w-full">
+        Ce message partira a {{ format(c.total) }} joueurs. Pour confirmer, saisissez ce nombre.
+      </p-message>
+      <input pInputText class="w-full" inputmode="numeric" [(ngModel)]="confirmTyped" [placeholder]="'' + c.total" />
+    } @else {
+      <p class="text-sm text-slate-500">Calcul des destinataires…</p>
+    }
+  }
+
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="confirmOpen.set(false)" />
+    <p-button
+      [label]="when() === 'later' ? 'Programmer' : 'Envoyer'"
+      [icon]="when() === 'later' ? 'pi pi-clock' : 'pi pi-send'"
+      [loading]="sending()"
+      [disabled]="!confirmReady() || !confirmMatches()"
+      (onClick)="send()"
+    />
+  </ng-template>
+</p-dialog>
