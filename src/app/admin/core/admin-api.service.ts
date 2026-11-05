@@ -25,6 +25,8 @@ import {
   BalanceType,
   Dashboard,
   DepositNumbers,
+  PlayerFilters,
+  PlayerSort,
   PlayerSummary,
   ProfitPeriod,
   Wallet,
@@ -85,8 +87,22 @@ export class AdminApi {
     return this.http.put<DepositNumbers>(`${this.base}/deposit-numbers`, numbers);
   }
 
-  searchPlayers(query: string, page = 0, size = 20): Observable<Page<PlayerSummary>> {
-    const params = new HttpParams().set('query', query).set('page', page).set('size', size);
+  searchPlayers(
+    query: string,
+    page = 0,
+    size = 20,
+    filters: PlayerFilters = {},
+    sort?: PlayerSort,
+  ): Observable<Page<PlayerSummary>> {
+    let params = new HttpParams().set('query', query).set('page', page).set('size', size);
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== null && value !== undefined && `${value}` !== '') {
+        params = params.set(key, `${value}`);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<PlayerSummary>>(`${this.base}/players`, { params });
   }
 

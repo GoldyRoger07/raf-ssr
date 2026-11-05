@@ -1,12 +1,60 @@
 <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
     <h1 class="text-2xl font-semibold">Joueurs</h1>
-    <p class="text-sm text-slate-500">{{ total() }} compte(s)</p>
+    <p class="text-sm text-slate-500">
+      {{ total() }} compte(s){{ activeCount ? ' correspondant aux criteres' : '' }}
+    </p>
   </div>
   <p-iconfield class="w-full max-w-md">
     <p-inputicon class="pi pi-search" />
     <input pInputText type="search" class="w-full" [(ngModel)]="query" (input)="onInput()" placeholder="Telephone, email ou nom" />
   </p-iconfield>
+</div>
+
+<div class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex flex-col gap-1">
+    <label for="emailVerified" class="text-xs text-slate-500">Email</label>
+    <p-select inputId="emailVerified" [options]="verifiedOptions" [(ngModel)]="filters.emailVerified" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="phoneVerified" class="text-xs text-slate-500">Telephone</label>
+    <p-select inputId="phoneVerified" [options]="verifiedOptions" [(ngModel)]="filters.phoneVerified" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="hasCredit" class="text-xs text-slate-500">Credits</label>
+    <p-select inputId="hasCredit" [options]="creditOptions" [(ngModel)]="filters.hasCredit" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="hasWinnings" class="text-xs text-slate-500">Gains</label>
+    <p-select inputId="hasWinnings" [options]="winningsOptions" [(ngModel)]="filters.hasWinnings" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="status" class="text-xs text-slate-500">Statut</label>
+    <p-select inputId="status" [options]="statusOptions" [(ngModel)]="filters.status" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-36" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="test" class="text-xs text-slate-500">Comptes de test</label>
+    <p-select inputId="test" [options]="testOptions" [(ngModel)]="filters.test" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Inclus" styleClass="w-56" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="createdFrom" class="text-xs text-slate-500">Inscrit du</label>
+    <input pInputText id="createdFrom" type="date" class="w-40" [(ngModel)]="filters.createdFrom" (change)="apply()"
+      [max]="filters.createdTo ?? ''" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="createdTo" class="text-xs text-slate-500">au</label>
+    <input pInputText id="createdTo" type="date" class="w-40" [(ngModel)]="filters.createdTo" (change)="apply()"
+      [min]="filters.createdFrom ?? ''" />
+  </div>
+  @if (activeCount || sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
 </div>
 
 @if (error(); as message) {
@@ -24,17 +72,19 @@
     [rows]="pageSize"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Joueur</th>
-        <th>Contact</th>
+        <th pSortableColumn="name">Joueur <p-sortIcon field="name" /></th>
+        <th pSortableColumn="email">Contact <p-sortIcon field="email" /></th>
         <th>Verifications</th>
-        <th class="text-right">Credits</th>
-        <th class="text-right">Gains</th>
-        <th>Inscrit le</th>
+        <th pSortableColumn="creditBalance" class="text-right">Credits <p-sortIcon field="creditBalance" /></th>
+        <th pSortableColumn="winningsBalanceHtg" class="text-right">Gains <p-sortIcon field="winningsBalanceHtg" /></th>
+        <th pSortableColumn="createdAt">Inscrit le <p-sortIcon field="createdAt" /></th>
       </tr>
     </ng-template>
     <ng-template #body let-p>
@@ -43,6 +93,9 @@
           <a [routerLink]="['/admin/joueurs', p.id]" class="font-medium hover:text-orange-600">{{ p.firstName }} {{ p.lastName }}</a>
           @if (p.status !== 'ACTIVE') {
             <p-tag class="ml-2" [value]="p.status" severity="danger" />
+          }
+          @if (p.test) {
+            <p-tag class="ml-2" value="Test" severity="warn" />
           }
         </td>
         <td>
@@ -62,7 +115,9 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6" class="py-10 text-center text-slate-500">Aucun joueur.</td>
+        <td colspan="6" class="py-10 text-center text-slate-500">
+          {{ activeCount ? 'Aucun joueur ne correspond a ces criteres.' : 'Aucun joueur.' }}
+        </td>
       </tr>
     </ng-template>
   </p-table>

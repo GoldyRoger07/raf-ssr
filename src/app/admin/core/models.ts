@@ -92,6 +92,30 @@ export interface PlayerSummary {
   createdAt: string;
 }
 
+/** Filtres de la liste des joueurs ; une valeur absente ou nulle ne filtre pas. */
+export interface PlayerFilters {
+  emailVerified?: boolean | null;
+  phoneVerified?: boolean | null;
+  /** true : solde de credits > 0 ; false : a zero. */
+  hasCredit?: boolean | null;
+  /** true : gains a retirer > 0 ; false : a zero. */
+  hasWinnings?: boolean | null;
+  status?: UserStatus | 'DELETED' | null;
+  /** true : comptes de test seulement ; false : hors comptes de test. */
+  test?: boolean | null;
+  /** Jour d'inscription (AAAA-MM-JJ, jour d'Haiti), bornes incluses. */
+  createdFrom?: string | null;
+  createdTo?: string | null;
+}
+
+/** Colonnes triables de la liste des joueurs. */
+export type PlayerSortField = 'name' | 'email' | 'creditBalance' | 'winningsBalanceHtg' | 'createdAt';
+
+export interface PlayerSort {
+  field: PlayerSortField;
+  direction: 'asc' | 'desc';
+}
+
 export type BalanceType = 'CREDIT' | 'WINNINGS';
 export type PaymentProvider = 'MONCASH' | 'NATCASH' | 'MANUAL';
 export type WithdrawalStatus =
