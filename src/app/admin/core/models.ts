@@ -1,6 +1,6 @@
 /** Types des reponses du backend utilisees par le back-office. */
 
-export type RoleName = 'PLAYER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
+export type RoleName = 'PLAYER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN' | 'LEADER';
 
 export interface UserResponse {
   id: number;
@@ -28,7 +28,7 @@ export type ProfitPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH' | 'LAST
 
 /**
  * Resultat du jeu sur une periode (GameProfitResponse), en HTG :
- * resultHtg = salesHtg - refundsHtg - prizesHtg + withdrawalFeesHtg.
+ * resultHtg = salesHtg - refundsHtg - prizesHtg - leaderCommissionsHtg + withdrawalFeesHtg.
  */
 export interface GameProfit {
   period: ProfitPeriod;
@@ -41,6 +41,8 @@ export interface GameProfit {
   refundsCredits: number;
   refundsHtg: number;
   prizesHtg: number;
+  /** Commissions versees aux leaders sur les parties perdues de leurs joueurs. */
+  leaderCommissionsHtg: number;
   withdrawalFeesHtg: number;
   resultHtg: number;
   ticketsSold: number;
@@ -120,6 +122,54 @@ export type PlayerSortField = 'name' | 'email' | 'creditBalance' | 'winningsBala
 export interface PlayerSort {
   field: PlayerSortField;
   direction: 'asc' | 'desc';
+}
+
+// --- Leaders ---------------------------------------------------------------------
+
+/** Un leader : commission en pourcentage (chaine decimale, ex. "2.50") et ce qu'il a touche. */
+export interface LeaderSummary {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  status: string;
+  commissionPercent: number;
+  playerCount: number;
+  commissionsLast30DaysHtg: number;
+  commissionsTotalHtg: number;
+}
+
+/** Joueur rattache a un leader. */
+export interface LeaderPlayer {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  status: string;
+  test: boolean;
+  addedAt: string;
+  /** Commissions que ce joueur a rapportees a ce leader. */
+  commissionsHtg: number;
+  lastPlayedAt?: string | null;
+}
+
+/** Commission versee, une ligne par joueur et par quiz (ou partie solo). */
+export interface LeaderCommission {
+  id: number;
+  playerId: number;
+  playerFirstName: string;
+  playerLastName: string;
+  source: 'QUIZ' | 'SOLO';
+  quizId: number;
+  quizTitle: string;
+  sessionId?: number | null;
+  baseCredits: number;
+  htgRate: number;
+  commissionPercent: number;
+  amountHtg: number;
+  createdAt: string;
 }
 
 export type BalanceType = 'CREDIT' | 'WINNINGS';

@@ -29,6 +29,11 @@ const ROLES: { value: RoleName; label: string; description: string }[] = [
   { value: 'MODERATOR', label: 'Moderateur', description: 'Gere la banque de questions et les categories' },
   { value: 'ADMIN', label: 'Administrateur', description: 'Quiz, retraits, guichet, recharges : acces a l\'argent' },
   { value: 'SUPER_ADMIN', label: 'Super-administrateur', description: 'Tout, y compris les comptes et les roles' },
+  {
+    value: 'LEADER',
+    label: 'Leader',
+    description: 'Joueur qui touche une commission sur ses joueurs (commission et joueurs : ecran Leaders)',
+  },
 ];
 
 /**

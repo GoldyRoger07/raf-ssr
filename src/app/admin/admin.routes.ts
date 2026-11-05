@@ -66,6 +66,18 @@ export default [
             canActivate: [adminGuard],
             loadComponent: () => import('./pages/player-detail/player-detail'),
           },
+          {
+            path: 'leaders',
+            title: 'Leaders - RAF Admin',
+            canActivate: [superAdminGuard],
+            loadComponent: () => import('./pages/leaders/leaders'),
+          },
+          {
+            path: 'leaders/:id',
+            title: 'Leader - RAF Admin',
+            canActivate: [superAdminGuard],
+            loadComponent: () => import('./pages/leader-detail/leader-detail'),
+          },
           // --- Quiz (administrateurs : prix et recompenses engagent de l'argent)
           {
             path: 'quiz',

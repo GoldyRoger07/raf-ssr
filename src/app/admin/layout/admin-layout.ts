@@ -43,6 +43,7 @@ export default class AdminLayout {
     { label: 'Guichet', icon: 'pi pi-money-bill', link: '/admin/guichet', adminOnly: true },
     { label: 'Recharge a distance', icon: 'pi pi-mobile', link: '/admin/recharge-distance', adminOnly: true },
     { label: 'Joueurs', icon: 'pi pi-users', link: '/admin/joueurs', adminOnly: true },
+    { label: 'Leaders', icon: 'pi pi-sitemap', link: '/admin/leaders', superAdminOnly: true },
     { label: 'Quiz', icon: 'pi pi-trophy', link: '/admin/quiz', adminOnly: true, section: 'Jeu' },
     { label: 'Parties signalees', icon: 'pi pi-flag', link: '/admin/parties', adminOnly: true },
     { label: 'Questions', icon: 'pi pi-question-circle', link: '/admin/questions', section: 'Contenu' },

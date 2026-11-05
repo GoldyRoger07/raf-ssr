@@ -1,0 +1,175 @@
+<p-confirmdialog />
+
+<a routerLink="/admin/leaders" class="mb-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600">
+  <i class="pi pi-arrow-left"></i> Leaders
+</a>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+} @else if (leader(); as l) {
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold">{{ l.firstName }} {{ l.lastName }}</h1>
+      <div class="text-sm text-slate-500">{{ l.phone }} - {{ l.email }}</div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <p-tag value="Leader" severity="info" icon="pi pi-sitemap" />
+        @if (l.status !== 'ACTIVE') {
+          <p-tag [value]="l.status + ' : aucune commission tant que le compte n\'est pas actif'" severity="danger" />
+        }
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <p-button label="Fiche joueur" icon="pi pi-user" severity="secondary" [text]="true" [routerLink]="['/admin/joueurs', l.id]" />
+      <p-button label="Historique" icon="pi pi-history" severity="secondary" [text]="true" routerLink="/admin/journal"
+                [queryParams]="{ entityType: 'User', entityId: l.id }" />
+      <p-button label="Retirer le role leader" icon="pi pi-user-minus" severity="danger" [outlined]="true" (onClick)="demote()" />
+    </div>
+  </div>
+
+  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-xs text-slate-500">Commission</div>
+      <div class="mt-1 flex items-center justify-between">
+        <span class="text-2xl font-semibold">{{ l.commissionPercent }} %</span>
+        <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier la commission" (onClick)="openCommission()" />
+      </div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-xs text-slate-500">Joueurs</div>
+      <div class="mt-1 text-2xl font-semibold">{{ l.playerCount }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-xs text-slate-500">Touche ces 30 jours</div>
+      <div class="mt-1 text-2xl font-semibold">{{ l.commissionsLast30DaysHtg | htg }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-xs text-slate-500">Touche au total</div>
+      <div class="mt-1 text-2xl font-semibold">{{ l.commissionsTotalHtg | htg }}</div>
+    </div>
+  </div>
+
+  <p-tabs value="players">
+    <p-tablist>
+      <p-tab value="players">Joueurs ({{ playersTotal() }})</p-tab>
+      <p-tab value="commissions">Commissions ({{ commissionsTotal() }})</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="players">
+        <div class="mb-4 flex flex-wrap items-end gap-3">
+          <div class="flex w-full max-w-md flex-col gap-1">
+            <span class="text-xs text-slate-500">Ajouter un joueur (il ne doit avoir aucun autre leader)</span>
+            <player-search (selected)="addPlayer($event)" />
+          </div>
+          @if (adding()) {
+            <i class="pi pi-spin pi-spinner text-slate-500"></i>
+          }
+        </div>
+
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <p-table [value]="players()" [lazy]="true" [paginator]="playersTotal() > pageSize" [first]="playersPage * pageSize"
+                   [rows]="pageSize" [totalRecords]="playersTotal()" [loading]="playersLoading()"
+                   (onLazyLoad)="onPlayersPage($event)" dataKey="id">
+            <ng-template #header>
+              <tr>
+                <th>Joueur</th>
+                <th>Contact</th>
+                <th>Rattache le</th>
+                <th>Derniere partie</th>
+                <th class="text-right">A rapporte</th>
+                <th></th>
+              </tr>
+            </ng-template>
+            <ng-template #body let-p>
+              <tr>
+                <td>
+                  <a [routerLink]="['/admin/joueurs', p.id]" class="font-medium hover:text-orange-600">{{ p.firstName }} {{ p.lastName }}</a>
+                  @if (p.status !== 'ACTIVE') {
+                    <p-tag class="ml-2" [value]="p.status" severity="danger" />
+                  }
+                  @if (p.test) {
+                    <p-tag class="ml-2" value="Test : ne rapporte rien" severity="warn" />
+                  }
+                </td>
+                <td>
+                  <div>{{ p.phone }}</div>
+                  <div class="text-xs text-slate-500">{{ p.email }}</div>
+                </td>
+                <td class="text-sm text-slate-500">{{ p.addedAt | haitiDate }}</td>
+                <td class="text-sm text-slate-500">{{ p.lastPlayedAt ? (p.lastPlayedAt | haitiDate) : 'Jamais' }}</td>
+                <td class="text-right font-medium">{{ p.commissionsHtg | htg }}</td>
+                <td class="text-right">
+                  <p-button icon="pi pi-user-minus" severity="danger" [text]="true" ariaLabel="Retirer ce joueur"
+                            (onClick)="removePlayer(p)" />
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+              <tr>
+                <td colspan="6" class="py-10 text-center text-slate-500">Aucun joueur : ajoutez-en avec la recherche ci-dessus.</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </p-tabpanel>
+
+      <p-tabpanel value="commissions">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <p-table [value]="commissions()" [lazy]="true" [paginator]="commissionsTotal() > pageSize"
+                   [first]="commissionsPage * pageSize" [rows]="pageSize" [totalRecords]="commissionsTotal()"
+                   [loading]="commissionsLoading()" (onLazyLoad)="onCommissionsPage($event)" dataKey="id">
+            <ng-template #header>
+              <tr>
+                <th>Date</th>
+                <th>Joueur</th>
+                <th>Partie perdue</th>
+                <th class="text-right">Prix paye</th>
+                <th class="text-right">Taux</th>
+                <th class="text-right">Commission</th>
+              </tr>
+            </ng-template>
+            <ng-template #body let-c>
+              <tr>
+                <td class="whitespace-nowrap text-sm text-slate-500">{{ c.createdAt | haitiDate }}</td>
+                <td>
+                  <a [routerLink]="['/admin/joueurs', c.playerId]" class="hover:text-orange-600">{{ c.playerFirstName }} {{ c.playerLastName }}</a>
+                </td>
+                <td>
+                  <a [routerLink]="['/admin/quiz', c.quizId]" class="hover:text-orange-600">{{ c.quizTitle }}</a>
+                  <div class="text-xs text-slate-500">{{ c.source === 'SOLO' ? 'Partie solo' : 'Quiz en groupe (tous ses tickets)' }}</div>
+                </td>
+                <td class="text-right">
+                  {{ c.baseCredits | credits }}
+                  <div class="text-xs text-slate-500">{{ c.baseCredits * c.htgRate | htg }}</div>
+                </td>
+                <td class="text-right">{{ c.commissionPercent }} %</td>
+                <td class="text-right font-medium">{{ c.amountHtg | htg }}</td>
+              </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+              <tr>
+                <td colspan="6" class="py-10 text-center text-slate-500">Aucune commission versee pour l'instant.</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+
+  <p-dialog header="Commission du leader" [visible]="commissionOpen()" (visibleChange)="commissionOpen.set($event)"
+            [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+    <div class="flex flex-col gap-3">
+      <label for="percent" class="text-xs text-slate-500">Pourcentage du prix paye par ses joueurs perdants</label>
+      <p-inputnumber inputId="percent" [(ngModel)]="percent" [min]="0" [max]="100" [minFractionDigits]="0"
+                     [maxFractionDigits]="2" suffix=" %" />
+      <p class="text-xs text-slate-500">Vaut pour les parties a venir ; les commissions deja versees ne changent pas.</p>
+      @if (commissionError(); as message) {
+        <p-message severity="error" [text]="message" />
+      }
+    </div>
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="commissionOpen.set(false)" />
+      <p-button label="Enregistrer" icon="pi pi-check" [loading]="commissionBusy()" (onClick)="saveCommission()" />
+    </ng-template>
+  </p-dialog>
+}

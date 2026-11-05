@@ -1,0 +1,104 @@
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Leaders</h1>
+    <p class="max-w-2xl text-sm text-slate-500">
+      Chaque fois qu'un de leurs joueurs perd, le leader touche sa commission sur le prix paye, en HTG, sur ses gains
+      (retirables). Quiz en groupe : a la cloture, si le joueur n'a rien gagne, sur tous ses tickets. Solo : sur chaque
+      partie sans sans-faute.
+    </p>
+  </div>
+  <div class="flex flex-wrap items-center gap-3">
+    <p-iconfield class="w-72">
+      <p-inputicon class="pi pi-search" />
+      <input pInputText type="search" class="w-full" [(ngModel)]="query" (input)="onInput()" placeholder="Telephone, email ou nom" />
+    </p-iconfield>
+    <p-button label="Nommer un leader" icon="pi pi-plus" (onClick)="openPromote()" />
+  </div>
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4" [text]="message" />
+}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <p-table
+    [value]="rows()"
+    [lazy]="true"
+    [paginator]="total() > pageSize"
+    [first]="page * pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [loading]="loading()"
+    (onLazyLoad)="onLazyLoad($event)"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Leader</th>
+        <th>Contact</th>
+        <th class="text-right">Commission</th>
+        <th class="text-right">Joueurs</th>
+        <th class="text-right">Touche (30 j)</th>
+        <th class="text-right">Touche (total)</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-l>
+      <tr>
+        <td>
+          <a [routerLink]="['/admin/leaders', l.id]" class="font-medium hover:text-orange-600">{{ l.firstName }} {{ l.lastName }}</a>
+          @if (l.status !== 'ACTIVE') {
+            <p-tag class="ml-2" [value]="l.status" severity="danger" />
+          }
+        </td>
+        <td>
+          <div>{{ l.phone }}</div>
+          <div class="text-xs text-slate-500">{{ l.email }}</div>
+        </td>
+        <td class="text-right font-medium">{{ l.commissionPercent }} %</td>
+        <td class="text-right">{{ l.playerCount }}</td>
+        <td class="text-right">{{ l.commissionsLast30DaysHtg | htg }}</td>
+        <td class="text-right font-medium">{{ l.commissionsTotalHtg | htg }}</td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="py-10 text-center text-slate-500">
+          {{ query.trim() ? 'Aucun leader ne correspond.' : 'Aucun leader pour l\'instant.' }}
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog header="Nommer un leader" [visible]="promoteOpen()" (visibleChange)="promoteOpen.set($event)" [modal]="true"
+          [style]="{ width: '32rem' }" [draggable]="false">
+  <div class="flex flex-col gap-4">
+    @if (candidate(); as c) {
+      <div class="flex items-center justify-between rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div>
+          <div class="font-medium">{{ c.firstName }} {{ c.lastName }}</div>
+          <div class="text-xs text-slate-500">{{ c.phone }} - {{ c.email }}</div>
+        </div>
+        <p-button icon="pi pi-times" severity="secondary" [text]="true" ariaLabel="Changer de joueur" (onClick)="candidate.set(null)" />
+      </div>
+    } @else {
+      <div class="flex flex-col gap-1">
+        <span class="text-xs text-slate-500">Joueur</span>
+        <player-search (selected)="candidate.set($event)" />
+      </div>
+    }
+    <div class="flex flex-col gap-1">
+      <label for="percent" class="text-xs text-slate-500">Commission (% du prix paye par ses joueurs perdants)</label>
+      <p-inputnumber inputId="percent" [(ngModel)]="percent" [min]="0" [max]="100" [minFractionDigits]="0"
+                     [maxFractionDigits]="2" suffix=" %" placeholder="Ex. 10 %" />
+    </div>
+    @if (promoteError(); as message) {
+      <p-message severity="error" [text]="message" />
+    }
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="promoteOpen.set(false)" />
+    <p-button label="Nommer leader" icon="pi pi-check" [loading]="busy()" [disabled]="!candidate() || percent === null"
+              (onClick)="promote()" />
+  </ng-template>
+</p-dialog>

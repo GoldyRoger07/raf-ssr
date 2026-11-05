@@ -23,6 +23,7 @@ export const TRANSACTION_TYPE: Record<string, string> = {
   TICKET_PURCHASE: 'Achat de ticket',
   SOLO_ENTRY: 'Partie solo',
   PRIZE: 'Gain',
+  COMMISSION: 'Commission leader',
   WITHDRAWAL: 'Retrait',
   REFUND: 'Remboursement',
   ADJUSTMENT: 'Ajustement',

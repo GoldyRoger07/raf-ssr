@@ -25,6 +25,9 @@ import {
   BalanceType,
   Dashboard,
   DepositNumbers,
+  LeaderCommission,
+  LeaderPlayer,
+  LeaderSummary,
   PlayerFilters,
   PlayerSort,
   PlayerSummary,
@@ -104,6 +107,49 @@ export class AdminApi {
       params = params.set('sort', `${sort.field},${sort.direction}`);
     }
     return this.http.get<Page<PlayerSummary>>(`${this.base}/players`, { params });
+  }
+
+  // --- Leaders (super-administrateur) ---------------------------------------------
+
+  leaders(query: string, page = 0, size = 20): Observable<Page<LeaderSummary>> {
+    const params = new HttpParams().set('query', query).set('page', page).set('size', size);
+    return this.http.get<Page<LeaderSummary>>(`${this.base}/leaders`, { params });
+  }
+
+  leader(id: number): Observable<LeaderSummary> {
+    return this.http.get<LeaderSummary>(`${this.base}/leaders/${id}`);
+  }
+
+  /** Nomme leader un compte joueur. */
+  promoteLeader(userId: number, commissionPercent: number): Observable<LeaderSummary> {
+    return this.http.post<LeaderSummary>(`${this.base}/leaders`, { userId, commissionPercent });
+  }
+
+  /** Retire le role leader : ses joueurs sont detaches. */
+  demoteLeader(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/leaders/${id}`);
+  }
+
+  setLeaderCommission(id: number, commissionPercent: number): Observable<LeaderSummary> {
+    return this.http.put<LeaderSummary>(`${this.base}/leaders/${id}/commission`, { commissionPercent });
+  }
+
+  leaderPlayers(id: number, page = 0, size = 20): Observable<Page<LeaderPlayer>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<LeaderPlayer>>(`${this.base}/leaders/${id}/players`, { params });
+  }
+
+  addLeaderPlayer(id: number, playerId: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/leaders/${id}/players`, { playerId });
+  }
+
+  removeLeaderPlayer(id: number, playerId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/leaders/${id}/players/${playerId}`);
+  }
+
+  leaderCommissions(id: number, page = 0, size = 20): Observable<Page<LeaderCommission>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<LeaderCommission>>(`${this.base}/leaders/${id}/commissions`, { params });
   }
 
   player(id: number): Observable<PlayerSummary> {
