@@ -24,6 +24,7 @@ export const TRANSACTION_TYPE: Record<string, string> = {
   SOLO_ENTRY: 'Partie solo',
   PRIZE: 'Gain',
   COMMISSION: 'Commission leader',
+  INVITE_BONUS: "Bonus d'invitation",
   WITHDRAWAL: 'Retrait',
   REFUND: 'Remboursement',
   ADJUSTMENT: 'Ajustement',

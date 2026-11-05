@@ -124,6 +124,10 @@
               <td class="py-2 text-right font-medium">− {{ p.leaderCommissionsHtg | htg }}</td>
             </tr>
             <tr class="border-b border-slate-100 dark:border-slate-800">
+              <td class="py-2">Credits offerts <span class="text-slate-500">(bonus d'invitation des leaders, {{ p.inviteBonusesCredits | credits }})</span></td>
+              <td class="py-2 text-right font-medium">− {{ p.inviteBonusesHtg | htg }}</td>
+            </tr>
+            <tr class="border-b border-slate-100 dark:border-slate-800">
               <td class="py-2">Frais de retrait <span class="text-slate-500">(retraits verses)</span></td>
               <td class="py-2 text-right font-medium">+ {{ p.withdrawalFeesHtg | htg }}</td>
             </tr>

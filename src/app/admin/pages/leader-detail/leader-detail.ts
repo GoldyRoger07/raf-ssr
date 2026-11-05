@@ -70,6 +70,12 @@ export default class LeaderDetail {
   protected readonly commissionBusy = signal(false);
   protected readonly commissionError = signal<string | null>(null);
 
+  // Bonus d'inscription
+  protected readonly bonusOpen = signal(false);
+  protected bonusCredits: number | null = null;
+  protected readonly bonusBusy = signal(false);
+  protected readonly bonusError = signal<string | null>(null);
+
   protected readonly adding = signal(false);
 
   constructor() {
@@ -105,6 +111,37 @@ export default class LeaderDetail {
       error: (error) => {
         this.commissionBusy.set(false);
         this.commissionError.set(errorMessage(error));
+      },
+    });
+  }
+
+  protected openBonus(): void {
+    this.bonusCredits = this.leader()?.signupBonusCredits ?? 0;
+    this.bonusError.set(null);
+    this.bonusOpen.set(true);
+  }
+
+  protected saveBonus(): void {
+    if (this.bonusCredits === null) {
+      this.bonusError.set('Indiquez un nombre de credits (0 pour aucun bonus).');
+      return;
+    }
+    this.bonusBusy.set(true);
+    this.bonusError.set(null);
+    this.api.setLeaderSignupBonus(this.id, this.bonusCredits).subscribe({
+      next: (leader) => {
+        this.leader.set(leader);
+        this.bonusBusy.set(false);
+        this.bonusOpen.set(false);
+        this.messages.add({
+          severity: 'success',
+          summary: "Bonus d'inscription mis a jour",
+          detail: `${leader.signupBonusCredits} credits pour les prochains inscrits ; le bonus deja promis aux inscrits ne change pas.`,
+        });
+      },
+      error: (error) => {
+        this.bonusBusy.set(false);
+        this.bonusError.set(errorMessage(error));
       },
     });
   }

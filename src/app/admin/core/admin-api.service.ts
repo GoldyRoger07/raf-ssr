@@ -134,6 +134,11 @@ export class AdminApi {
     return this.http.put<LeaderSummary>(`${this.base}/leaders/${id}/commission`, { commissionPercent });
   }
 
+  /** Bonus offert aux joueurs qui s'inscriront avec le lien de ce leader. */
+  setLeaderSignupBonus(id: number, signupBonusCredits: number): Observable<LeaderSummary> {
+    return this.http.put<LeaderSummary>(`${this.base}/leaders/${id}/signup-bonus`, { signupBonusCredits });
+  }
+
   leaderPlayers(id: number, page = 0, size = 20): Observable<Page<LeaderPlayer>> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<Page<LeaderPlayer>>(`${this.base}/leaders/${id}/players`, { params });

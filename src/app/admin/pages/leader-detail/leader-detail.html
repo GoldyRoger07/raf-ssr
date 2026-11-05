@@ -26,12 +26,19 @@
     </div>
   </div>
 
-  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
     <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div class="text-xs text-slate-500">Commission</div>
       <div class="mt-1 flex items-center justify-between">
         <span class="text-2xl font-semibold">{{ l.commissionPercent }} %</span>
         <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier la commission" (onClick)="openCommission()" />
+      </div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-xs text-slate-500">Bonus par invitation</div>
+      <div class="mt-1 flex items-center justify-between">
+        <span class="text-2xl font-semibold">{{ l.signupBonusCredits | credits }}</span>
+        <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier le bonus d'inscription" (onClick)="openBonus()" />
       </div>
     </div>
     <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
@@ -57,7 +64,7 @@
       <p-tabpanel value="players">
         <div class="mb-4 flex flex-wrap items-end gap-3">
           <div class="flex w-full max-w-md flex-col gap-1">
-            <span class="text-xs text-slate-500">Ajouter un joueur (il ne doit avoir aucun autre leader)</span>
+            <span class="text-xs text-slate-500">Ajouter un joueur (il ne doit avoir aucun autre leader). Les joueurs inscrits avec le lien d'invitation du leader sont ajoutes automatiquement.</span>
             <player-search (selected)="addPlayer($event)" />
           </div>
           @if (adding()) {
@@ -74,6 +81,7 @@
                 <th>Joueur</th>
                 <th>Contact</th>
                 <th>Rattache le</th>
+                <th>Bonus d'invitation</th>
                 <th>Derniere partie</th>
                 <th class="text-right">A rapporte</th>
                 <th></th>
@@ -94,7 +102,21 @@
                   <div>{{ p.phone }}</div>
                   <div class="text-xs text-slate-500">{{ p.email }}</div>
                 </td>
-                <td class="text-sm text-slate-500">{{ p.addedAt | haitiDate }}</td>
+                <td class="text-sm text-slate-500">
+                  {{ p.addedAt | haitiDate }}
+                  <div class="text-xs">{{ p.viaInvite ? 'Par son lien' : 'Par un administrateur' }}</div>
+                </td>
+                <td class="text-sm">
+                  @if (!p.viaInvite || p.signupBonusCredits === 0) {
+                    <span class="text-slate-400">-</span>
+                  } @else if (p.bonusPaidAt) {
+                    <p-tag [value]="(p.signupBonusCredits | credits) + ' verses'" severity="success" />
+                    <div class="text-xs text-slate-500">{{ p.bonusPaidAt | haitiDate }}</div>
+                  } @else {
+                    <p-tag [value]="(p.signupBonusCredits | credits) + ' en attente'" severity="warn" />
+                    <div class="text-xs text-slate-500">Verse quand son email sera confirme</div>
+                  }
+                </td>
                 <td class="text-sm text-slate-500">{{ p.lastPlayedAt ? (p.lastPlayedAt | haitiDate) : 'Jamais' }}</td>
                 <td class="text-right font-medium">{{ p.commissionsHtg | htg }}</td>
                 <td class="text-right">
@@ -105,7 +127,7 @@
             </ng-template>
             <ng-template #emptymessage>
               <tr>
-                <td colspan="6" class="py-10 text-center text-slate-500">Aucun joueur : ajoutez-en avec la recherche ci-dessus.</td>
+                <td colspan="7" class="py-10 text-center text-slate-500">Aucun joueur : ajoutez-en avec la recherche ci-dessus.</td>
               </tr>
             </ng-template>
           </p-table>
@@ -170,6 +192,25 @@
     <ng-template #footer>
       <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="commissionOpen.set(false)" />
       <p-button label="Enregistrer" icon="pi pi-check" [loading]="commissionBusy()" (onClick)="saveCommission()" />
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog header="Bonus d'inscription" [visible]="bonusOpen()" (visibleChange)="bonusOpen.set($event)"
+            [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+    <div class="flex flex-col gap-3">
+      <label for="bonus" class="text-xs text-slate-500">Credits offerts a chaque joueur inscrit avec le lien d'invitation de ce leader</label>
+      <p-inputnumber inputId="bonus" [(ngModel)]="bonusCredits" [min]="0" [max]="100000" [useGrouping]="true" suffix=" credits" />
+      <p class="text-xs text-slate-500">
+        Offerts par la plateforme, verses une seule fois des que le nouvel inscrit confirme son email.
+        Vaut pour les inscriptions a venir ; 0 = aucun bonus.
+      </p>
+      @if (bonusError(); as message) {
+        <p-message severity="error" [text]="message" />
+      }
+    </div>
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="bonusOpen.set(false)" />
+      <p-button label="Enregistrer" icon="pi pi-check" [loading]="bonusBusy()" (onClick)="saveBonus()" />
     </ng-template>
   </p-dialog>
 }

@@ -28,7 +28,7 @@ export type ProfitPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH' | 'LAST
 
 /**
  * Resultat du jeu sur une periode (GameProfitResponse), en HTG :
- * resultHtg = salesHtg - refundsHtg - prizesHtg - leaderCommissionsHtg + withdrawalFeesHtg.
+ * resultHtg = salesHtg - refundsHtg - prizesHtg - leaderCommissionsHtg - inviteBonusesHtg + withdrawalFeesHtg.
  */
 export interface GameProfit {
   period: ProfitPeriod;
@@ -43,6 +43,9 @@ export interface GameProfit {
   prizesHtg: number;
   /** Commissions versees aux leaders sur les parties perdues de leurs joueurs. */
   leaderCommissionsHtg: number;
+  /** Credits offerts aux joueurs inscrits avec le lien d'un leader, et leur valeur en HTG. */
+  inviteBonusesCredits: number;
+  inviteBonusesHtg: number;
   withdrawalFeesHtg: number;
   resultHtg: number;
   ticketsSold: number;
@@ -135,6 +138,8 @@ export interface LeaderSummary {
   phone: string;
   status: string;
   commissionPercent: number;
+  /** Credits offerts a chaque joueur inscrit avec son lien, des qu'il confirme son email. */
+  signupBonusCredits: number;
   playerCount: number;
   commissionsLast30DaysHtg: number;
   commissionsTotalHtg: number;
@@ -150,6 +155,12 @@ export interface LeaderPlayer {
   status: string;
   test: boolean;
   addedAt: string;
+  /** Inscrit avec le lien d'invitation du leader (et non ajoute par un administrateur). */
+  viaInvite: boolean;
+  /** Bonus promis a l'inscription, 0 si aucun. */
+  signupBonusCredits: number;
+  /** Versement du bonus, null tant que l'email n'est pas confirme. */
+  bonusPaidAt?: string | null;
   /** Commissions que ce joueur a rapportees a ce leader. */
   commissionsHtg: number;
   lastPlayedAt?: string | null;
