@@ -15,13 +15,14 @@ import { Subject, debounceTime } from 'rxjs';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
-import { PlayerFilters, PlayerSort, PlayerSortField, PlayerSummary } from '../../core/models';
+import { PlayerActivity, PlayerFilters, PlayerSort, PlayerSortField, PlayerSummary } from '../../core/models';
 
 const PAGE_SIZE = 20;
 
 const SORT_FIELDS: PlayerSortField[] = ['name', 'email', 'creditBalance', 'winningsBalanceHtg', 'createdAt'];
-const BOOLEAN_FILTERS = ['emailVerified', 'phoneVerified', 'hasCredit', 'hasWinnings', 'test'] as const;
+const BOOLEAN_FILTERS = ['emailVerified', 'phoneVerified', 'hasCredit', 'hasWinnings', 'test', 'hasToppedUp'] as const;
 const STATUSES: string[] = ['ACTIVE', 'SUSPENDED', 'BANNED', 'DELETED'];
+const ACTIVITIES: string[] = ['LAST_7_DAYS', 'LAST_30_DAYS', 'INACTIVE_30_DAYS', 'NEVER'];
 
 interface Option<T> {
   label: string;
@@ -85,6 +86,16 @@ export default class Players {
     { label: 'Suspendu', value: 'SUSPENDED' },
     { label: 'Banni', value: 'BANNED' },
     { label: 'Supprime', value: 'DELETED' },
+  ];
+  protected readonly topUpOptions: Option<boolean>[] = [
+    { label: 'A deja recharge', value: true },
+    { label: "N'a jamais recharge", value: false },
+  ];
+  protected readonly activityOptions: Option<PlayerActivity>[] = [
+    { label: 'A joue ces 7 derniers jours', value: 'LAST_7_DAYS' },
+    { label: 'A joue ces 30 derniers jours', value: 'LAST_30_DAYS' },
+    { label: 'Inactif depuis 30 jours', value: 'INACTIVE_30_DAYS' },
+    { label: "N'a jamais joue", value: 'NEVER' },
   ];
   protected readonly testOptions: Option<boolean>[] = [
     { label: 'Hors comptes de test', value: false },
@@ -165,6 +176,9 @@ export default class Players {
     }
     if (STATUSES.includes(params['status'])) {
       filters.status = params['status'];
+    }
+    if (ACTIVITIES.includes(params['activity'])) {
+      filters.activity = params['activity'];
     }
     for (const key of ['createdFrom', 'createdTo'] as const) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(params[key] ?? '')) {

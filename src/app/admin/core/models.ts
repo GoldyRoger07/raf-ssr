@@ -106,7 +106,13 @@ export interface PlayerFilters {
   /** Jour d'inscription (AAAA-MM-JJ, jour d'Haiti), bornes incluses. */
   createdFrom?: string | null;
   createdTo?: string | null;
+  /** true : au moins une recharge confirmee ; false : aucune. */
+  hasToppedUp?: boolean | null;
+  activity?: PlayerActivity | null;
 }
+
+/** Activite de jeu, d'apres les parties commencees. */
+export type PlayerActivity = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'INACTIVE_30_DAYS' | 'NEVER';
 
 /** Colonnes triables de la liste des joueurs. */
 export type PlayerSortField = 'name' | 'email' | 'creditBalance' | 'winningsBalanceHtg' | 'createdAt';

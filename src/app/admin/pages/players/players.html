@@ -33,6 +33,16 @@
       [showClear]="true" placeholder="Tous" styleClass="w-40" />
   </div>
   <div class="flex flex-col gap-1">
+    <label for="hasToppedUp" class="text-xs text-slate-500">Recharges</label>
+    <p-select inputId="hasToppedUp" [options]="topUpOptions" [(ngModel)]="filters.hasToppedUp" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-48" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="activity" class="text-xs text-slate-500">Activite de jeu</label>
+    <p-select inputId="activity" [options]="activityOptions" [(ngModel)]="filters.activity" (ngModelChange)="apply()"
+      [showClear]="true" placeholder="Toutes" styleClass="w-60" />
+  </div>
+  <div class="flex flex-col gap-1">
     <label for="status" class="text-xs text-slate-500">Statut</label>
     <p-select inputId="status" [options]="statusOptions" [(ngModel)]="filters.status" (ngModelChange)="apply()"
       [showClear]="true" placeholder="Tous" styleClass="w-36" />
