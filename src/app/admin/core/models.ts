@@ -127,6 +127,31 @@ export interface PlayerSort {
   direction: 'asc' | 'desc';
 }
 
+// --- Actualites -------------------------------------------------------------------
+
+/** Actualite de l'onglet Actualite de l'app joueur. */
+export interface News {
+  id: number;
+  title: string;
+  body: string;
+  mediaId: number | null;
+  imageUrl: string | null;
+  pinned: boolean;
+  published: boolean;
+  /** Premiere publication, null pour un brouillon jamais publie. */
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsRequest {
+  title: string;
+  body: string;
+  mediaId: number | null;
+  pinned: boolean;
+  published: boolean;
+}
+
 // --- Leaders ---------------------------------------------------------------------
 
 /** Un leader : commission en pourcentage (chaine decimale, ex. "2.50") et ce qu'il a touche. */

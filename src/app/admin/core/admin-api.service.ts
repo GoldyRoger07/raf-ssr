@@ -26,6 +26,8 @@ import {
   Dashboard,
   DepositNumbers,
   LeaderCommission,
+  News,
+  NewsRequest,
   LeaderPlayer,
   LeaderSummary,
   PlayerFilters,
@@ -107,6 +109,25 @@ export class AdminApi {
       params = params.set('sort', `${sort.field},${sort.direction}`);
     }
     return this.http.get<Page<PlayerSummary>>(`${this.base}/players`, { params });
+  }
+
+  // --- Actualites de l'app joueur --------------------------------------------------
+
+  newsList(page = 0, size = 20): Observable<Page<News>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<News>>(`${this.base}/news`, { params });
+  }
+
+  createNews(request: NewsRequest): Observable<News> {
+    return this.http.post<News>(`${this.base}/news`, request);
+  }
+
+  updateNews(id: number, request: NewsRequest): Observable<News> {
+    return this.http.put<News>(`${this.base}/news/${id}`, request);
+  }
+
+  deleteNews(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/news/${id}`);
   }
 
   // --- Leaders (super-administrateur) ---------------------------------------------

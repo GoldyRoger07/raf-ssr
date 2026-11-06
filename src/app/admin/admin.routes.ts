@@ -159,6 +159,12 @@ export default [
             loadComponent: () => import('./pages/announcements/announcements'),
           },
           {
+            path: 'actualites',
+            title: 'Actualites - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/news/news'),
+          },
+          {
             path: 'app-joueur',
             title: 'App joueur - RAF Admin',
             canActivate: [adminGuard],

@@ -1,0 +1,103 @@
+<p-confirmdialog />
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Actualites</h1>
+    <p class="text-sm text-slate-500">
+      Affichees dans l'onglet Actualite de l'accueil de l'app joueur, epinglees d'abord puis de la plus recente a la plus ancienne.
+    </p>
+  </div>
+  <p-button label="Nouvelle actualite" icon="pi pi-plus" (onClick)="create()" />
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" />
+}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <p-table [value]="rows()" [lazy]="true" [paginator]="total() > pageSize" [first]="page * pageSize" [rows]="pageSize"
+           [totalRecords]="total()" [loading]="loading()" (onLazyLoad)="onPage($event)" dataKey="id">
+    <ng-template #header>
+      <tr>
+        <th>Actualite</th>
+        <th>Etat</th>
+        <th>Publiee le</th>
+        <th>Modifiee le</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-n>
+      <tr>
+        <td>
+          <div class="flex items-center gap-3">
+            @if (n.imageUrl) {
+              <img [src]="n.imageUrl" alt="" class="h-12 w-20 flex-none rounded object-cover" />
+            }
+            <div class="min-w-0">
+              <button type="button" class="text-left font-medium hover:text-orange-600" (click)="edit(n)">{{ n.title }}</button>
+              <div class="line-clamp-1 max-w-xl text-xs text-slate-500">{{ n.body }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="flex flex-wrap gap-1">
+            @if (n.published) {
+              <p-tag value="Publiee" severity="success" />
+            } @else {
+              <p-tag value="Brouillon" severity="secondary" />
+            }
+            @if (n.pinned) {
+              <p-tag value="Epinglee" severity="info" icon="pi pi-thumbtack" />
+            }
+          </div>
+        </td>
+        <td class="whitespace-nowrap text-sm text-slate-500">{{ n.publishedAt ? (n.publishedAt | haitiDate) : '-' }}</td>
+        <td class="whitespace-nowrap text-sm text-slate-500">{{ n.updatedAt | haitiDate }}</td>
+        <td class="whitespace-nowrap text-right">
+          <p-button [icon]="n.published ? 'pi pi-eye-slash' : 'pi pi-send'" severity="secondary" [text]="true"
+                    [ariaLabel]="n.published ? 'Repasser en brouillon' : 'Publier'" (onClick)="togglePublished(n)" />
+          <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier" (onClick)="edit(n)" />
+          <p-button icon="pi pi-trash" severity="danger" [text]="true" ariaLabel="Supprimer" (onClick)="remove(n)" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="5" class="py-10 text-center text-slate-500">Aucune actualite : creez la premiere avec « Nouvelle actualite ».</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog [header]="editing() ? 'Modifier l\'actualite' : 'Nouvelle actualite'" [visible]="editorOpen()"
+          (visibleChange)="editorOpen.set($event)" [modal]="true" [style]="{ width: '40rem' }" [draggable]="false">
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-1">
+      <label for="news-title" class="text-xs text-slate-500">Titre</label>
+      <input pInputText id="news-title" [(ngModel)]="newsTitle" maxlength="140" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="news-body" class="text-xs text-slate-500">Texte ({{ newsBody.length }} / 5000)</label>
+      <textarea pTextarea id="news-body" rows="8" maxlength="5000" [(ngModel)]="newsBody"></textarea>
+    </div>
+    <div class="flex flex-col gap-1">
+      <span class="text-xs text-slate-500">Image (facultative)</span>
+      <media-picker [(ngModel)]="mediaId" folder="actualites" hint="Format 16/9 conseille, ex. 1280 x 720." />
+    </div>
+    <label class="flex items-center gap-3">
+      <p-toggleswitch [(ngModel)]="published" />
+      <span>Publiee <span class="text-xs text-slate-500">(sinon brouillon, invisible des joueurs)</span></span>
+    </label>
+    <label class="flex items-center gap-3">
+      <p-toggleswitch [(ngModel)]="pinned" />
+      <span>Epinglee <span class="text-xs text-slate-500">(affichee en tete du fil, marquee « A la une »)</span></span>
+    </label>
+    @if (formError(); as message) {
+      <p-message severity="error" [text]="message" />
+    }
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="editorOpen.set(false)" />
+    <p-button label="Enregistrer" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>

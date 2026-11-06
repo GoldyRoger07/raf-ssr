@@ -56,6 +56,7 @@ export default class AdminLayout {
     { label: 'Comptes et roles', icon: 'pi pi-shield', link: '/admin/comptes', superAdminOnly: true },
     { label: 'Parametres', icon: 'pi pi-sliders-h', link: '/admin/parametres', superAdminOnly: true },
     { label: 'Messages aux joueurs', icon: 'pi pi-megaphone', link: '/admin/messages', adminOnly: true, section: 'Communication' },
+    { label: 'Actualites', icon: 'pi pi-book', link: '/admin/actualites', adminOnly: true },
     { label: 'App joueur', icon: 'pi pi-mobile', link: '/admin/app-joueur', adminOnly: true },
     { label: 'Reseaux sociaux', icon: 'pi pi-instagram', link: '/admin/reseaux-sociaux', adminOnly: true },
   ];
