@@ -35,6 +35,8 @@ import {
   PlayerSort,
   PlayerSummary,
   ProfitPeriod,
+  TopUpResult,
+  TopUpRetentionView,
   Wallet,
   WalletTransaction,
   Withdrawal,
@@ -201,8 +203,21 @@ export class AdminApi {
     });
   }
 
-  manualTopUp(userId: number, amountHtg: number, reference: string, note: string | null): Observable<unknown> {
-    return this.http.post(`${this.base}/wallet/topups/manual`, { userId, amountHtg, reference, note });
+  manualTopUp(userId: number, amountHtg: number, reference: string, note: string | null): Observable<TopUpResult> {
+    return this.http.post<TopUpResult>(`${this.base}/wallet/topups/manual`, { userId, amountHtg, reference, note });
+  }
+
+  /** Retenue de recharge d'un joueur : solde et derniers mouvements. */
+  retention(userId: number): Observable<TopUpRetentionView> {
+    return this.http.get<TopUpRetentionView>(`${this.base}/wallet/users/${userId}/retention`);
+  }
+
+  /** Correction tracee de la retenue : montant signe en HTG, motif obligatoire. */
+  adjustRetention(userId: number, amountHtg: number, reason: string): Observable<TopUpRetentionView> {
+    return this.http.post<TopUpRetentionView>(`${this.base}/wallet/users/${userId}/retention/adjust`, {
+      amountHtg,
+      reason,
+    });
   }
 
   adjust(userId: number, balanceType: BalanceType, amount: number, reason: string): Observable<unknown> {

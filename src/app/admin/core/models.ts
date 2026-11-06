@@ -462,6 +462,40 @@ export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 /** Origine d'une question : saisie, import CSV ou generation par IA. */
 export type QuestionSource = 'MANUAL' | 'IMPORT' | 'AI';
 
+// --- Retenue de recharge ---------------------------------------------------------
+
+/** KEPT : reste d'une recharge ; USED : reprise par une recharge ; ADJUSTMENT : correction. */
+export type RetentionReason = 'KEPT' | 'USED' | 'ADJUSTMENT';
+
+export interface TopUpRetentionEntry {
+  id: number;
+  /** Signe : positif mis de cote, negatif repris ou retire. */
+  amountHtg: number;
+  balanceAfterHtg: number;
+  reason: RetentionReason;
+  topUpRequestId: number | null;
+  adminId: number | null;
+  note: string | null;
+  createdAt: string;
+}
+
+/** Gourdes de recharge d'un joueur qui ne formaient pas un credit entier. */
+export interface TopUpRetentionView {
+  balanceHtg: number;
+  htgRate: number;
+  entries: TopUpRetentionEntry[];
+}
+
+/** Recharge enregistree, avec le detail de la conversion. */
+export interface TopUpResult {
+  id: number;
+  amountHtg: number;
+  credits: number;
+  htgRate: number | null;
+  retentionUsedHtg: number;
+  retentionKeptHtg: number;
+}
+
 // --- Activite des quiz solo ------------------------------------------------------
 
 export type SoloStatsPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'ALL_TIME';

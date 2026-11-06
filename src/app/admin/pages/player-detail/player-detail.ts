@@ -17,7 +17,20 @@ import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { TRANSACTION_TYPE, providerLabel, withdrawalStatus } from '../../core/labels';
-import { AdminWithdrawal, BalanceType, PlayerSummary, WalletTransaction } from '../../core/models';
+import {
+  AdminWithdrawal,
+  BalanceType,
+  PlayerSummary,
+  RetentionReason,
+  TopUpRetentionView,
+  WalletTransaction,
+} from '../../core/models';
+
+const RETENTION_REASON: Record<RetentionReason, string> = {
+  KEPT: 'Reste d\'une recharge',
+  USED: 'Reprise par une recharge',
+  ADJUSTMENT: 'Correction',
+};
 
 /** « 3712 3456 » -> « +50937123456 » ; un numero deja international est garde. */
 function normalizePhone(raw: string): string {
@@ -105,6 +118,15 @@ export default class PlayerDetail implements OnInit {
   protected adjustAmount: number | null = null;
   protected adjustReason = '';
 
+  // Retenue de recharge : gourdes qui ne formaient pas un credit entier.
+  protected readonly retention = signal<TopUpRetentionView | null>(null);
+  protected retentionLabel(reason: string): string {
+    return RETENTION_REASON[reason as RetentionReason] ?? reason;
+  }
+  protected readonly retentionOpen = signal(false);
+  protected retentionAmount: number | null = null;
+  protected retentionReason = '';
+
   protected readonly busy = signal(false);
 
   ngOnInit(): void {
@@ -150,6 +172,42 @@ export default class PlayerDetail implements OnInit {
     });
     this.loadTransactions();
     this.loadWithdrawals();
+    this.loadRetention();
+  }
+
+  private loadRetention(): void {
+    this.api.retention(this.id()).subscribe({ next: (view) => this.retention.set(view) });
+  }
+
+  /** Apercu de la recharge en cours de saisie : credits et reste, retenue actuelle comprise. */
+  protected topUpPreview(): { credits: number; kept: number; used: number } | null {
+    const view = this.retention();
+    if (!view || !this.topUpAmount || this.topUpAmount <= 0) {
+      return null;
+    }
+    const total = this.topUpAmount + view.balanceHtg;
+    return { credits: Math.floor(total / view.htgRate), kept: total % view.htgRate, used: view.balanceHtg };
+  }
+
+  protected openRetention(): void {
+    this.retentionAmount = null;
+    this.retentionReason = '';
+    this.retentionOpen.set(true);
+  }
+
+  protected adjustRetention(): void {
+    if (!this.retentionAmount || !this.retentionReason.trim()) {
+      return;
+    }
+    this.busy.set(true);
+    this.api.adjustRetention(this.id(), this.retentionAmount, this.retentionReason.trim()).subscribe({
+      next: (view) => {
+        this.retention.set(view);
+        this.retentionOpen.set(false);
+        this.done('Retenue corrigee', `Nouvelle retenue : ${view.balanceHtg} HTG. La correction est tracee dans le journal d'audit.`);
+      },
+      error: (error) => this.fail(error),
+    });
   }
 
   protected onWithdrawalsPage(event: TableLazyLoadEvent): void {
@@ -198,9 +256,16 @@ export default class PlayerDetail implements OnInit {
     }
     this.busy.set(true);
     this.api.manualTopUp(this.id(), this.topUpAmount, this.topUpReference.trim(), this.topUpNote.trim() || null).subscribe({
-      next: () => {
+      next: (result) => {
         this.topUpOpen.set(false);
-        this.done('Recharge enregistree', `${this.topUpAmount} HTG credites.`);
+        const parts = [`${result.amountHtg} HTG recus : ${result.credits} credit(s) ajoute(s).`];
+        if (result.retentionUsedHtg > 0) {
+          parts.push(`${result.retentionUsedHtg} HTG de retenue repris.`);
+        }
+        if (result.retentionKeptHtg > 0) {
+          parts.push(`${result.retentionKeptHtg} HTG gardes pour la prochaine recharge.`);
+        }
+        this.done('Recharge enregistree', parts.join(' '));
       },
       error: (error) => this.fail(error),
     });
