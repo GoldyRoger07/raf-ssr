@@ -27,35 +27,191 @@
   </p-tablist>
 </p-tabs>
 
+@if (mode() === 'SOLO') {
+  <div class="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex flex-col gap-1">
+      <label for="solo-q" class="text-xs text-slate-500">Recherche</label>
+      <p-iconfield>
+        <p-inputicon class="pi pi-search" />
+        <input pInputText id="solo-q" type="search" class="w-56" [(ngModel)]="filters.q" (input)="onSearch()" placeholder="Titre du quiz" />
+      </p-iconfield>
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="solo-period" class="text-xs text-slate-500">Periode</label>
+      <p-select inputId="solo-period" [options]="periodOptions" [(ngModel)]="filters.period" (ngModelChange)="applyFilters()"
+        optionLabel="label" optionValue="value" styleClass="w-48" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="solo-category" class="text-xs text-slate-500">Sujet</label>
+      <p-select inputId="solo-category" [options]="categories()" [(ngModel)]="filters.categoryId" (ngModelChange)="applyFilters()"
+        optionLabel="name" optionValue="id" [filter]="true" filterBy="name" [showClear]="true" placeholder="Tous les sujets" styleClass="w-52" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="solo-perfect" class="text-xs text-slate-500">Sans-fautes</label>
+      <p-select inputId="solo-perfect" [options]="perfectOptions" [(ngModel)]="filters.perfect" (ngModelChange)="applyFilters()"
+        optionLabel="label" optionValue="value" styleClass="w-60" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="solo-result" class="text-xs text-slate-500">Resultat</label>
+      <p-select inputId="solo-result" [options]="resultOptions" [(ngModel)]="filters.result" (ngModelChange)="applyFilters()"
+        optionLabel="label" optionValue="value" styleClass="w-40" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="solo-sort" class="text-xs text-slate-500">Trier par</label>
+      <p-select inputId="solo-sort" [options]="sortOptions" [(ngModel)]="filters.sort" (ngModelChange)="applyFilters()"
+        optionLabel="label" optionValue="value" styleClass="w-48" />
+    </div>
+    @if (filtersActive) {
+      <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetFilters()" />
+    }
+  </div>
+
+  @if (summary(); as s) {
+    <div class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-xs text-slate-500">Quiz</div>
+        <div class="mt-1 text-2xl font-semibold">{{ s.quizzes }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-xs text-slate-500">Parties jouees</div>
+        <div class="mt-1 text-2xl font-semibold">{{ s.games }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-xs text-slate-500">Sans-fautes</div>
+        <div class="mt-1 text-2xl font-semibold">{{ s.perfectGames }}</div>
+        <div class="text-xs text-slate-500">{{ summaryRate(s) }} % des parties</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-xs text-slate-500">Recettes</div>
+        <div class="mt-1 text-2xl font-semibold">{{ s.revenueHtg | htg }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-xs text-slate-500">Prix verses</div>
+        <div class="mt-1 text-2xl font-semibold">{{ s.prizesPaidHtg | htg }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-xs text-slate-500">Resultat</div>
+        <div class="mt-1 text-2xl font-semibold" [class.text-green-700]="s.resultHtg > 0" [class.text-red-600]="s.resultHtg < 0">
+          {{ s.resultHtg | htg }}
+        </div>
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-slate-500">
+      Chiffres de la periode choisie, comptes de test exclus. Recettes au taux actuel du credit.
+    </p>
+  }
+}
+
 @if (error(); as message) {
   <p-message severity="error" class="my-4" [text]="message" />
 }
 
-<div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-  <p-table
-    [value]="rows()"
-    [lazy]="true"
-    [paginator]="total() > 0"
-    [first]="page * pageSize"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="{first} - {last} sur {totalRecords}"
-    [rows]="pageSize"
-    [totalRecords]="total()"
-    [loading]="loading()"
-    (onLazyLoad)="onLazyLoad($event)"
-    dataKey="id"
-  >
-    <ng-template #header>
-      @if (mode() === 'SOLO') {
+@if (mode() === 'SOLO') {
+  <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <p-table
+      [value]="soloRows()"
+      [lazy]="true"
+      [paginator]="total() > 0"
+      [first]="page * pageSize"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+      [rows]="pageSize"
+      [totalRecords]="total()"
+      [loading]="loading()"
+      (onLazyLoad)="onLazyLoad($event)"
+      dataKey="id"
+    >
+      <ng-template #header>
         <tr>
           <th>Quiz</th>
-          <th>Sujet</th>
-          <th class="text-right">Partie</th>
-          <th class="text-right">Sans-faute</th>
-          <th>Deroule</th>
+          <th class="text-right">Partie / prix</th>
+          <th class="text-right">Parties</th>
+          <th class="text-right">Sans-fautes</th>
+          <th class="text-right">Bonnes rep. moy.</th>
+          <th class="text-right">Recettes / prix verses</th>
+          <th class="text-right">Resultat</th>
+          <th>Derniere partie</th>
           <th>Statut</th>
         </tr>
-      } @else {
+      </ng-template>
+      <ng-template #body let-q>
+        <tr>
+          <td>
+            <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
+            @if (q.test) {
+              <p-tag value="Test" severity="warn" class="ml-2" />
+            }
+            <div class="text-xs text-slate-500">
+              {{ q.categoryName ?? '—' }} · {{ q.questionsPerGame }} questions × {{ q.questionDurationSeconds }} s
+            </div>
+          </td>
+          <td class="whitespace-nowrap text-right">
+            @if (q.entryCredits === 0) {
+              <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-500/15 dark:text-green-300">Gratuit</span>
+            } @else {
+              <div>{{ q.entryHtg | htg }}</div>
+            }
+            <div class="text-xs text-slate-500">prix {{ q.prizeHtg | htg }}</div>
+          </td>
+          <td class="text-right">
+            <div class="font-medium">{{ q.games }}</div>
+            <div class="text-xs text-slate-500">{{ q.players }} joueur(s)</div>
+          </td>
+          <td class="text-right">
+            @if (q.perfectGames > 0) {
+              <div class="font-semibold text-orange-600">{{ q.perfectGames }}</div>
+            } @else {
+              <div class="text-slate-400">0</div>
+            }
+            <div class="text-xs text-slate-500">{{ q.perfectRate }} %</div>
+          </td>
+          <td class="text-right">
+            @if (q.averageCorrect !== null) {
+              {{ q.averageCorrect }} / {{ q.questionsPerGame }}
+            } @else {
+              <span class="text-slate-400">—</span>
+            }
+          </td>
+          <td class="whitespace-nowrap text-right">
+            <div>{{ q.revenueHtg | htg }}</div>
+            <div class="text-xs text-slate-500">− {{ q.prizesPaidHtg | htg }}</div>
+          </td>
+          <td class="whitespace-nowrap text-right font-semibold" [class.text-green-700]="q.resultHtg > 0" [class.text-red-600]="q.resultHtg < 0">
+            {{ q.resultHtg | htg }}
+          </td>
+          <td class="whitespace-nowrap text-sm text-slate-500">
+            {{ q.lastPlayedAt ? (q.lastPlayedAt | haitiDate) : 'Jamais' }}
+          </td>
+          <td>
+            <p-tag [value]="quizStatus(q.status, 'SOLO').label" [severity]="quizStatus(q.status, 'SOLO').severity" />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="9" class="py-10 text-center text-slate-500">
+            {{ filtersActive ? 'Aucun quiz solo ne correspond a ces filtres.' : 'Aucun quiz dans cet etat.' }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+} @else {
+  <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <p-table
+      [value]="rows()"
+      [lazy]="true"
+      [paginator]="total() > 0"
+      [first]="page * pageSize"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+      [rows]="pageSize"
+      [totalRecords]="total()"
+      [loading]="loading()"
+      (onLazyLoad)="onLazyLoad($event)"
+      dataKey="id"
+    >
+      <ng-template #header>
         <tr>
           <th>Quiz</th>
           <th>Sujet</th>
@@ -64,35 +220,8 @@
           <th>Echeance</th>
           <th>Statut</th>
         </tr>
-      }
-    </ng-template>
-    <ng-template #body let-q>
-      @if (mode() === 'SOLO') {
-        <tr>
-          <td>
-            <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
-            @if (q.test) {
-              <p-tag value="Test" severity="warn" class="ml-2" />
-            }
-          </td>
-          <td>{{ q.selectedCategoryName ?? '—' }}</td>
-          <td class="text-right">
-            @if (q.free) {
-              <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-500/15 dark:text-green-300">Gratuit</span>
-            } @else {
-              <div>{{ q.ticketPriceHtg | htg }}</div>
-              <div class="text-xs text-slate-500">{{ q.ticketPriceCredits | credits }}</div>
-            }
-          </td>
-          <td class="text-right">
-            <div class="font-medium">{{ q.soloPrizeHtg | htg }}</div>
-          </td>
-          <td class="text-sm text-slate-500">{{ q.questionsPerGame }} questions × {{ q.questionDurationSeconds }} s</td>
-          <td>
-            <p-tag [value]="quizStatus(q.status, q.gameMode).label" [severity]="quizStatus(q.status, q.gameMode).severity" />
-          </td>
-        </tr>
-      } @else {
+      </ng-template>
+      <ng-template #body let-q>
         <tr>
           <td>
             <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
@@ -138,12 +267,12 @@
             <p-tag [value]="quizStatus(q.status).label" [severity]="quizStatus(q.status).severity" />
           </td>
         </tr>
-      }
-    </ng-template>
-    <ng-template #emptymessage>
-      <tr>
-        <td colspan="6" class="py-10 text-center text-slate-500">Aucun quiz dans cet etat.</td>
-      </tr>
-    </ng-template>
-  </p-table>
-</div>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="6" class="py-10 text-center text-slate-500">Aucun quiz dans cet etat.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+}

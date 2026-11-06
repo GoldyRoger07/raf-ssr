@@ -3,7 +3,19 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
-import { Economics, GameMode, Leaderboard, Quiz, QuizInput, QuizStatus, RewardTier, SoloEconomics, SoloQuizInput } from './models';
+import {
+  Economics,
+  GameMode,
+  Leaderboard,
+  Quiz,
+  QuizInput,
+  QuizStatus,
+  RewardTier,
+  SoloEconomics,
+  SoloQuizInput,
+  SoloQuizStats,
+  SoloStatsFilters,
+} from './models';
 
 /** Quiz : configuration et cycle de vie (administrateurs). */
 @Injectable()
@@ -15,6 +27,25 @@ export class QuizApi {
   list(status: QuizStatus, mode: GameMode, page = 0, size = 20): Observable<Page<Quiz>> {
     const params = new HttpParams().set('status', status).set('mode', mode).set('page', page).set('size', size);
     return this.http.get<Page<Quiz>>(this.base, { params });
+  }
+
+  /** Activite des quiz solo d'un statut, filtree et triee (comptes de test exclus). */
+  soloStats(status: QuizStatus, filters: SoloStatsFilters, page = 0, size = 20): Observable<SoloQuizStats> {
+    let params = new HttpParams()
+      .set('status', status)
+      .set('period', filters.period)
+      .set('perfect', filters.perfect)
+      .set('result', filters.result)
+      .set('sort', filters.sort)
+      .set('page', page)
+      .set('size', size);
+    if (filters.q.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    if (filters.categoryId != null) {
+      params = params.set('categoryId', filters.categoryId);
+    }
+    return this.http.get<SoloQuizStats>(`${this.base}/solo/stats`, { params });
   }
 
   get(id: number): Observable<Quiz> {

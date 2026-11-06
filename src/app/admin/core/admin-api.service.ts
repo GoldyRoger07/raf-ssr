@@ -26,6 +26,7 @@ import {
   Dashboard,
   DepositNumbers,
   LeaderCommission,
+  LeaderTransfer,
   News,
   NewsRequest,
   LeaderPlayer,
@@ -176,6 +177,11 @@ export class AdminApi {
   leaderCommissions(id: number, page = 0, size = 20): Observable<Page<LeaderCommission>> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<Page<LeaderCommission>>(`${this.base}/leaders/${id}/commissions`, { params });
+  }
+
+  leaderTransfers(id: number, page = 0, size = 20): Observable<Page<LeaderTransfer>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<LeaderTransfer>>(`${this.base}/leaders/${id}/transfers`, { params });
   }
 
   player(id: number): Observable<PlayerSummary> {

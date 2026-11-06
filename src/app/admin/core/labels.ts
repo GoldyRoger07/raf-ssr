@@ -25,6 +25,8 @@ export const TRANSACTION_TYPE: Record<string, string> = {
   PRIZE: 'Gain',
   COMMISSION: 'Commission leader',
   INVITE_BONUS: "Bonus d'invitation",
+  LEADER_TRANSFER_OUT: "Recharge d'un joueur (leader)",
+  LEADER_TRANSFER_IN: 'Recharge par le leader',
   WITHDRAWAL: 'Retrait',
   REFUND: 'Remboursement',
   ADJUSTMENT: 'Ajustement',

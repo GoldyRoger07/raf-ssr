@@ -2,7 +2,11 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
@@ -11,7 +15,16 @@ import { TagModule } from 'primeng/tag';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { quizStatus } from '../../core/labels';
-import { GameMode, Quiz, QuizStatus } from '../../core/models';
+import {
+  Category,
+  GameMode,
+  Quiz,
+  QuizStatus,
+  SoloQuizStatsRow,
+  SoloQuizStatsSummary,
+  SoloStatsFilters,
+} from '../../core/models';
+import { QuestionApi } from '../../core/question-api.service';
 import { QuizApi } from '../../core/quiz-api.service';
 
 const GROUP_TABS: { status: QuizStatus; label: string }[] = [
@@ -34,6 +47,16 @@ const SOLO_TABS: { status: QuizStatus; label: string }[] = [
 ];
 
 const PAGE_SIZE = 20;
+const SEARCH_DELAY_MS = 300;
+
+const DEFAULT_SOLO_FILTERS: SoloStatsFilters = {
+  period: 'ALL_TIME',
+  q: '',
+  categoryId: null,
+  perfect: 'ALL',
+  result: 'ALL',
+  sort: 'RECENT',
+};
 
 @Component({
   selector: 'admin-quizzes',
@@ -41,7 +64,11 @@ const PAGE_SIZE = 20;
     FormsModule,
     RouterLink,
     ButtonModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
     MessageModule,
+    SelectModule,
     SelectButtonModule,
     TableModule,
     TabsModule,
@@ -54,6 +81,7 @@ const PAGE_SIZE = 20;
 })
 export default class Quizzes {
   private readonly api = inject(QuizApi);
+  private readonly questionApi = inject(QuestionApi);
   private readonly router = inject(Router);
   private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
 
@@ -73,8 +101,71 @@ export default class Quizzes {
   protected readonly error = signal<string | null>(null);
   protected page = 0;
 
+  // --- Solo : activite, filtres et tri ---------------------------------------------
+  protected readonly periodOptions = [
+    { label: '7 derniers jours', value: 'LAST_7_DAYS' },
+    { label: '30 derniers jours', value: 'LAST_30_DAYS' },
+    { label: 'Depuis le lancement', value: 'ALL_TIME' },
+  ];
+  protected readonly perfectOptions = [
+    { label: 'Tous', value: 'ALL' },
+    { label: 'Avec au moins un sans-faute', value: 'WITH' },
+    { label: 'Joues, sans aucun sans-faute', value: 'WITHOUT' },
+    { label: 'Jamais joues', value: 'NEVER_PLAYED' },
+  ];
+  protected readonly resultOptions = [
+    { label: 'Tous', value: 'ALL' },
+    { label: 'Beneficiaires', value: 'PROFIT' },
+    { label: 'Deficitaires', value: 'LOSS' },
+  ];
+  protected readonly sortOptions = [
+    { label: 'Plus recents', value: 'RECENT' },
+    { label: 'Plus joues', value: 'MOST_PLAYED' },
+    { label: 'Plus de sans-fautes', value: 'MOST_PERFECT' },
+    { label: 'Meilleur resultat', value: 'BEST_RESULT' },
+    { label: 'Pire resultat', value: 'WORST_RESULT' },
+    { label: 'Derniere partie', value: 'LAST_PLAYED' },
+  ];
+  protected readonly categories = signal<Category[]>([]);
+  protected filters: SoloStatsFilters = { ...DEFAULT_SOLO_FILTERS };
+  protected readonly soloRows = signal<SoloQuizStatsRow[]>([]);
+  protected readonly summary = signal<SoloQuizStatsSummary | null>(null);
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     this.load();
+    this.questionApi.categories().subscribe({
+      next: (categories) => this.categories.set([...categories].sort((a, b) => a.name.localeCompare(b.name, 'fr'))),
+    });
+  }
+
+  protected get filtersActive(): boolean {
+    const f = this.filters;
+    const d = DEFAULT_SOLO_FILTERS;
+    return f.period !== d.period || f.q.trim() !== '' || f.categoryId != null || f.perfect !== d.perfect
+      || f.result !== d.result || f.sort !== d.sort;
+  }
+
+  protected applyFilters(): void {
+    this.page = 0;
+    this.load();
+  }
+
+  protected onSearch(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+    this.searchTimer = setTimeout(() => this.applyFilters(), SEARCH_DELAY_MS);
+  }
+
+  protected resetFilters(): void {
+    this.filters = { ...DEFAULT_SOLO_FILTERS };
+    this.applyFilters();
+  }
+
+  /** Taux de sans-faute de la selection, en pourcentage. */
+  protected summaryRate(s: SoloQuizStatsSummary): number {
+    return s.games === 0 ? 0 : Math.round((s.perfectGames * 1000) / s.games) / 10;
   }
 
   protected selectMode(mode: GameMode): void {
@@ -113,6 +204,21 @@ export default class Quizzes {
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
+    if (this.mode() === 'SOLO') {
+      this.api.soloStats(this.status(), this.filters, this.page, PAGE_SIZE).subscribe({
+        next: (stats) => {
+          this.soloRows.set(stats.page.content);
+          this.summary.set(stats.summary);
+          this.total.set(stats.page.totalElements);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.error.set(errorMessage(error));
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
     this.api.list(this.status(), this.mode(), this.page, PAGE_SIZE).subscribe({
       next: (page) => {
         this.rows.set(page.content);

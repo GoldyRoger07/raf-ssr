@@ -1,5 +1,7 @@
 /** Types des reponses du backend utilisees par le back-office. */
 
+import type { Page } from './api';
+
 export type RoleName = 'PLAYER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN' | 'LEADER';
 
 export interface UserResponse {
@@ -168,6 +170,9 @@ export interface LeaderSummary {
   playerCount: number;
   commissionsLast30DaysHtg: number;
   commissionsTotalHtg: number;
+  /** Credits envoyes par le leader a ses joueurs (recharges). */
+  transfersLast30DaysCredits: number;
+  transfersTotalCredits: number;
 }
 
 /** Joueur rattache a un leader. */
@@ -189,6 +194,18 @@ export interface LeaderPlayer {
   /** Commissions que ce joueur a rapportees a ce leader. */
   commissionsHtg: number;
   lastPlayedAt?: string | null;
+}
+
+/** Recharge d'un joueur par son leader, avec les credits du leader. */
+export interface LeaderTransfer {
+  id: number;
+  playerId: number;
+  playerFirstName: string;
+  playerLastName: string;
+  credits: number;
+  createdAt: string;
+  /** Solde de credits du leader juste apres la recharge. */
+  leaderBalanceAfter: number;
 }
 
 /** Commission versee, une ligne par joueur et par quiz (ou partie solo). */
@@ -444,6 +461,61 @@ export type QuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE';
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 /** Origine d'une question : saisie, import CSV ou generation par IA. */
 export type QuestionSource = 'MANUAL' | 'IMPORT' | 'AI';
+
+// --- Activite des quiz solo ------------------------------------------------------
+
+export type SoloStatsPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'ALL_TIME';
+export type SoloPerfectFilter = 'ALL' | 'WITH' | 'WITHOUT' | 'NEVER_PLAYED';
+export type SoloResultFilter = 'ALL' | 'PROFIT' | 'LOSS';
+export type SoloStatsSort = 'RECENT' | 'MOST_PLAYED' | 'MOST_PERFECT' | 'BEST_RESULT' | 'WORST_RESULT' | 'LAST_PLAYED';
+
+export interface SoloStatsFilters {
+  period: SoloStatsPeriod;
+  q: string;
+  categoryId: number | null;
+  perfect: SoloPerfectFilter;
+  result: SoloResultFilter;
+  sort: SoloStatsSort;
+}
+
+/** Un quiz solo et son activite sur la periode (comptes de test exclus). */
+export interface SoloQuizStatsRow {
+  id: number;
+  title: string;
+  test: boolean;
+  status: QuizStatus;
+  categoryId: number | null;
+  categoryName: string | null;
+  entryCredits: number;
+  entryHtg: number;
+  prizeHtg: number;
+  questionsPerGame: number;
+  questionDurationSeconds: number;
+  games: number;
+  players: number;
+  perfectGames: number;
+  /** En pourcentage, une decimale. */
+  perfectRate: number;
+  averageCorrect: number | null;
+  revenueHtg: number;
+  prizesPaidHtg: number;
+  resultHtg: number;
+  lastPlayedAt: string | null;
+}
+
+export interface SoloQuizStatsSummary {
+  quizzes: number;
+  games: number;
+  perfectGames: number;
+  revenueHtg: number;
+  prizesPaidHtg: number;
+  resultHtg: number;
+}
+
+export interface SoloQuizStats {
+  summary: SoloQuizStatsSummary;
+  page: Page<SoloQuizStatsRow>;
+}
 
 export interface Category {
   id: number;
@@ -790,4 +862,6 @@ export interface AnnouncementTestResult {
 export interface PlayerAppConfig {
   /** Fenetre de rappel de confirmation de l'email, toutes les 10 secondes. */
   emailReminderEnabled: boolean;
+  /** Bouton « Recharger un joueur » des leaders, dans le Tresor. */
+  leaderTransferEnabled: boolean;
 }

@@ -15,7 +15,7 @@ import { PlayerSearch } from '../../components/player-search/player-search';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
-import { LeaderCommission, LeaderPlayer, LeaderSummary, PlayerSummary } from '../../core/models';
+import { LeaderCommission, LeaderPlayer, LeaderSummary, LeaderTransfer, PlayerSummary } from '../../core/models';
 
 const PAGE_SIZE = 20;
 
@@ -64,6 +64,11 @@ export default class LeaderDetail {
   protected readonly commissionsLoading = signal(false);
   protected commissionsPage = 0;
 
+  protected readonly transfers = signal<LeaderTransfer[]>([]);
+  protected readonly transfersTotal = signal(0);
+  protected readonly transfersLoading = signal(false);
+  protected transfersPage = 0;
+
   // Commission
   protected readonly commissionOpen = signal(false);
   protected percent: number | null = null;
@@ -82,6 +87,7 @@ export default class LeaderDetail {
     this.loadLeader();
     this.loadPlayers();
     this.loadCommissions();
+    this.loadTransfers();
   }
 
   protected openCommission(): void {
@@ -222,6 +228,26 @@ export default class LeaderDetail {
       this.commissionsPage = page;
       this.loadCommissions();
     }
+  }
+
+  protected onTransfersPage(event: TableLazyLoadEvent): void {
+    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
+    if (page !== this.transfersPage) {
+      this.transfersPage = page;
+      this.loadTransfers();
+    }
+  }
+
+  private loadTransfers(): void {
+    this.transfersLoading.set(true);
+    this.api.leaderTransfers(this.id, this.transfersPage, PAGE_SIZE).subscribe({
+      next: (page) => {
+        this.transfers.set(page.content);
+        this.transfersTotal.set(page.totalElements);
+        this.transfersLoading.set(false);
+      },
+      error: () => this.transfersLoading.set(false),
+    });
   }
 
   private loadLeader(): void {

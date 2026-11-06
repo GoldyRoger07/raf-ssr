@@ -41,23 +41,36 @@ export default class PlayerApp {
   }
 
   protected setEmailReminder(enabled: boolean): void {
+    this.save({ emailReminderEnabled: enabled }, (config) =>
+      config.emailReminderEnabled
+        ? { summary: 'Rappel active', detail: "Les joueurs dont l'email n'est pas confirme reverront la fenetre." }
+        : { summary: 'Rappel desactive', detail: "La fenetre de rappel ne s'affichera plus." },
+    );
+  }
+
+  protected setLeaderTransfer(enabled: boolean): void {
+    this.save({ leaderTransferEnabled: enabled }, (config) =>
+      config.leaderTransferEnabled
+        ? { summary: 'Recharge par les leaders activee', detail: 'Les leaders peuvent de nouveau recharger leurs joueurs.' }
+        : { summary: 'Recharge par les leaders coupee', detail: 'Le bouton disparait et les nouvelles recharges sont refusees.' },
+    );
+  }
+
+  private save(
+    change: Partial<PlayerAppConfig>,
+    message: (config: PlayerAppConfig) => { summary: string; detail: string },
+  ): void {
     const previous = this.config();
-    if (!previous || previous.emailReminderEnabled === enabled) {
+    if (!previous || Object.entries(change).every(([key, value]) => previous[key as keyof PlayerAppConfig] === value)) {
       return;
     }
-    this.config.set({ ...previous, emailReminderEnabled: enabled });
+    this.config.set({ ...previous, ...change });
     this.saving.set(true);
-    this.api.updatePlayerApp({ ...previous, emailReminderEnabled: enabled }).subscribe({
+    this.api.updatePlayerApp({ ...previous, ...change }).subscribe({
       next: (config) => {
         this.saving.set(false);
         this.config.set(config);
-        this.messages.add({
-          severity: 'success',
-          summary: config.emailReminderEnabled ? 'Rappel active' : 'Rappel desactive',
-          detail: config.emailReminderEnabled
-            ? "Les joueurs dont l'email n'est pas confirme reverront la fenetre."
-            : "La fenetre de rappel ne s'affichera plus.",
-        });
+        this.messages.add({ severity: 'success', ...message(config) });
       },
       error: (error) => {
         this.saving.set(false);
