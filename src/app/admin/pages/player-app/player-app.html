@@ -68,4 +68,34 @@
       </div>
     </div>
   </section>
+
+  <section class="mt-6 max-w-3xl rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <i class="pi pi-sync text-2xl text-violet-600"></i>
+      <div class="flex-1">
+        <h2 class="font-semibold">Recharge avec les gains</h2>
+        <p class="text-sm text-slate-500">
+          Bouton « Recharger avec mes gains » de l'ecran Recharger : le joueur convertit ses gains (HTG) en credits.
+        </p>
+      </div>
+      <p-toggleswitch
+        inputId="winnings-conversion"
+        [ngModel]="c.winningsConversionEnabled"
+        [disabled]="saving()"
+        (ngModelChange)="setWinningsConversion($event)"
+      />
+      <label for="winnings-conversion" class="w-16 text-sm font-medium">{{ c.winningsConversionEnabled ? 'Active' : 'Coupe' }}</label>
+    </div>
+
+    <div class="px-5 py-4">
+      <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+        <ul class="list-disc space-y-1 pl-5">
+          <li>Le bouton n'apparait que si les gains du joueur valent au moins un credit (parametre <code>credit.htg_rate</code>).</li>
+          <li>Ni frais ni bonus : seules les gourdes formant des credits entiers sont debitees, le reste demeure dans les gains (toujours retirables).</li>
+          <li>La conversion est definitive pour le joueur : les credits ne se retirent pas. Chaque conversion est une recharge « Gains du joueur », tracee au journal d'audit et controlee par le rapprochement.</li>
+          <li>Coupe, le bouton disparait et toute nouvelle conversion est refusee.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
 }

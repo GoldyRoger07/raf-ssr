@@ -226,7 +226,8 @@ export interface LeaderCommission {
 }
 
 export type BalanceType = 'CREDIT' | 'WINNINGS';
-export type PaymentProvider = 'MONCASH' | 'NATCASH' | 'MANUAL';
+/** WINNINGS : recharge payee par le joueur avec ses gains ; jamais un moyen de retrait. */
+export type PaymentProvider = 'MONCASH' | 'NATCASH' | 'MANUAL' | 'WINNINGS';
 export type WithdrawalStatus =
   | 'AWAITING_OTP'
   | 'PENDING'
@@ -898,4 +899,6 @@ export interface PlayerAppConfig {
   emailReminderEnabled: boolean;
   /** Bouton « Recharger un joueur » des leaders, dans le Tresor. */
   leaderTransferEnabled: boolean;
+  /** Bouton « Recharger avec mes gains » de l'ecran Recharger. */
+  winningsConversionEnabled: boolean;
 }

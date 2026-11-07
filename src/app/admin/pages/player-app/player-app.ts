@@ -56,6 +56,14 @@ export default class PlayerApp {
     );
   }
 
+  protected setWinningsConversion(enabled: boolean): void {
+    this.save({ winningsConversionEnabled: enabled }, (config) =>
+      config.winningsConversionEnabled
+        ? { summary: 'Recharge avec les gains activee', detail: 'Les joueurs peuvent de nouveau convertir leurs gains en credits.' }
+        : { summary: 'Recharge avec les gains coupee', detail: 'Le bouton disparait et les nouvelles conversions sont refusees.' },
+    );
+  }
+
   private save(
     change: Partial<PlayerAppConfig>,
     message: (config: PlayerAppConfig) => { summary: string; detail: string },

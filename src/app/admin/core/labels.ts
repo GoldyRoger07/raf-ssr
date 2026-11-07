@@ -16,6 +16,7 @@ export const PROVIDER: Record<PaymentProvider, string> = {
   MONCASH: 'MonCash',
   NATCASH: 'NatCash',
   MANUAL: 'Especes (guichet)',
+  WINNINGS: 'Gains du joueur',
 };
 
 export const TRANSACTION_TYPE: Record<string, string> = {
@@ -27,6 +28,7 @@ export const TRANSACTION_TYPE: Record<string, string> = {
   INVITE_BONUS: "Bonus d'invitation",
   LEADER_TRANSFER_OUT: "Recharge d'un joueur (leader)",
   LEADER_TRANSFER_IN: 'Recharge par le leader',
+  WINNINGS_CONVERSION: 'Recharge avec les gains',
   WITHDRAWAL: 'Retrait',
   REFUND: 'Remboursement',
   ADJUSTMENT: 'Ajustement',
