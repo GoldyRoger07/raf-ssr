@@ -41,6 +41,9 @@ const DEVICE_NAMES: Record<Device, string> = { android: 'Android', iphone: 'iPho
                 @if (node.hint; as hint) {
                   <p class="hint">{{ prefs.t(hint) }}</p>
                 }
+                @if (node.image; as image) {
+                  <img class="shot" [src]="image" alt="" loading="lazy" />
+                }
                 <div class="choices">
                   @for (option of node.options; track option.next) {
                     <button class="btn3d light block" type="button" (click)="go(option.next, option.device)">
@@ -61,7 +64,7 @@ const DEVICE_NAMES: Record<Device, string> = { android: 'Android', iphone: 'iPho
                       <div class="grow">
                         <p>{{ prefs.t(step.text) }}</p>
                         @if (step.image; as image) {
-                          <img [src]="image" [alt]="prefs.t(step.text)" loading="lazy" />
+                          <img class="shot" [src]="image" alt="" loading="lazy" />
                         }
                       </div>
                     </li>
@@ -85,6 +88,9 @@ const DEVICE_NAMES: Record<Device, string> = { android: 'Android', iphone: 'iPho
                   <raf-icon name="check" [size]="72" />
                   <h2>{{ prefs.t(node.title) }}</h2>
                   <p class="hint">{{ prefs.t(node.text) }}</p>
+                  @if (node.image; as image) {
+                    <img class="shot" [src]="image" alt="" loading="lazy" />
+                  }
                   @if (node.link; as link) {
                     <ng-container [ngTemplateOutlet]="linkButton" [ngTemplateOutletContext]="{ $implicit: link }" />
                   }
@@ -142,14 +148,18 @@ const DEVICE_NAMES: Record<Device, string> = { android: 'Android', iphone: 'iPho
     .steps { display: grid; gap: 16px; margin: 8px 0 20px; }
     .steps li { display: flex; gap: 12px; align-items: flex-start; }
     .steps p { font-weight: 800; font-size: 1.08rem; line-height: 1.5; padding-top: 4px; }
-    .steps img {
+    /* Le texte de l'etape decrit deja l'image : alt vide pour ne pas le lire deux fois. */
+    .shot {
       display: block;
       width: 100%;
-      max-width: 320px;
-      margin-top: 10px;
+      max-width: 300px;
+      height: auto;
+      margin: 10px auto 4px;
       border-radius: 18px;
       border: 3px solid var(--raf-p200);
+      background: #fff;
     }
+    .choices, .done .shot { margin-top: 8px; }
     .grow { flex: 1; min-width: 0; }
     .num {
       flex: none;

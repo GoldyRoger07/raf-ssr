@@ -8,8 +8,10 @@
  * Les libelles des ecrans (« Corriger », « Mot de passe oublié ? »...) restent en
  * francais entre « » dans les deux langues : c'est ce que le joueur voit a l'ecran.
  *
- * Captures d'ecran : ajouter `image: 'img/aide/<fichier>.png'` a une etape (fichier
- * dans public/img/aide/). Une etape sans image s'affiche en texte seul.
+ * Images : `image: 'img/aide/<fichier>'` sur une etape, une question ou une fin de
+ * parcours (fichiers dans public/img/aide/). Les app-*.webp sont de vraies captures
+ * de l'app ; les .svg sont des schemas des ecrans du telephone (Chrome, Safari,
+ * Gmail, Reglages), a remplacer par de vraies captures quand on les aura.
  */
 
 export type Lang = 'fr' | 'ht';
@@ -39,7 +41,7 @@ export interface HelpOption {
 }
 
 export type HelpNode =
-  | { kind: 'question'; title: Text; hint?: Text; options: HelpOption[] }
+  | { kind: 'question'; title: Text; hint?: Text; image?: string; options: HelpOption[] }
   | {
       kind: 'steps';
       title: Text;
@@ -53,7 +55,7 @@ export type HelpNode =
       ko: string;
       koLabel?: Text;
     }
-  | { kind: 'done'; title: Text; text: Text; link?: HelpLink };
+  | { kind: 'done'; title: Text; text: Text; image?: string; link?: HelpLink };
 
 export interface HelpTopic {
   id: string;
@@ -101,6 +103,7 @@ function spamNode(ko: string): HelpNode {
           'Gmail : touche les 3 traits ☰ en haut à gauche, puis « Spam ». Regarde aussi « Promotions ».',
           'Gmail : peze sou 3 ti liy ☰ anlè a goch, epi « Spam ». Gade tou nan « Promotions ».',
         ),
+        image: 'img/aide/gmail-spam.svg',
       },
       {
         text: t(
@@ -137,6 +140,7 @@ const EMAIL: HelpTopic = {
         'Dans RAF, touche « Profil ». Ton adresse est écrite dans « Mon compte ». Compare-la lettre par lettre avec ta vraie adresse : gmail et pas gmial, .com et pas .co.',
         'Nan RAF, peze sou « Profil ». Adrès ou ekri nan « Mon compte ». Konpare l lèt pa lèt ak vrè adrès ou : gmail epi pa gmial, .com epi pa .co.',
       ),
+      image: 'img/aide/app-email-profil.webp',
       options: [
         { label: t('Elle est correcte', 'Li kòrèk'), next: 'can-open' },
         { label: t('Elle est fausse', 'Li pa bon'), next: 'fix-address' },
@@ -182,13 +186,14 @@ const EMAIL: HelpTopic = {
       title: t('Corriger ton adresse', 'Korije adrès ou'),
       steps: [
         PROFILE_STEP,
-        { text: t('À côté de ton email, touche « Corriger ».', 'Bò kote imèl ou, peze « Corriger ».') },
+        { text: t('À côté de ton email, touche « Corriger ».', 'Bò kote imèl ou, peze « Corriger ».'), image: 'img/aide/app-email-profil.webp' },
         { text: t('Écris la bonne adresse, puis ton mot de passe RAF.', 'Ekri bon adrès la, epi modpas RAF ou.') },
         {
           text: t(
             'Touche « Enregistrer et renvoyer le lien ». Un nouvel email part vers la bonne adresse.',
             'Peze « Enregistrer et renvoyer le lien ». Yon nouvo imèl ap pati nan bon adrès la.',
           ),
+          image: 'img/aide/app-email-corriger.webp',
         },
       ],
       ok: 'can-open',
@@ -247,6 +252,7 @@ const EMAIL: HelpTopic = {
             'Dans ta boîte mail, touche la barre « Rechercher » en haut et écris RAF.',
             'Nan bwat imèl ou, peze sou ba « Rechercher » anlè a epi ekri RAF.',
           ),
+          image: 'img/aide/gmail-recherche.svg',
         },
         { text: t('Ouvre l’email de RAF et touche le lien de confirmation.', 'Ouvri imèl RAF la epi peze sou lyen konfimasyon an.') },
         {
@@ -254,6 +260,7 @@ const EMAIL: HelpTopic = {
             'RAF s’ouvre et affiche « Adresse email confirmée ! ». C’est terminé.',
             'RAF ap louvri epi l ap ekri « Adresse email confirmée ! ». Ou fini.',
           ),
+          image: 'img/aide/app-email-confirme.webp',
         },
       ],
       ok: 'done',
@@ -266,7 +273,7 @@ const EMAIL: HelpTopic = {
       title: t('Recevoir un nouveau lien', 'Resevwa yon nouvo lyen'),
       steps: [
         PROFILE_STEP,
-        { text: t('À côté de ton email, touche « Renvoyer ».', 'Bò kote imèl ou, peze « Renvoyer ».') },
+        { text: t('À côté de ton email, touche « Renvoyer ».', 'Bò kote imèl ou, peze « Renvoyer ».'), image: 'img/aide/app-email-profil.webp' },
         {
           text: t(
             'Attends 5 minutes, puis cherche encore RAF dans ta boîte mail et dans les spams.',
@@ -294,6 +301,7 @@ const INSTALLED: HelpNode = {
     'À partir de maintenant, ouvre RAF depuis son icône sur l’écran d’accueil. C’est comme ça que les notifications fonctionnent.',
     'Depi kounye a, ouvri RAF nan ikòn li sou ekran dakèy la. Se konsa notifikasyon yo mache.',
   ),
+  image: 'img/aide/icone-ecran-accueil.svg',
   link: { label: t('Activer les notifications', 'Aktive notifikasyon yo'), to: '/aide/notifications' },
 };
 
@@ -322,12 +330,14 @@ const INSTALL: HelpTopic = {
             'Choisis « Installer l’application » ou « Ajouter à l’écran d’accueil ».',
             'Chwazi « Installer l’application » oswa « Ajouter à l’écran d’accueil ».',
           ),
+          image: 'img/aide/android-chrome-menu.svg',
         },
         {
           text: t(
             'Touche « Installer ». L’icône RAF apparaît avec tes autres applications.',
             'Peze « Installer ». Ikòn RAF la parèt ak lòt aplikasyon ou yo.',
           ),
+          image: 'img/aide/android-installer.svg',
         },
       ],
       link: { label: t('Ouvrir RAF', 'Ouvri RAF'), to: 'app' },
@@ -376,18 +386,21 @@ const INSTALL: HelpTopic = {
             'Touche le bouton Partager : le carré avec une flèche vers le haut, en bas de l’écran.',
             'Peze bouton Pataje a : kare ki gen yon flèch k ap monte a, anba ekran an.',
           ),
+          image: 'img/aide/iphone-safari-partager.svg',
         },
         {
           text: t(
             'Fais glisser la liste vers le haut et choisis « Sur l’écran d’accueil ».',
             'Fè lis la monte epi chwazi « Sur l’écran d’accueil ».',
           ),
+          image: 'img/aide/iphone-sur-ecran-accueil.svg',
         },
         {
           text: t(
             'Touche « Ajouter » en haut à droite. L’icône RAF apparaît sur ton écran.',
             'Peze « Ajouter » anlè a dwat. Ikòn RAF la parèt sou ekran ou.',
           ),
+          image: 'img/aide/iphone-ajouter.svg',
         },
       ],
       link: { label: t('Ouvrir RAF', 'Ouvri RAF'), to: 'app' },
@@ -427,9 +440,9 @@ const INSTALL: HelpTopic = {
 
 const ENABLE_STEPS = (first: HelpStep): HelpStep[] => [
   first,
-  { text: t('Touche « Profil », puis « Notifications ».', 'Peze « Profil », epi « Notifications ».') },
+  { text: t('Touche « Profil », puis « Notifications ».', 'Peze « Profil », epi « Notifications ».'), image: 'img/aide/app-notif-profil.webp' },
   { text: t('Active « Notifications push ».', 'Aktive « Notifications push ».') },
-  { text: t('Une fenêtre s’ouvre : touche « Autoriser ».', 'Yon fenèt ap louvri : peze « Autoriser ».') },
+  { text: t('Une fenêtre s’ouvre : touche « Autoriser ».', 'Yon fenèt ap louvri : peze « Autoriser ».'), image: 'img/aide/notif-autoriser.svg' },
 ];
 
 const NOTIFICATIONS: HelpTopic = {
@@ -554,7 +567,7 @@ const NOTIFICATIONS: HelpTopic = {
       steps: [
         { text: t('Ouvre « Réglages » sur l’iPhone, puis « Notifications ».', 'Ouvri « Réglages » nan iPhone nan, epi « Notifications ».') },
         { text: t('Touche RAF dans la liste.', 'Peze RAF nan lis la.') },
-        { text: t('Active « Autoriser les notifications ».', 'Aktive « Autoriser les notifications ».') },
+        { text: t('Active « Autoriser les notifications ».', 'Aktive « Autoriser les notifications ».'), image: 'img/aide/iphone-reglages-notif.svg' },
         {
           text: t('Reviens dans RAF et réessaie : « Profil » → « Notifications ».', 'Retounen nan RAF epi eseye ankò : « Profil » → « Notifications ».'),
         },
@@ -582,6 +595,7 @@ const PASSWORD: HelpTopic = {
             'Ouvre RAF. Sur l’écran de connexion, touche « Mot de passe oublié ? ».',
             'Ouvri RAF. Sou ekran koneksyon an, peze « Mot de passe oublié ? ».',
           ),
+          image: 'img/aide/app-connexion-mdp.webp',
         },
         { text: t('Écris ton adresse email et valide.', 'Ekri adrès imèl ou epi valide.') },
         { text: t('Ouvre l’email de RAF et touche le lien.', 'Ouvri imèl RAF la epi peze sou lyen an.') },
