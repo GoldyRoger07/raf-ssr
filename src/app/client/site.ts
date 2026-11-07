@@ -37,6 +37,7 @@ export const MAIN_NAV: NavLink[] = [
   { label: 'Règles du jeu', path: '/regles' },
   { label: 'Installer l’app', path: '/installer' },
   { label: 'FAQ', path: '/faq' },
+  { label: 'Aide', path: '/aide' },
 ];
 
 export const LEGAL_NAV: NavLink[] = [

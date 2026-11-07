@@ -1,0 +1,19 @@
+/* Mise en forme commune aux pages du guide d'aide (/aide). Pensee d'abord pour le telephone. */
+
+.hero { padding: 108px 16px 36px; text-align: center; border-bottom: 4px solid var(--raf-p200); }
+.inner { max-width: 40rem; margin: 0 auto; display: grid; justify-items: center; gap: 14px; }
+.badge {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 28px;
+  background: #fff;
+  border: 4px solid var(--raf-p200);
+  box-shadow: 0 6px 0 var(--raf-p300);
+}
+h1 { font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.1; }
+.lead { font-size: 1.1rem; font-weight: 700; color: var(--raf-ink-soft); line-height: 1.5; }
+
+/* Les boutons du site restent sur une ligne ; ici, les libelles peuvent etre longs. */
+.btn3d { white-space: normal; text-align: center; line-height: 1.2; }
