@@ -901,4 +901,6 @@ export interface PlayerAppConfig {
   leaderTransferEnabled: boolean;
   /** Bouton « Recharger avec mes gains » de l'ecran Recharger. */
   winningsConversionEnabled: boolean;
+  /** Paiement en ligne MonCash / NatCash (passerelle Tranzak) de l'ecran Recharger. */
+  onlineTopUpEnabled: boolean;
 }

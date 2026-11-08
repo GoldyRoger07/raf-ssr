@@ -64,6 +64,14 @@ export default class PlayerApp {
     );
   }
 
+  protected setOnlineTopUp(enabled: boolean): void {
+    this.save({ onlineTopUpEnabled: enabled }, (config) =>
+      config.onlineTopUpEnabled
+        ? { summary: 'Paiement en ligne active', detail: "Les joueurs peuvent recharger par MonCash et NatCash depuis l'app." }
+        : { summary: 'Paiement en ligne coupe', detail: "L'option disparait ; les paiements deja lances seront tout de meme credites." },
+    );
+  }
+
   private save(
     change: Partial<PlayerAppConfig>,
     message: (config: PlayerAppConfig) => { summary: string; detail: string },

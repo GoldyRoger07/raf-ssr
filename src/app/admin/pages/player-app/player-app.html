@@ -71,6 +71,36 @@
 
   <section class="mt-6 max-w-3xl rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <i class="pi pi-credit-card text-2xl text-violet-600"></i>
+      <div class="flex-1">
+        <h2 class="font-semibold">Paiement en ligne MonCash / NatCash</h2>
+        <p class="text-sm text-slate-500">
+          Bouton « Payer en ligne » de l'ecran Recharger : le joueur paie par la passerelle Tranzak, sans agent.
+        </p>
+      </div>
+      <p-toggleswitch
+        inputId="online-topup"
+        [ngModel]="c.onlineTopUpEnabled"
+        [disabled]="saving()"
+        (ngModelChange)="setOnlineTopUp($event)"
+      />
+      <label for="online-topup" class="w-16 text-sm font-medium">{{ c.onlineTopUpEnabled ? 'Active' : 'Coupe' }}</label>
+    </div>
+
+    <div class="px-5 py-4">
+      <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+        <ul class="list-disc space-y-1 pl-5">
+          <li>Propose seulement si la cle Tranzak (<code>TRANZAK_API_KEY</code>) est configuree sur le serveur.</li>
+          <li>Les frais de la passerelle sont payes par le joueur, en plus du montant : parametre <code>topup.online_fee_bps</code> (450 = 4,5 %), dans Parametres. Bornes : <code>topup.online_min_htg</code> et <code>topup.online_max_htg</code>.</li>
+          <li>Les credits ne sont ajoutes qu'une fois le paiement confirme par Tranzak (webhook signe, ou verification automatique chaque minute). Un paiement non regle expire apres 45 minutes.</li>
+          <li>Coupe, l'option disparait et tout nouveau paiement est refuse ; les paiements deja lances sont tout de meme credites.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="mt-6 max-w-3xl rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
       <i class="pi pi-sync text-2xl text-violet-600"></i>
       <div class="flex-1">
         <h2 class="font-semibold">Recharge avec les gains</h2>
