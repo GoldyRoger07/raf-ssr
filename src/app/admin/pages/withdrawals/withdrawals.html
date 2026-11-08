@@ -5,6 +5,15 @@
   <p class="text-sm text-slate-500">
     Les gains sont geles des la demande : refuser les rend au joueur, verser cloture la demande.
   </p>
+  @if (payout(); as p) {
+    <p class="mt-1 text-sm" [class.text-emerald-700]="p.enabled" [class.text-slate-500]="!p.enabled">
+      @if (p.enabled) {
+        <i class="pi pi-send mr-1"></i>Envoi automatique actif : approuver un retrait MonCash / NatCash envoie l'argent par Tranzak.
+      } @else {
+        Envoi automatique inactif : les retraits MonCash / NatCash se versent a la main.
+      }
+    </p>
+  }
 </div>
 
 <p-tabs [value]="status()" (valueChange)="selectTab($event)">
@@ -76,6 +85,11 @@
           @if (row.withdrawal.payoutReference) {
             <div class="mt-1 text-xs text-slate-500">Ref. {{ row.withdrawal.payoutReference }}</div>
           }
+          @if (row.withdrawal.payoutError && row.withdrawal.status === 'APPROVED') {
+            <div class="mt-1 max-w-56 text-xs text-red-600">
+              <i class="pi pi-exclamation-triangle mr-1"></i>Envoi echoue : {{ row.withdrawal.payoutError }}
+            </div>
+          }
         </td>
         <td class="text-right">
           @switch (row.withdrawal.status) {
@@ -86,12 +100,29 @@
               </div>
             }
             @case ('APPROVED') {
-              <p-button
-                [label]="row.withdrawal.provider === 'MANUAL' ? 'Remettre les especes' : 'Marquer verse'"
-                [icon]="row.withdrawal.provider === 'MANUAL' ? 'pi pi-money-bill' : 'pi pi-check'"
-                size="small"
-                (onClick)="openPay(row)"
-              />
+              <div class="flex flex-wrap justify-end gap-2">
+                @if (row.withdrawal.payoutError) {
+                  <p-button label="Refuser" severity="danger" [outlined]="true" size="small" (onClick)="openReject(row)" />
+                }
+                @if (automatic(row)) {
+                  <p-button
+                    [label]="row.withdrawal.payoutError ? 'Relancer l\'envoi' : 'Envoyer'"
+                    icon="pi pi-send"
+                    size="small"
+                    (onClick)="resend(row)"
+                  />
+                }
+                <p-button
+                  [label]="row.withdrawal.provider === 'MANUAL' ? 'Remettre les especes' : 'Marquer verse'"
+                  [icon]="row.withdrawal.provider === 'MANUAL' ? 'pi pi-money-bill' : 'pi pi-check'"
+                  size="small"
+                  [outlined]="automatic(row)"
+                  (onClick)="openPay(row)"
+                />
+              </div>
+            }
+            @case ('SENDING') {
+              <span class="text-xs text-slate-500"><i class="pi pi-spin pi-spinner mr-1"></i>Confirmation Tranzak attendue</span>
             }
           }
         </td>

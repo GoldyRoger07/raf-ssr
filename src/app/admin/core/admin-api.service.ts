@@ -41,6 +41,7 @@ import {
   WalletTransaction,
   Withdrawal,
   WithdrawalStatus,
+  PayoutConfig,
 } from './models';
 
 /** Appels du back-office au backend (endpoints /api/admin). */
@@ -242,6 +243,15 @@ export class AdminApi {
 
   approve(id: number): Observable<Withdrawal> {
     return this.http.post<Withdrawal>(`${this.base}/wallet/withdrawals/${id}/approve`, {});
+  }
+
+  /** Relance l'envoi automatique d'un retrait approuve, apres un echec. */
+  sendPayout(id: number): Observable<Withdrawal> {
+    return this.http.post<Withdrawal>(`${this.base}/wallet/withdrawals/${id}/send`, {});
+  }
+
+  payoutConfig(): Observable<PayoutConfig> {
+    return this.http.get<PayoutConfig>(`${this.base}/wallet/payouts/config`);
   }
 
   reject(id: number, reason: string): Observable<Withdrawal> {

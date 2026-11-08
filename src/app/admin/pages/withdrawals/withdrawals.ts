@@ -17,9 +17,9 @@ import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { HaitiDatePipe, HtgPipe } from '../../core/format';
 import { WITHDRAWAL_STATUS, providerLabel, withdrawalStatus } from '../../core/labels';
-import { AdminWithdrawal, WithdrawalStatus } from '../../core/models';
+import { AdminWithdrawal, PayoutConfig, Withdrawal, WithdrawalStatus } from '../../core/models';
 
-const TABS: WithdrawalStatus[] = ['PENDING', 'APPROVED', 'PAID', 'REJECTED'];
+const TABS: WithdrawalStatus[] = ['PENDING', 'APPROVED', 'SENDING', 'PAID', 'REJECTED'];
 const PAGE_SIZE = 20;
 
 @Component({
@@ -59,6 +59,8 @@ export default class Withdrawals {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected page = 0;
+  /** Envoi automatique des retraits MonCash / NatCash ; null tant qu'on ne sait pas. */
+  protected readonly payout = signal<PayoutConfig | null>(null);
 
   // Dialogues
   protected readonly selected = signal<AdminWithdrawal | null>(null);
@@ -71,6 +73,15 @@ export default class Withdrawals {
 
   constructor() {
     this.load();
+    this.api.payoutConfig().subscribe({
+      next: (config) => this.payout.set(config),
+      error: () => this.payout.set(null),
+    });
+  }
+
+  /** Retrait qui partira (ou repartira) par Tranzak. */
+  protected automatic(row: AdminWithdrawal): boolean {
+    return !!this.payout()?.enabled && row.withdrawal.provider !== 'MANUAL' && !row.withdrawal.initiatedByAdminId;
   }
 
   protected selectTab(value: string | number | undefined): void {
@@ -109,19 +120,55 @@ export default class Withdrawals {
   }
 
   protected approve(row: AdminWithdrawal): void {
+    const automatic = this.automatic(row);
     this.confirmation.confirm({
-      header: 'Approuver le retrait',
-      message: `Approuver le retrait de ${row.withdrawal.netHtg} HTG pour ${row.playerName} ?`,
+      header: automatic ? 'Approuver et envoyer' : 'Approuver le retrait',
+      message: automatic
+        ? `Envoyer ${row.withdrawal.netHtg} HTG sur le compte ${this.providerLabel(row.withdrawal.provider)} ` +
+          `${row.withdrawal.destinationNumber} de ${row.playerName} ? L'argent part tout de suite par Tranzak.`
+        : `Approuver le retrait de ${row.withdrawal.netHtg} HTG pour ${row.playerName} ?`,
       icon: 'pi pi-check-circle',
-      acceptLabel: 'Approuver',
+      acceptLabel: automatic ? 'Approuver et envoyer' : 'Approuver',
       rejectLabel: 'Annuler',
       rejectButtonProps: { severity: 'secondary', outlined: true },
       accept: () =>
         this.api.approve(row.withdrawal.id).subscribe({
-          next: () => this.done('Retrait approuve', `${row.playerName} est prevenu.`),
+          next: (result) => this.afterSend(row, result, 'Retrait approuve'),
           error: (error) => this.fail(error),
         }),
     });
+  }
+
+  /** Nouvel essai d'envoi automatique, apres un echec. */
+  protected resend(row: AdminWithdrawal): void {
+    this.confirmation.confirm({
+      header: "Relancer l'envoi",
+      message: `Renvoyer ${row.withdrawal.netHtg} HTG sur ${this.providerLabel(row.withdrawal.provider)} ` +
+        `${row.withdrawal.destinationNumber} ? Dernier echec : ${row.withdrawal.payoutError}.`,
+      icon: 'pi pi-send',
+      acceptLabel: 'Relancer',
+      rejectLabel: 'Annuler',
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () =>
+        this.api.sendPayout(row.withdrawal.id).subscribe({
+          next: (result) => this.afterSend(row, result, 'Envoi relance'),
+          error: (error) => this.fail(error),
+        }),
+    });
+  }
+
+  private afterSend(row: AdminWithdrawal, result: Withdrawal, summary: string): void {
+    if (result.status === 'PAID') {
+      this.done('Retrait verse', `${row.withdrawal.netHtg} HTG envoyes a ${row.playerName}.`);
+    } else if (result.status === 'SENDING') {
+      this.done(summary, "Envoi en cours chez Tranzak : le retrait passera en « Verse » des confirmation.");
+    } else if (result.payoutError) {
+      this.busy.set(false);
+      this.messages.add({ severity: 'warn', summary: 'Envoi automatique echoue', detail: result.payoutError, life: 10000 });
+      this.load();
+    } else {
+      this.done(summary, `${row.playerName} est prevenu.`);
+    }
   }
 
   protected openReject(row: AdminWithdrawal): void {

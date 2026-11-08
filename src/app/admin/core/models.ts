@@ -232,6 +232,7 @@ export type WithdrawalStatus =
   | 'AWAITING_OTP'
   | 'PENDING'
   | 'APPROVED'
+  | 'SENDING'
   | 'PAID'
   | 'REJECTED'
   | 'CANCELLED';
@@ -252,6 +253,17 @@ export interface Withdrawal {
   paidAt?: string;
   initiatedByAdminId?: number;
   note?: string;
+  /** Frais au pourcentage de la passerelle : envoi automatique a l'approbation. */
+  automaticPayout?: boolean;
+  /** Raison du dernier echec d'envoi automatique. */
+  payoutError?: string | null;
+  payoutAttempts?: number;
+}
+
+/** Envoi automatique des retraits MonCash / NatCash (payouts Tranzak). */
+export interface PayoutConfig {
+  enabled: boolean;
+  feeBps: number;
 }
 
 export interface AdminWithdrawal {
@@ -903,4 +915,6 @@ export interface PlayerAppConfig {
   winningsConversionEnabled: boolean;
   /** Paiement en ligne MonCash / NatCash (passerelle Tranzak) de l'ecran Recharger. */
   onlineTopUpEnabled: boolean;
+  /** Envoi automatique des retraits MonCash / NatCash a l'approbation (payouts Tranzak). */
+  autoPayoutEnabled: boolean;
 }

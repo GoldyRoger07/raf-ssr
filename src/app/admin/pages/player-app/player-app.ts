@@ -72,6 +72,14 @@ export default class PlayerApp {
     );
   }
 
+  protected setAutoPayout(enabled: boolean): void {
+    this.save({ autoPayoutEnabled: enabled }, (config) =>
+      config.autoPayoutEnabled
+        ? { summary: 'Retraits automatiques actives', detail: "Approuver un retrait MonCash / NatCash enverra l'argent par Tranzak." }
+        : { summary: 'Retraits automatiques coupes', detail: 'Les retraits MonCash / NatCash se versent de nouveau a la main.' },
+    );
+  }
+
   private save(
     change: Partial<PlayerAppConfig>,
     message: (config: PlayerAppConfig) => { summary: string; detail: string },

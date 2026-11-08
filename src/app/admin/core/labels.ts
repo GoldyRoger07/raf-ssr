@@ -7,6 +7,7 @@ export const WITHDRAWAL_STATUS: Record<WithdrawalStatus, { label: string; severi
   AWAITING_OTP: { label: 'Code attendu', severity: 'secondary' },
   PENDING: { label: 'A examiner', severity: 'warn' },
   APPROVED: { label: 'A verser', severity: 'info' },
+  SENDING: { label: 'Envoi en cours', severity: 'contrast' },
   PAID: { label: 'Verse', severity: 'success' },
   REJECTED: { label: 'Refuse', severity: 'danger' },
   CANCELLED: { label: 'Annule', severity: 'secondary' },
