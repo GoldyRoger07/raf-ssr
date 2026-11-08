@@ -83,6 +83,11 @@ export class QuizApi {
     return this.http.post<Quiz>(`${this.base}/${id}/close`, {});
   }
 
+  /** Solo ouvert : ajoute au vivier les questions publiees depuis l'ouverture, sans rien retirer. */
+  addNewQuestions(id: number): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/pool/add-new`, {});
+  }
+
   configureTopics(id: number, categoryIds: number[]): Observable<Quiz> {
     return this.http.post<Quiz>(`${this.base}/${id}/topics`, categoryIds);
   }

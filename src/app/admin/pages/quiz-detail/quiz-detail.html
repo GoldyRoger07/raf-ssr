@@ -44,6 +44,9 @@
         }
         @case ('RUNNING') {
           @if (q.gameMode === 'SOLO') {
+            <p-button label="Ajouter les nouvelles questions" icon="pi pi-plus-circle" severity="secondary" [outlined]="true" [loading]="busy()"
+                      pTooltip="Ajoute au vivier les questions publiees dans le sujet depuis l'ouverture du quiz. Aucune question n'est retiree." tooltipPosition="bottom"
+                      (onClick)="addNewQuestions()" />
             <p-button label="Fermer le quiz" icon="pi pi-lock" severity="danger" [outlined]="true" [loading]="busy()" (onClick)="close()" />
           }
         }

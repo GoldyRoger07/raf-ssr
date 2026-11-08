@@ -13,6 +13,7 @@ import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 import { Observable } from 'rxjs';
 
 import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
@@ -51,6 +52,7 @@ interface TierRow {
     TableModule,
     TagModule,
     TextareaModule,
+    TooltipModule,
     CreditsPipe,
     HtgPipe,
     HaitiDatePipe,
@@ -318,6 +320,32 @@ export default class QuizDetail implements OnInit {
       acceptButtonProps: { severity: 'danger' },
       rejectButtonProps: { severity: 'secondary', outlined: true },
       accept: () => this.run(this.api.close(q.id), 'Quiz solo ferme'),
+    });
+  }
+
+  /** Solo ouvert : les questions publiees depuis l'ouverture rejoignent le vivier. */
+  protected addNewQuestions(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    const before = q.poolSize;
+    this.busy.set(true);
+    this.api.addNewQuestions(q.id).subscribe({
+      next: (updated) => {
+        this.busy.set(false);
+        const added = updated.poolSize - before;
+        this.messages.add(
+          added > 0
+            ? { severity: 'success', summary: `${added} question(s) ajoutee(s)`, detail: `Le vivier compte desormais ${updated.poolSize} questions.` }
+            : { severity: 'info', summary: 'Aucune nouvelle question', detail: 'Toutes les questions publiees du sujet sont deja dans le vivier.' },
+        );
+        this.load();
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error), life: 8000 });
+      },
     });
   }
 
