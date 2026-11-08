@@ -66,6 +66,15 @@ export class QuestionApi {
     return this.http.post<ImportReport>(`${this.base}/import`, form, { params });
   }
 
+  /** CSV au format de l'import. status null : tous les statuts. */
+  exportCsv(categoryId: number, status: QuestionStatus | null): Observable<Blob> {
+    let params = new HttpParams().set('categoryId', categoryId);
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http.get(`${this.base}/export`, { params, responseType: 'blob' });
+  }
+
   aiStatus(): Observable<AiStatus> {
     return this.http.get<AiStatus>(`${this.base}/ai/status`);
   }

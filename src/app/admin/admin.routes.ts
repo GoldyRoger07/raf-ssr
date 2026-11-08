@@ -215,7 +215,7 @@ export default [
           },
           {
             path: 'import',
-            title: 'Import CSV - RAF Admin',
+            title: 'Import / Export CSV - RAF Admin',
             loadComponent: () => import('./pages/import/import'),
           },
         ],

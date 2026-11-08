@@ -1,5 +1,5 @@
 <div class="mb-6">
-  <h1 class="text-2xl font-semibold">Import CSV</h1>
+  <h1 class="text-2xl font-semibold">Import / Export CSV</h1>
   <p class="text-sm text-slate-500">
     Une ligne fautive est ignoree et expliquee dans le rapport, sans bloquer les autres. Reimporter le meme fichier ne cree aucun doublon.
   </p>
@@ -45,10 +45,36 @@
       <li><code>bonne_reponse</code> : A, B, C ou D</li>
       <li><code>difficulte</code> : FACILE, MOYEN ou DIFFICILE (vide = MOYEN)</li>
       <li>Vrai / faux : laisser <code>reponse_c</code> et <code>reponse_d</code> vides</li>
+      <li>Facultatif : <code>reponse_e</code> et <code>reponse_f</code> (bonne reponse E ou F) pour 5 ou 6 propositions</li>
     </ul>
     <p-button label="Telecharger un modele" icon="pi pi-download" [text]="true" size="small" (onClick)="downloadTemplate()" />
   </section>
 </div>
+
+<section class="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+  <div>
+    <h2 class="font-semibold">Exporter une categorie</h2>
+    <p class="text-sm text-slate-500">
+      Meme format que l'import : le fichier se reimporte tel quel. Il contient les bonnes reponses, ne le diffusez pas. Chaque export est trace au journal d'audit.
+    </p>
+  </div>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+    <div class="flex flex-col gap-2">
+      <label for="export-category" class="text-sm font-medium">Categorie</label>
+      <p-select inputId="export-category" [options]="allCategories()" [(ngModel)]="exportCategoryId" optionLabel="name" optionValue="id"
+                [filter]="true" placeholder="Choisir une categorie" styleClass="w-full sm:w-72" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="export-status" class="text-sm font-medium">Questions</label>
+      <p-select inputId="export-status" [options]="exportStatuses" [(ngModel)]="exportStatus" optionLabel="label" optionValue="value"
+                styleClass="w-full sm:w-52" />
+    </div>
+    <p-button label="Exporter" icon="pi pi-download" [loading]="exporting()" [disabled]="!exportCategoryId" (onClick)="exportCsv()" />
+  </div>
+  @if (exportError(); as message) {
+    <p-message severity="error" [text]="message" />
+  }
+</section>
 
 @if (report(); as r) {
   <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">

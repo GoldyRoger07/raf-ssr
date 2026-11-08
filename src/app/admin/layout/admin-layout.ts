@@ -48,7 +48,7 @@ export default class AdminLayout {
     { label: 'Parties signalees', icon: 'pi pi-flag', link: '/admin/parties', adminOnly: true },
     { label: 'Questions', icon: 'pi pi-question-circle', link: '/admin/questions', section: 'Contenu' },
     { label: 'Categories', icon: 'pi pi-tags', link: '/admin/categories' },
-    { label: 'Import CSV', icon: 'pi pi-upload', link: '/admin/import' },
+    { label: 'Import / Export CSV', icon: 'pi pi-file-export', link: '/admin/import' },
     { label: 'Generation IA', icon: 'pi pi-sparkles', link: '/admin/generation' },
     { label: 'Medias', icon: 'pi pi-images', link: '/admin/medias' },
     { label: 'Rapprochement', icon: 'pi pi-calculator', link: '/admin/rapprochement', adminOnly: true, section: 'Controle' },
