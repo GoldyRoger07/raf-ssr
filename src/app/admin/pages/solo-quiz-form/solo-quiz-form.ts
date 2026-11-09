@@ -76,6 +76,8 @@ export default class SoloQuizForm implements OnInit {
     free: [false],
     entryPriceCredits: [10, [Validators.required, Validators.min(1)]],
     prizeHtg: [200, [Validators.required, Validators.min(1)]],
+    /** Fermeture automatique au premier sans-faute. */
+    closeOnPerfect: [false],
     questionsPerGame: [10, [Validators.required, Validators.min(1)]],
     questionDurationSeconds: [5, [Validators.required, Validators.min(3), Validators.max(300)]],
   });
@@ -186,6 +188,7 @@ export default class SoloQuizForm implements OnInit {
       prizeHtg: v.prizeHtg!,
       questionsPerGame: v.questionsPerGame!,
       questionDurationSeconds: v.questionDurationSeconds!,
+      closeOnPerfect: !!v.closeOnPerfect,
     };
 
     this.saving.set(true);
@@ -234,6 +237,7 @@ export default class SoloQuizForm implements OnInit {
       free: quiz.free,
       entryPriceCredits: quiz.free ? 10 : quiz.ticketPriceCredits,
       prizeHtg: quiz.soloPrizeHtg ?? null,
+      closeOnPerfect: quiz.closeOnPerfect,
       questionsPerGame: quiz.questionsPerGame,
       questionDurationSeconds: quiz.questionDurationSeconds,
     });

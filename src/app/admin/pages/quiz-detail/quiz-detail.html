@@ -118,6 +118,11 @@
         <li>Une partie par joueur, par sujet et par jour (heure d'Haiti), tous quiz solo confondus.</li>
         <li>Le joueur sait aussitot s'il a gagne. A la fermeture, son corrige montre juste ou fausse par question, jamais les questions ni les reponses.</li>
         <li>Desactiver le sujet en Solo bloque aussitot les nouvelles parties.</li>
+        @if (q.closeOnPerfect) {
+          <li><strong>Fermeture au premier sans-faute :</strong> le quiz se ferme de lui-meme des qu'un joueur gagne. Les parties deja commencees vont a leur terme.</li>
+        } @else {
+          <li>Reste ouvert apres un sans-faute : il ne se ferme qu'a la main.</li>
+        }
       </ul>
       @if (soloEconomics(); as e) {
         <h3 class="mb-2 mt-5 text-sm font-semibold">Rentabilite</h3>

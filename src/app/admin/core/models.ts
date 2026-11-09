@@ -356,6 +356,8 @@ export interface Quiz {
   pointsPerCorrect: number;
   /** Solo : prix d'un sans-faute (ticketPrice* = prix d'une partie). */
   soloPrizeHtg?: number;
+  /** Solo : le quiz se ferme de lui-meme au premier sans-faute. */
+  closeOnPerfect: boolean;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
   startDelayMinutes: number;
@@ -408,6 +410,8 @@ export interface SoloQuizInput {
   prizeHtg: number;
   questionsPerGame: number;
   questionDurationSeconds: number;
+  /** Fermer le quiz des le premier sans-faute. */
+  closeOnPerfect: boolean;
 }
 
 export interface RewardTier {

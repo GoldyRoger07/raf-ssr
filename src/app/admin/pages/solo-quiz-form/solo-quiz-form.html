@@ -99,6 +99,16 @@
           }
         </div>
       </div>
+      <div class="mt-4 flex items-start gap-3">
+        <p-toggleswitch inputId="closeOnPerfect" formControlName="closeOnPerfect" />
+        <div>
+          <label for="closeOnPerfect" class="text-sm font-medium">Fermer le quiz au premier sans-faute</label>
+          <p class="text-xs text-slate-500">
+            Des qu'un joueur fait un sans-faute, le quiz se ferme : plus aucune partie ne peut y etre lancee. Les parties
+            deja commencees vont a leur terme et peuvent encore gagner le prix.
+          </p>
+        </div>
+      </div>
       @if (economics(); as e) {
         <solo-economics class="mt-4 block" [economics]="e" />
       } @else if (free()) {
