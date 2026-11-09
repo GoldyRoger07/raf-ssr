@@ -76,6 +76,89 @@
     </a>
   </div>
 
+  <!-- Aujourd'hui compare a hier -->
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Aujourd'hui</h2>
+      <p class="text-xs text-slate-400">
+        Depuis minuit (heure d'Haiti), compare a hier · hors quiz et comptes de test
+        @if (daily() && comparisons().length) {
+          · <span class="text-green-700 dark:text-green-500">{{ balance().good }} en progression</span>,
+          <span class="text-red-600 dark:text-red-400">{{ balance().bad }} en recul</span>
+        }
+      </p>
+    </div>
+    <p-selectbutton [options]="compareOptions" [ngModel]="compareTo()" (ngModelChange)="$event && compareTo.set($event)"
+                    optionLabel="label" optionValue="value" size="small" [allowEmpty]="false" />
+  </div>
+  @if (dailyError(); as message) {
+    <p-message class="mb-8 block" severity="error" [text]="message" />
+  } @else if (daily()) {
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" [class.opacity-60]="dailyLoading()">
+      @for (c of comparisons(); track c.key) {
+        <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-sm text-slate-500">{{ c.label }}</div>
+          <div class="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span class="text-2xl font-semibold">{{ c.today }}</span>
+            <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" [class]="toneClass[c.tone]">
+              <i class="pi text-[0.65rem]"
+                 [class.pi-arrow-up-right]="c.trend === 'up'" [class.pi-arrow-down-right]="c.trend === 'down'"
+                 [class.pi-minus]="c.trend === 'flat'"></i>
+              {{ c.trend === 'flat' ? 'Stable' : (c.percent ?? c.difference) }}
+            </span>
+          </div>
+          <div class="mt-1 text-sm text-slate-500">
+            {{ c.reference }} hier
+            @if (c.trend !== 'flat' && c.percent) { · {{ c.difference }} }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (i of [1, 2, 3]; track i) {
+        <p-skeleton height="6.5rem" borderRadius="0.75rem" />
+      }
+    </div>
+  }
+
+  <!-- Tendances -->
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Tendances</h2>
+      <p class="text-xs text-slate-400">Jour par jour, aujourd'hui compris (journee en cours)</p>
+    </div>
+    <p-selectbutton [options]="rangeOptions" [ngModel]="range()" (ngModelChange)="changeRange($event)"
+                    optionLabel="label" optionValue="value" size="small" [allowEmpty]="false" />
+  </div>
+  @if (daily()) {
+    <div class="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-2" [class.opacity-60]="dailyLoading()">
+      <section class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="mb-2 font-semibold">Ventes et gains verses</h3>
+        <admin-trend-chart [dates]="dates()" [series]="salesChart()" unit="htg" label="Ventes de jeu et gains verses par jour, en HTG" />
+      </section>
+      <section class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="font-semibold">Resultat du jeu</h3>
+        <p class="mb-2 text-xs text-slate-500">En bleu les jours gagnants, en rouge les jours perdants</p>
+        <admin-trend-chart [dates]="dates()" [series]="resultChart()" kind="bar" unit="htg" label="Resultat du jeu par jour, en HTG" />
+      </section>
+      <section class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="mb-2 font-semibold">Joueurs</h3>
+        <admin-trend-chart [dates]="dates()" [series]="playersChart()" label="Joueurs actifs et nouveaux joueurs par jour" />
+      </section>
+      <section class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="mb-2 font-semibold">Recharges et retraits verses</h3>
+        <admin-trend-chart [dates]="dates()" [series]="cashChart()" unit="htg" label="Recharges et retraits verses par jour, en HTG" />
+      </section>
+    </div>
+  } @else if (!dailyError()) {
+    <div class="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      @for (i of [1, 2]; track i) {
+        <p-skeleton height="16rem" borderRadius="0.75rem" />
+      }
+    </div>
+  }
+
   <!-- Resultat du jeu -->
   <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
     <div>

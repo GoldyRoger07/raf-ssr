@@ -83,6 +83,34 @@ export interface Dashboard {
   lastReconciliation: { id: number; status: string; startedAt: string; findingCount: number } | null;
 }
 
+/** Chiffres d'une journee d'Haiti, hors quiz et comptes de test (montants en HTG). */
+export interface DayStats {
+  /** AAAA-MM-JJ */
+  date: string;
+  newPlayers: number;
+  activePlayers: number;
+  ticketsSold: number;
+  soloGames: number;
+  salesHtg: number;
+  prizesHtg: number;
+  resultHtg: number;
+  topUpsHtg: number;
+  withdrawalsPaidHtg: number;
+}
+
+export interface DailyStats {
+  generatedAt: string;
+  htgRate: number;
+  /** De minuit a maintenant. */
+  today: DayStats;
+  /** Hier, journee entiere. */
+  yesterday: DayStats;
+  /** Hier, de minuit a la meme heure qu'aujourd'hui. */
+  yesterdaySameTime: DayStats;
+  /** Du plus ancien jour a aujourd'hui inclus. */
+  days: DayStats[];
+}
+
 export interface PlayerSummary {
   id: number;
   /** Compte de test : son activite est exclue du tableau de bord. */

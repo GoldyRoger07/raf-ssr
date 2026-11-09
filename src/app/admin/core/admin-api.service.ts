@@ -23,6 +23,7 @@ import {
   UserResponse,
   UserStatus,
   BalanceType,
+  DailyStats,
   Dashboard,
   DepositNumbers,
   LeaderCommission,
@@ -54,6 +55,10 @@ export class AdminApi {
 
   dashboard(): Observable<Dashboard> {
     return this.http.get<Dashboard>(`${this.base}/dashboard`);
+  }
+
+  daily(days: number): Observable<DailyStats> {
+    return this.http.get<DailyStats>(`${this.base}/dashboard/daily`, { params: { days } });
   }
 
   profit(period: ProfitPeriod): Observable<GameProfit> {
