@@ -1,0 +1,32 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+  @for (row of rows(); track row.level) {
+    <div class="flex flex-col gap-1">
+      <label [for]="'mix-' + row.level" class="text-sm font-medium">{{ row.label }}</label>
+      <p-inputnumber [inputId]="'mix-' + row.level" [ngModel]="row.percent" (ngModelChange)="set(row.level, $event)"
+                     [min]="0" [max]="100" suffix=" %" [showButtons]="true" [step]="5" inputStyleClass="w-full" styleClass="w-full" />
+      @if (questionsPerGame()) {
+        <small class="text-slate-500">
+          {{ row.perGame }} question{{ row.perGame > 1 ? 's' : '' }} par partie
+          @if (row.available !== null) {
+            · {{ row.available }} dans le sujet
+          }
+        </small>
+      }
+      @if (row.short) {
+        <small class="text-red-600 dark:text-red-400">
+          Pas assez pour une partie : il manquera {{ row.perGame - row.available! }} question(s), prises dans un niveau voisin.
+        </small>
+      } @else if (row.thin) {
+        <small class="text-amber-700 dark:text-amber-400">
+          Peu de questions : un joueur reverra vite celles qu'il a deja reussies.
+        </small>
+      }
+    </div>
+  }
+</div>
+<p class="mt-2 text-sm" [class]="total() === 100 ? 'text-slate-500' : 'font-medium text-red-600 dark:text-red-400'">
+  Total : {{ total() }} %
+  @if (total() !== 100) {
+    — il doit faire 100 %.
+  }
+</p>

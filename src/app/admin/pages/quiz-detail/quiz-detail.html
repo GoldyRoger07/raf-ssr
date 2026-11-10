@@ -145,6 +145,14 @@
           }
           <p-button label="Regler" icon="pi pi-clock" size="small" [text]="true" (onClick)="openCooldown()" />
         </li>
+        <li>
+          @if (q.difficultyMix) {
+            <strong>Repartition par difficulte :</strong> {{ mixSummary(q) }}, melangees.
+          } @else {
+            Tirage libre : les questions sont tirees au hasard dans le vivier, sans tenir compte de leur difficulte.
+          }
+          <p-button label="Regler" icon="pi pi-sliders-h" size="small" [text]="true" (onClick)="openMix()" />
+        </li>
       </ul>
       @if (soloEconomics(); as e) {
         <h3 class="mb-2 mt-5 text-sm font-semibold">Rentabilite</h3>
@@ -354,6 +362,27 @@
       </p-table>
     </section>
   }
+
+  <!-- Dialogue : repartition par difficulte (solo) -->
+  <p-dialog header="Repartition par difficulte" [(visible)]="mixOpen" [modal]="true" [style]="{ width: '40rem' }" [draggable]="false">
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+      Part des questions faciles, moyennes et difficiles de chaque partie. Le changement s'applique aux parties lancees
+      ensuite ; les parties en cours gardent leurs questions. Un niveau qui manque de questions ressert d'abord celles que
+      le joueur a deja reussies, puis emprunte a un niveau voisin.
+    </p>
+    <div class="flex items-center gap-3">
+      <p-toggleswitch inputId="mix-enabled" [ngModel]="mixEnabled()" (ngModelChange)="mixEnabled.set($event)" />
+      <label for="mix-enabled" class="text-sm font-medium">Repartir par difficulte</label>
+    </div>
+    @if (mixEnabled() && quiz(); as q) {
+      <difficulty-mix-editor class="mt-4 block" [mix]="mixDraft()" (mixChange)="mixDraft.set($event)"
+                             [questionsPerGame]="q.questionsPerGame" [available]="mixAvailable()" [poolRatio]="mixPoolRatio()" />
+    }
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="mixOpen.set(false)" />
+      <p-button label="Enregistrer" [loading]="busy()" [disabled]="mixInvalid()" (onClick)="saveMix()" />
+    </ng-template>
+  </p-dialog>
 
   <!-- Dialogue : delai apres un sans-faute (solo) -->
   <p-dialog header="Cacher apres un sans-faute" [(visible)]="cooldownOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">

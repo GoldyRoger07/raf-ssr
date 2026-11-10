@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
 import {
+  DifficultyMix,
   Economics,
   GameMode,
   Leaderboard,
@@ -101,6 +102,11 @@ export class QuizApi {
     return this.http.post<Quiz>(`${this.base}/${id}/perfect-cooldown`, { minutes });
   }
 
+  /** Solo : part des questions par difficulte (null : tirage libre). S'applique aux parties suivantes. */
+  setDifficultyMix(id: number, mix: DifficultyMix | null): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/difficulty-mix`, mix ?? {});
+  }
+
   /** Masque ou demasque le quiz aux joueurs, sans changer son statut. */
   setHidden(id: number, hidden: boolean): Observable<Quiz> {
     return this.http.post<Quiz>(`${this.base}/${id}/hidden`, { hidden });
@@ -138,12 +144,19 @@ export class QuizApi {
     entryPriceCredits: number,
     prizeHtg: number,
     questionsPerGame: number,
+    mix: DifficultyMix | null = null,
   ): Observable<SoloEconomics> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('categoryId', categoryId)
       .set('entryPriceCredits', entryPriceCredits)
       .set('prizeHtg', prizeHtg)
       .set('questionsPerGame', questionsPerGame);
+    if (mix) {
+      params = params
+        .set('easyPercent', mix.easyPercent)
+        .set('mediumPercent', mix.mediumPercent)
+        .set('hardPercent', mix.hardPercent);
+    }
     return this.http.get<SoloEconomics>(`${this.base}/solo/economics`, { params });
   }
 

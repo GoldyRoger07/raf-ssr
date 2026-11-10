@@ -58,8 +58,44 @@
   </dl>
 }
 
+@if (e.byDifficulty.length) {
+  <table class="mt-3 w-full text-sm">
+    <thead>
+      <tr class="text-left text-slate-500">
+        <th class="py-1 font-normal">Niveau</th>
+        <th class="py-1 text-right font-normal">Par partie</th>
+        <th class="py-1 text-right font-normal">Dans le vivier</th>
+        <th class="py-1 text-right font-normal">Reussite</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (level of e.byDifficulty; track level.difficulty) {
+        <tr class="border-t border-slate-100 dark:border-slate-800">
+          <td class="py-1">{{ label(level.difficulty) }} ({{ level.percent }} %)</td>
+          <td class="py-1 text-right font-semibold">
+            {{ level.servedPerGame }}
+            @if (level.servedPerGame !== level.targetPerGame) {
+              <span class="font-normal text-amber-700 dark:text-amber-400">(voulu {{ level.targetPerGame }})</span>
+            }
+          </td>
+          <td class="py-1 text-right">{{ level.poolQuestions }}</td>
+          <td class="py-1 text-right">{{ pct(level.accuracy) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
 <p class="mt-3 text-xs text-slate-500">
-  Estimation : reussite moyenne des {{ e.poolQuestions }} questions du vivier, puissance {{ e.questionsPerGame }}.
+  @if (e.byDifficulty.length) {
+    Estimation : reussite de chaque niveau, puissance son nombre de questions par partie, multipliees entre elles.
+    La reussite par question est l'equivalent sur toute la partie.
+    @if (borrowed()) {
+      Un niveau manque de questions : la partie est completee par un niveau voisin.
+    }
+  } @else {
+    Estimation : reussite moyenne des {{ e.poolQuestions }} questions du vivier, puissance {{ e.questionsPerGame }}.
+  }
   @if (fewStats()) {
     Seules {{ e.questionsWithStats }} ont assez d'historique : le reste repose sur la difficulte declaree
     (facile 85 %, moyenne 70 %, difficile 55 %). A verifier sur les premieres parties.

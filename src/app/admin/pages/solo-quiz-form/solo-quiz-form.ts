@@ -13,12 +13,14 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { debounceTime, map, of, startWith, switchMap } from 'rxjs';
 
 import { MediaPicker } from '../../components/media-picker/media-picker';
+import { DifficultyMixEditor } from '../../components/difficulty-mix-editor/difficulty-mix-editor';
 import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { AuthService } from '../../core/auth.service';
 import { HtgPipe } from '../../core/format';
-import { Category, PoolStatus, Quiz, SoloEconomics, SoloQuizInput } from '../../core/models';
+import { DEFAULT_DIFFICULTY_MIX, mixValid } from '../../core/difficulty-mix';
+import { Category, DifficultyMix, PoolStatus, Quiz, SoloEconomics, SoloQuizInput } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 import { DURATION_UNITS, DurationUnit, MAX_DURATION_MINUTES, fromMinutes, toMinutes } from '../../core/duration';
 import { QuizApi } from '../../core/quiz-api.service';
@@ -41,6 +43,7 @@ import { QuizApi } from '../../core/quiz-api.service';
     ToggleSwitchModule,
     HtgPipe,
     SoloEconomicsPanel,
+    DifficultyMixEditor,
     MediaPicker,
   ],
   templateUrl: './solo-quiz-form.html',
@@ -85,9 +88,12 @@ export default class SoloQuizForm implements OnInit {
     cooldownUnit: ['DAYS' as DurationUnit],
     questionsPerGame: [10, [Validators.required, Validators.min(1)]],
     questionDurationSeconds: [5, [Validators.required, Validators.min(3), Validators.max(300)]],
+    /** Repartir les questions de chaque partie par difficulte ; sinon tirage libre. */
+    mixEnabled: [false],
+    difficultyMix: [{ ...DEFAULT_DIFFICULTY_MIX } as DifficultyMix],
   });
 
-  private readonly values = toSignal(
+  protected readonly values = toSignal(
     this.form.valueChanges.pipe(startWith(this.form.getRawValue()), map(() => this.form.getRawValue())),
     { requireSync: true },
   );
@@ -103,6 +109,23 @@ export default class SoloQuizForm implements OnInit {
     }
     const minutes = toMinutes(v.cooldownValue ?? 0, v.cooldownUnit ?? 'DAYS');
     return !Number.isInteger(minutes) || minutes < 1 || minutes > MAX_DURATION_MINUTES;
+  });
+  protected readonly mixEnabled = computed(() => !!this.values().mixEnabled);
+  protected readonly mix = computed(() => this.values().difficultyMix ?? DEFAULT_DIFFICULTY_MIX);
+  /** Repartition active mais dont le total ne fait pas 100. */
+  protected readonly mixInvalid = computed(() => this.mixEnabled() && !mixValid(this.mix()));
+  /** Repartition a envoyer : null en tirage libre ou tant qu'elle est incomplete. */
+  private readonly activeMix = (v: { mixEnabled?: boolean | null; difficultyMix?: DifficultyMix | null }) =>
+    v.mixEnabled && v.difficultyMix && mixValid(v.difficultyMix) ? v.difficultyMix : null;
+  /** Questions publiees du sujet, par niveau. */
+  protected readonly available = computed(() => {
+    const p = this.pool();
+    return p ? { EASY: p.easy, MEDIUM: p.medium, HARD: p.hard } : null;
+  });
+  protected readonly poolRatio = computed(() => {
+    const p = this.pool();
+    const perGame = this.poolPerGame();
+    return p && perGame ? p.required / perGame : null;
   });
   protected readonly entryHtg = computed(() => this.toHtg(this.values().entryPriceCredits));
   protected readonly prizeHtg = computed(() => this.values().prizeHtg ?? null);
@@ -172,6 +195,7 @@ export default class SoloQuizForm implements OnInit {
                 v.free ? 0 : (v.entryPriceCredits ?? 0),
                 v.prizeHtg!,
                 v.questionsPerGame!,
+                this.activeMix(v),
               )
             : of(null),
         ),
@@ -189,7 +213,15 @@ export default class SoloQuizForm implements OnInit {
     }
   }
 
+  protected setMix(mix: DifficultyMix): void {
+    this.form.controls.difficultyMix.setValue(mix);
+  }
+
   protected submit(): void {
+    if (this.mixInvalid()) {
+      this.error.set('Les pourcentages facile, moyen et difficile doivent faire 100 au total.');
+      return;
+    }
     if (this.cooldownInvalid()) {
       this.error.set('Le delai apres un sans-faute doit etre compris entre une minute et un an.');
       return;
@@ -210,6 +242,7 @@ export default class SoloQuizForm implements OnInit {
       questionDurationSeconds: v.questionDurationSeconds!,
       closeOnPerfect: !!v.closeOnPerfect,
       perfectCooldownMinutes: v.cooldownEnabled ? toMinutes(v.cooldownValue ?? 0, v.cooldownUnit ?? 'DAYS') : null,
+      difficultyMix: this.activeMix(v),
     };
 
     this.saving.set(true);
@@ -264,6 +297,8 @@ export default class SoloQuizForm implements OnInit {
       cooldownUnit: quiz.perfectCooldownMinutes != null ? fromMinutes(quiz.perfectCooldownMinutes).unit : 'DAYS',
       questionsPerGame: quiz.questionsPerGame,
       questionDurationSeconds: quiz.questionDurationSeconds,
+      mixEnabled: quiz.difficultyMix != null,
+      difficultyMix: quiz.difficultyMix ?? { ...DEFAULT_DIFFICULTY_MIX },
     });
   }
 }

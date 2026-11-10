@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 
 import { HtgPipe } from '../../core/format';
+import { difficultyLabel } from '../../core/labels';
 import { SoloEconomics } from '../../core/models';
 
 /**
@@ -23,6 +24,13 @@ export class SoloEconomicsPanel {
     const e = this.economics();
     return e.questionsWithStats * 2 < e.poolQuestions;
   });
+
+  /** Un niveau est servi en moins que voulu : un voisin complete les parties. */
+  protected readonly borrowed = computed(() =>
+    this.economics().byDifficulty.some((level) => level.servedPerGame < level.targetPerGame),
+  );
+
+  protected readonly label = difficultyLabel;
 
   /** Prix ramene a la marge visee : 30 % de la mise conservee en moyenne. */
   protected readonly suggestedPrizeHtg = computed(() => Math.floor(this.economics().breakEvenPrizeHtg * 0.7));

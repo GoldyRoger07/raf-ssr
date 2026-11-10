@@ -19,11 +19,14 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { Observable, Subject, debounceTime } from 'rxjs';
 
+import { DifficultyMixEditor } from '../../components/difficulty-mix-editor/difficulty-mix-editor';
 import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { PLAY_MODE, quizStatus } from '../../core/labels';
-import { Economics, Leaderboard, Quiz, RewardTier, SoloEconomics } from '../../core/models';
+import { DEFAULT_DIFFICULTY_MIX, describeSplit, formatMix, mixValid, splitMix } from '../../core/difficulty-mix';
+import { Difficulty, DifficultyMix, Economics, Leaderboard, Quiz, RewardTier, SoloEconomics } from '../../core/models';
+import { QuestionApi } from '../../core/question-api.service';
 import { QuizApi } from '../../core/quiz-api.service';
 import { DURATION_UNITS, DurationUnit, MAX_DURATION_MINUTES, formatDuration, fromMinutes, toMinutes } from '../../core/duration';
 import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
@@ -65,11 +68,13 @@ interface TierRow {
     HtgPipe,
     HaitiDatePipe,
     SoloEconomicsPanel,
+    DifficultyMixEditor,
   ],
   templateUrl: './quiz-detail.html',
 })
 export default class QuizDetail implements OnInit {
   private readonly api = inject(QuizApi);
+  private readonly questionApi = inject(QuestionApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly messages = inject(MessageService);
@@ -315,6 +320,69 @@ export default class QuizDetail implements OnInit {
             this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
           },
         });
+      },
+    });
+  }
+
+  // --- Solo : repartition des questions par difficulte ---------------------------------
+  protected readonly mixOpen = signal(false);
+  protected readonly mixEnabled = signal(false);
+  protected readonly mixDraft = signal<DifficultyMix>({ ...DEFAULT_DIFFICULTY_MIX });
+  /** Questions publiees du sujet par niveau, et taille minimale du vivier (multiple d'une partie). */
+  protected readonly mixAvailable = signal<Record<Difficulty, number> | null>(null);
+  protected readonly mixPoolRatio = signal<number | null>(null);
+  protected readonly mixInvalid = computed(() => this.mixEnabled() && !mixValid(this.mixDraft()));
+
+  /** « 40 / 40 / 20 % (4 faciles, 4 moyennes, 2 difficiles) ». */
+  protected mixSummary(q: Quiz): string {
+    const mix = q.difficultyMix!;
+    return `${formatMix(mix)} (${describeSplit(splitMix(mix, q.questionsPerGame))} par partie)`;
+  }
+
+  protected openMix(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    this.mixEnabled.set(q.difficultyMix != null);
+    this.mixDraft.set({ ...(q.difficultyMix ?? DEFAULT_DIFFICULTY_MIX) });
+    this.mixAvailable.set(null);
+    this.mixPoolRatio.set(null);
+    if (q.selectedCategoryId) {
+      this.questionApi.poolStatus(q.selectedCategoryId, q.questionsPerGame).subscribe({
+        next: (p) => {
+          this.mixAvailable.set({ EASY: p.easy, MEDIUM: p.medium, HARD: p.hard });
+          this.mixPoolRatio.set(p.required / q.questionsPerGame);
+        },
+        error: () => undefined,
+      });
+    }
+    this.mixOpen.set(true);
+  }
+
+  protected saveMix(): void {
+    const q = this.quiz();
+    if (!q || this.mixInvalid()) {
+      return;
+    }
+    const mix = this.mixEnabled() ? this.mixDraft() : null;
+    this.busy.set(true);
+    this.api.setDifficultyMix(q.id, mix).subscribe({
+      next: (updated) => {
+        this.busy.set(false);
+        this.quiz.set(updated);
+        this.mixOpen.set(false);
+        // Le sans-faute estime depend de la repartition.
+        this.api.soloEconomics(q.id).subscribe({ next: (e) => this.soloEconomics.set(e), error: () => undefined });
+        this.messages.add({
+          severity: 'success',
+          summary: mix ? `Repartition ${formatMix(mix)}` : 'Tirage libre retabli',
+          detail: q.status === 'DRAFT' ? undefined : 'S\'applique aux prochaines parties.',
+        });
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error) });
       },
     });
   }

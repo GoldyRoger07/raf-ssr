@@ -409,6 +409,8 @@ export interface Quiz {
   closeOnPerfect: boolean;
   /** Solo : minutes pendant lesquelles le quiz est cache a un joueur apres son sans-faute ; null = desactive. */
   perfectCooldownMinutes: number | null;
+  /** Solo : part des questions faciles / moyennes / difficiles d'une partie ; null = tirage libre. */
+  difficultyMix: DifficultyMix | null;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
   startDelayMinutes: number;
@@ -465,6 +467,28 @@ export interface SoloQuizInput {
   closeOnPerfect: boolean;
   /** Cacher le quiz a un joueur pendant ce nombre de minutes apres son sans-faute ; null = desactive. */
   perfectCooldownMinutes: number | null;
+  /** Part des questions par difficulte ; null = tirage libre. */
+  difficultyMix: DifficultyMix | null;
+}
+
+/** Pourcentages entiers dont le total vaut 100 ; un niveau peut etre a 0. */
+export interface DifficultyMix {
+  easyPercent: number;
+  mediumPercent: number;
+  hardPercent: number;
+}
+
+/** Un niveau de la repartition, dans le bilan d'un quiz solo. */
+export interface DifficultyLevelEstimate {
+  difficulty: Difficulty;
+  percent: number;
+  /** Questions voulues par partie. */
+  targetPerGame: number;
+  /** Questions servies, une fois complete par un niveau voisin si le vivier en manque. */
+  servedPerGame: number;
+  poolQuestions: number;
+  /** Reussite moyenne du niveau ; null s'il n'a aucune question. */
+  accuracy: number | null;
 }
 
 export interface RewardTier {
@@ -507,6 +531,8 @@ export interface SoloEconomics {
   gamesWon: number | null;
   observedWinRate: number | null;
   observedMarginHtg: number | null;
+  /** Detail par niveau quand une repartition est fixee, vide sinon. */
+  byDifficulty: DifficultyLevelEstimate[];
 }
 
 export interface LeaderboardEntry {
