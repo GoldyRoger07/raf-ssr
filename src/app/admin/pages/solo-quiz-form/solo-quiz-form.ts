@@ -20,6 +20,7 @@ import { AuthService } from '../../core/auth.service';
 import { HtgPipe } from '../../core/format';
 import { Category, PoolStatus, Quiz, SoloEconomics, SoloQuizInput } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
+import { DURATION_UNITS, DurationUnit, MAX_DURATION_MINUTES, fromMinutes, toMinutes } from '../../core/duration';
 import { QuizApi } from '../../core/quiz-api.service';
 
 /**
@@ -78,6 +79,10 @@ export default class SoloQuizForm implements OnInit {
     prizeHtg: [200, [Validators.required, Validators.min(1)]],
     /** Fermeture automatique au premier sans-faute. */
     closeOnPerfect: [false],
+    /** Cacher le quiz au joueur pendant un delai apres son sans-faute. */
+    cooldownEnabled: [false],
+    cooldownValue: [1 as number | null],
+    cooldownUnit: ['DAYS' as DurationUnit],
     questionsPerGame: [10, [Validators.required, Validators.min(1)]],
     questionDurationSeconds: [5, [Validators.required, Validators.min(3), Validators.max(300)]],
   });
@@ -88,6 +93,17 @@ export default class SoloQuizForm implements OnInit {
   );
 
   protected readonly free = computed(() => !!this.values().free);
+  protected readonly durationUnits = DURATION_UNITS;
+  protected readonly cooldownEnabled = computed(() => !!this.values().cooldownEnabled);
+  /** Delai saisi hors bornes (au moins une minute, au plus un an). */
+  protected readonly cooldownInvalid = computed(() => {
+    const v = this.values();
+    if (!v.cooldownEnabled) {
+      return false;
+    }
+    const minutes = toMinutes(v.cooldownValue ?? 0, v.cooldownUnit ?? 'DAYS');
+    return !Number.isInteger(minutes) || minutes < 1 || minutes > MAX_DURATION_MINUTES;
+  });
   protected readonly entryHtg = computed(() => this.toHtg(this.values().entryPriceCredits));
   protected readonly prizeHtg = computed(() => this.values().prizeHtg ?? null);
   protected readonly maxDurationSeconds = computed(
@@ -174,6 +190,10 @@ export default class SoloQuizForm implements OnInit {
   }
 
   protected submit(): void {
+    if (this.cooldownInvalid()) {
+      this.error.set('Le delai apres un sans-faute doit etre compris entre une minute et un an.');
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -189,6 +209,7 @@ export default class SoloQuizForm implements OnInit {
       questionsPerGame: v.questionsPerGame!,
       questionDurationSeconds: v.questionDurationSeconds!,
       closeOnPerfect: !!v.closeOnPerfect,
+      perfectCooldownMinutes: v.cooldownEnabled ? toMinutes(v.cooldownValue ?? 0, v.cooldownUnit ?? 'DAYS') : null,
     };
 
     this.saving.set(true);
@@ -238,6 +259,9 @@ export default class SoloQuizForm implements OnInit {
       entryPriceCredits: quiz.free ? 10 : quiz.ticketPriceCredits,
       prizeHtg: quiz.soloPrizeHtg ?? null,
       closeOnPerfect: quiz.closeOnPerfect,
+      cooldownEnabled: quiz.perfectCooldownMinutes != null,
+      cooldownValue: quiz.perfectCooldownMinutes != null ? fromMinutes(quiz.perfectCooldownMinutes).value : 1,
+      cooldownUnit: quiz.perfectCooldownMinutes != null ? fromMinutes(quiz.perfectCooldownMinutes).unit : 'DAYS',
       questionsPerGame: quiz.questionsPerGame,
       questionDurationSeconds: quiz.questionDurationSeconds,
     });

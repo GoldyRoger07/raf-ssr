@@ -172,6 +172,9 @@
             @if (q.test) {
               <p-tag value="Test" severity="warn" class="ml-2" />
             }
+            @if (q.hidden) {
+              <p-tag value="Masque" severity="contrast" icon="pi pi-eye-slash" class="ml-2" />
+            }
             <div class="text-xs text-slate-500">
               {{ q.categoryName ?? '—' }} · {{ q.questionsPerGame }} questions × {{ q.questionDurationSeconds }} s
             </div>
@@ -261,6 +264,9 @@
             <a [routerLink]="['/admin/quiz', q.id]" class="font-medium hover:text-orange-600">{{ q.title }}</a>
             @if (q.test) {
               <p-tag value="Test" severity="warn" class="ml-2" />
+            }
+            @if (q.hidden) {
+              <p-tag value="Masque" severity="contrast" icon="pi pi-eye-slash" class="ml-2" />
             }
             @if (q.themeLabel) {
               <div class="text-xs text-slate-500">{{ q.themeLabel }}</div>

@@ -109,6 +109,28 @@
           </p>
         </div>
       </div>
+      <div class="mt-4 flex items-start gap-3">
+        <p-toggleswitch inputId="cooldownEnabled" formControlName="cooldownEnabled" />
+        <div class="flex-1">
+          <label for="cooldownEnabled" class="text-sm font-medium">Cacher le quiz au joueur apres son sans-faute</label>
+          <p class="text-xs text-slate-500">
+            Un joueur qui fait un sans-faute ne voit plus ce quiz pendant le delai choisi, compte depuis son dernier sans-faute.
+            Les autres joueurs ne sont pas concernes. Reglable aussi apres l'ouverture, depuis la page du quiz.
+          </p>
+          @if (cooldownEnabled()) {
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <span class="text-sm">Pendant</span>
+              <p-inputnumber inputId="cooldownValue" formControlName="cooldownValue" [min]="1" [showButtons]="true" inputStyleClass="w-20"
+                             ariaLabel="Duree" />
+              <p-select formControlName="cooldownUnit" [options]="durationUnits" optionLabel="label" optionValue="value" styleClass="w-32"
+                        ariaLabel="Unite de duree" />
+            </div>
+            @if (cooldownInvalid()) {
+              <p class="mt-1 text-xs text-red-600">Le delai doit etre compris entre une minute et un an.</p>
+            }
+          }
+        </div>
+      </div>
       @if (economics(); as e) {
         <solo-economics class="mt-4 block" [economics]="e" />
       } @else if (free()) {

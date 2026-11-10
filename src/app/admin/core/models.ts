@@ -380,6 +380,8 @@ export interface Quiz {
   title: string;
   /** Quiz de test : invisible des joueurs, exclu du resultat du jeu. */
   test: boolean;
+  /** Masque aux joueurs : hors des listes de l'app, ferme aux nouveaux tickets et parties solo. */
+  hidden: boolean;
   slug: string;
   description?: string;
   themeLabel?: string;
@@ -405,6 +407,8 @@ export interface Quiz {
   soloPrizeHtg?: number;
   /** Solo : le quiz se ferme de lui-meme au premier sans-faute. */
   closeOnPerfect: boolean;
+  /** Solo : minutes pendant lesquelles le quiz est cache a un joueur apres son sans-faute ; null = desactive. */
+  perfectCooldownMinutes: number | null;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
   startDelayMinutes: number;
@@ -459,6 +463,8 @@ export interface SoloQuizInput {
   questionDurationSeconds: number;
   /** Fermer le quiz des le premier sans-faute. */
   closeOnPerfect: boolean;
+  /** Cacher le quiz a un joueur pendant ce nombre de minutes apres son sans-faute ; null = desactive. */
+  perfectCooldownMinutes: number | null;
 }
 
 export interface RewardTier {
@@ -619,6 +625,8 @@ export interface SoloQuizStatsRow {
   id: number;
   title: string;
   test: boolean;
+  /** Masque aux joueurs. */
+  hidden: boolean;
   status: QuizStatus;
   categoryId: number | null;
   categoryName: string | null;

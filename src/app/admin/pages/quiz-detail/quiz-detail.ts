@@ -15,6 +15,7 @@ import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { Observable, Subject, debounceTime } from 'rxjs';
 
@@ -24,6 +25,7 @@ import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { PLAY_MODE, quizStatus } from '../../core/labels';
 import { Economics, Leaderboard, Quiz, RewardTier, SoloEconomics } from '../../core/models';
 import { QuizApi } from '../../core/quiz-api.service';
+import { DURATION_UNITS, DurationUnit, MAX_DURATION_MINUTES, formatDuration, fromMinutes, toMinutes } from '../../core/duration';
 import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 
 interface TierRow {
@@ -57,6 +59,7 @@ interface TierRow {
     TableModule,
     TagModule,
     TextareaModule,
+    ToggleSwitchModule,
     TooltipModule,
     CreditsPipe,
     HtgPipe,
@@ -306,6 +309,89 @@ export default class QuizDetail implements OnInit {
             this.busy.set(false);
             this.quiz.set(updated);
             this.messages.add({ severity: 'success', summary: test ? 'Quiz marque comme test' : 'Quiz de nouveau reel' });
+          },
+          error: (error) => {
+            this.busy.set(false);
+            this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+          },
+        });
+      },
+    });
+  }
+
+  // --- Solo : cacher le quiz au joueur apres son sans-faute ---------------------------
+  protected readonly formatDuration = formatDuration;
+  protected readonly durationUnits = DURATION_UNITS;
+  protected readonly cooldownOpen = signal(false);
+  protected cooldownEnabled = false;
+  protected cooldownValue: number | null = 1;
+  protected cooldownUnit: DurationUnit = 'DAYS';
+
+  protected get cooldownInvalid(): boolean {
+    if (!this.cooldownEnabled) {
+      return false;
+    }
+    const minutes = toMinutes(this.cooldownValue ?? 0, this.cooldownUnit);
+    return !Number.isInteger(minutes) || minutes < 1 || minutes > MAX_DURATION_MINUTES;
+  }
+
+  protected openCooldown(): void {
+    const minutes = this.quiz()?.perfectCooldownMinutes ?? null;
+    this.cooldownEnabled = minutes != null;
+    const current = minutes != null ? fromMinutes(minutes) : { value: 1, unit: 'DAYS' as DurationUnit };
+    this.cooldownValue = current.value;
+    this.cooldownUnit = current.unit;
+    this.cooldownOpen.set(true);
+  }
+
+  protected saveCooldown(): void {
+    const q = this.quiz();
+    if (!q || this.cooldownInvalid) {
+      return;
+    }
+    const minutes = this.cooldownEnabled ? toMinutes(this.cooldownValue ?? 0, this.cooldownUnit) : null;
+    this.busy.set(true);
+    this.api.setPerfectCooldown(q.id, minutes).subscribe({
+      next: (updated) => {
+        this.busy.set(false);
+        this.quiz.set(updated);
+        this.cooldownOpen.set(false);
+        this.messages.add({
+          severity: 'success',
+          summary: minutes ? `Cache ${formatDuration(minutes)} apres un sans-faute` : 'Regle desactivee',
+        });
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
+  /** Masque ou demasque le quiz aux joueurs : le statut, les tickets et les parties ne changent pas. */
+  protected toggleHidden(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    const hidden = !q.hidden;
+    const entries = q.gameMode === 'SOLO' ? 'aucune nouvelle partie ne peut etre lancee' : 'plus aucun ticket ne peut etre achete';
+    this.confirmation.confirm({
+      header: hidden ? 'Masquer le quiz aux joueurs' : 'Rendre le quiz visible',
+      message: hidden
+        ? `Le quiz disparait des listes de l'app et ${entries}. Ceux qui ont deja un ticket le voient toujours et jouent `
+          + 'normalement. Son statut ne change pas.'
+        : 'Le quiz revient dans les listes de l\'app et accepte de nouveau les joueurs.',
+      acceptLabel: hidden ? 'Masquer' : 'Rendre visible',
+      rejectLabel: 'Annuler',
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => {
+        this.busy.set(true);
+        this.api.setHidden(q.id, hidden).subscribe({
+          next: (updated) => {
+            this.busy.set(false);
+            this.quiz.set(updated);
+            this.messages.add({ severity: 'success', summary: hidden ? 'Quiz masque aux joueurs' : 'Quiz de nouveau visible' });
           },
           error: (error) => {
             this.busy.set(false);

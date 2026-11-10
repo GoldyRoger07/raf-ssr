@@ -96,6 +96,16 @@ export class QuizApi {
     return this.http.post<Quiz>(`${this.base}/${id}/test`, { test });
   }
 
+  /** Solo : delai pendant lequel le quiz est cache a un joueur apres son sans-faute (null : desactive). */
+  setPerfectCooldown(id: number, minutes: number | null): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/perfect-cooldown`, { minutes });
+  }
+
+  /** Masque ou demasque le quiz aux joueurs, sans changer son statut. */
+  setHidden(id: number, hidden: boolean): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/hidden`, { hidden });
+  }
+
   /** Solo : plus aucune partie ne peut etre lancee. */
   close(id: number): Observable<Quiz> {
     return this.http.post<Quiz>(`${this.base}/${id}/close`, {});

@@ -17,7 +17,16 @@
         @if (q.test) {
           <p-tag value="Test" severity="warn" icon="pi pi-flask" />
         }
+        @if (q.hidden) {
+          <p-tag value="Masque aux joueurs" severity="contrast" icon="pi pi-eye-slash" />
+        }
       </div>
+      @if (q.hidden) {
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          Masque : absent des listes de l'app, plus de nouveau ticket{{ q.gameMode === 'SOLO' ? ' ni de nouvelle partie' : '' }}.
+          Ceux qui ont deja un ticket le voient et jouent normalement.
+        </p>
+      }
       @if (q.test) {
         <p class="mt-1 text-sm text-amber-700 dark:text-amber-400">
           Quiz de test : seuls le staff et les comptes de test le voient, et il ne compte pas dans le resultat du jeu.
@@ -61,6 +70,10 @@
         @case ('COMPUTING') {
           <p-button label="Figer le classement" icon="pi pi-lock" [loading]="busy()" (onClick)="finalize()" />
         }
+      }
+      @if (q.status !== 'DRAFT') {
+        <p-button [label]="q.hidden ? 'Rendre visible' : 'Masquer aux joueurs'" [icon]="q.hidden ? 'pi pi-eye' : 'pi pi-eye-slash'"
+                  severity="secondary" [outlined]="true" [loading]="busy()" (onClick)="toggleHidden()" />
       }
       <p-button [label]="q.test ? 'Ce n\'est plus un test' : 'Marquer comme test'" icon="pi pi-flask" severity="secondary"
                 [outlined]="true" [loading]="busy()" (onClick)="toggleTest()" />
@@ -123,6 +136,15 @@
         } @else {
           <li>Reste ouvert apres un sans-faute : il ne se ferme qu'a la main.</li>
         }
+        <li>
+          @if (q.perfectCooldownMinutes) {
+            <strong>Cache apres un sans-faute :</strong> le joueur qui fait un sans-faute ne voit plus ce quiz pendant
+            {{ formatDuration(q.perfectCooldownMinutes) }}, a compter de son dernier sans-faute.
+          } @else {
+            Reste visible apres un sans-faute : le gagnant peut rejouer.
+          }
+          <p-button label="Regler" icon="pi pi-clock" size="small" [text]="true" (onClick)="openCooldown()" />
+        </li>
       </ul>
       @if (soloEconomics(); as e) {
         <h3 class="mb-2 mt-5 text-sm font-semibold">Rentabilite</h3>
@@ -332,6 +354,32 @@
       </p-table>
     </section>
   }
+
+  <!-- Dialogue : delai apres un sans-faute (solo) -->
+  <p-dialog header="Cacher apres un sans-faute" [(visible)]="cooldownOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+      Un joueur qui fait un sans-faute ne voit plus ce quiz pendant ce delai, compte depuis son dernier sans-faute (les
+      sans-fautes deja faits comptent). Le staff le voit toujours. Le changement s'applique tout de suite.
+    </p>
+    <div class="flex items-center gap-3">
+      <p-toggleswitch inputId="cooldown-enabled" [(ngModel)]="cooldownEnabled" />
+      <label for="cooldown-enabled" class="text-sm font-medium">Activer</label>
+    </div>
+    @if (cooldownEnabled) {
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-sm">Pendant</span>
+        <p-inputnumber inputId="cooldown-value" [(ngModel)]="cooldownValue" [min]="1" [showButtons]="true" inputStyleClass="w-20" ariaLabel="Duree" />
+        <p-select [options]="durationUnits" [(ngModel)]="cooldownUnit" optionLabel="label" optionValue="value" styleClass="w-32" ariaLabel="Unite de duree" />
+      </div>
+      @if (cooldownInvalid) {
+        <p class="mt-1 text-xs text-red-600">Le delai doit etre compris entre une minute et un an.</p>
+      }
+    }
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="cooldownOpen.set(false)" />
+      <p-button label="Enregistrer" [loading]="busy()" [disabled]="cooldownInvalid" (onClick)="saveCooldown()" />
+    </ng-template>
+  </p-dialog>
 
   <!-- Dialogue : recompenses -->
   <p-dialog header="Recompenses" [(visible)]="rewardsOpen" [modal]="true" [style]="{ width: '44rem' }" [draggable]="false">
