@@ -7,7 +7,43 @@
       Une categorie desactivee n'est plus proposee comme sujet de quiz. Les interrupteurs choisissent dans quels modes de jeu elle l'est.
     </p>
   </div>
-  <p-button label="Nouvelle categorie" icon="pi pi-plus" (onClick)="openCreate()" />
+  <div class="flex flex-wrap items-center gap-3">
+    <p-iconfield class="w-full max-w-sm">
+      <p-inputicon class="pi pi-search" />
+      <input pInputText type="search" class="w-full" [ngModel]="query()" (ngModelChange)="query.set($event); apply()"
+        placeholder="Nom ou description" aria-label="Rechercher une categorie" />
+    </p-iconfield>
+    <p-button label="Nouvelle categorie" icon="pi pi-plus" (onClick)="openCreate()" />
+  </div>
+</div>
+
+<div class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex flex-col gap-1">
+    <label for="filter-state" class="text-xs text-slate-500">Etat</label>
+    <p-select inputId="filter-state" [options]="stateOptions" [ngModel]="state()" (ngModelChange)="state.set($event); apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="filter-parent" class="text-xs text-slate-500">Parente</label>
+    <p-select inputId="filter-parent" [options]="parentFilterOptions()" [ngModel]="parent()" (ngModelChange)="parent.set($event); apply()"
+      [showClear]="true" [filter]="true" filterBy="label" placeholder="Toutes" styleClass="w-56" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="filter-group" class="text-xs text-slate-500">En groupe</label>
+    <p-select inputId="filter-group" [options]="modeOptions" [ngModel]="group()" (ngModelChange)="group.set($event); apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="filter-solo" class="text-xs text-slate-500">Solo</label>
+    <p-select inputId="filter-solo" [options]="modeOptions" [ngModel]="solo()" (ngModelChange)="solo.set($event); apply()"
+      [showClear]="true" placeholder="Tous" styleClass="w-40" />
+  </div>
+  @if (activeCount() || sort()) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
+  <p class="ml-auto self-center text-sm text-slate-500">
+    {{ rows().length }} categorie(s){{ activeCount() ? ' sur ' + categories().length : '' }}
+  </p>
 </div>
 
 @if (error(); as message) {
@@ -16,21 +52,29 @@
 
 <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
   <p-table
-    [value]="categories()"
+    [value]="rows()"
     [loading]="loading()"
-    [paginator]="categories().length > 0"
-    [rows]="20"
+    [paginator]="rows().length > 0"
+    [rows]="pageSize()"
+    [rowsPerPageOptions]="[10, 20, 50, 100]"
+    [first]="first()"
+    (onPage)="onPage($event)"
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+    [customSort]="true"
+    (sortFunction)="keepComputedOrder()"
+    [sortField]="sort()?.field"
+    [sortOrder]="sort()?.direction === 'desc' ? -1 : 1"
+    (onSort)="onSort($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Categorie</th>
-        <th>Parente</th>
-        <th>Etat</th>
-        <th class="text-center">En groupe</th>
-        <th class="text-center">Solo</th>
+        <th pSortableColumn="name">Categorie <p-sortIcon field="name" /></th>
+        <th pSortableColumn="parentName">Parente <p-sortIcon field="parentName" /></th>
+        <th pSortableColumn="active">Etat <p-sortIcon field="active" /></th>
+        <th pSortableColumn="groupEnabled" class="text-center">En groupe <p-sortIcon field="groupEnabled" /></th>
+        <th pSortableColumn="soloEnabled" class="text-center">Solo <p-sortIcon field="soloEnabled" /></th>
         <th class="text-right">Actions</th>
       </tr>
     </ng-template>
@@ -42,7 +86,7 @@
             <div class="max-w-md text-xs text-slate-500">{{ c.description }}</div>
           }
         </td>
-        <td class="text-sm text-slate-500">{{ parentName(c.parentId) || '—' }}</td>
+        <td class="text-sm text-slate-500">{{ c.parentName || '—' }}</td>
         <td><p-tag [value]="c.active ? 'Active' : 'Desactivee'" [severity]="c.active ? 'success' : 'secondary'" /></td>
         <td class="text-center">
           @if (isAdmin()) {
@@ -72,7 +116,11 @@
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="6" class="py-10 text-center text-slate-500">Aucune categorie : commencez par en creer une.</td></tr>
+      <tr>
+        <td colspan="6" class="py-10 text-center text-slate-500">
+          {{ activeCount() ? 'Aucune categorie ne correspond a ces criteres.' : 'Aucune categorie : commencez par en creer une.' }}
+        </td>
+      </tr>
     </ng-template>
   </p-table>
 </div>

@@ -20,6 +20,26 @@
   }
 </div>
 
+<div class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex flex-col gap-1">
+    <label for="s-q" class="text-xs text-slate-500">Recherche</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-search" />
+      <input pInputText id="s-q" type="search" class="w-64" [(ngModel)]="q" (input)="onInput()" placeholder="Joueur, IP, n° de partie{{ quizId ? '' : ', quiz' }}" />
+    </p-iconfield>
+  </div>
+  @if (quizId) {
+    <div class="flex flex-col gap-1">
+      <label for="s-status" class="text-xs text-slate-500">Statut</label>
+      <p-select inputId="s-status" [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="toggleFlagged()"
+        optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-40" />
+    </div>
+  }
+  @if (activeCount || sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
+</div>
+
 @if (error(); as message) {
   <p-message severity="error" class="mb-4" [text]="message" />
 }
@@ -33,19 +53,22 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Partie</th>
-        <th>Joueur</th>
-        @if (!quizId) { <th>Quiz</th> }
-        <th class="text-right">Score</th>
+        <th pSortableColumn="startedAt">Partie <p-sortIcon field="startedAt" /></th>
+        <th pSortableColumn="player">Joueur <p-sortIcon field="player" /></th>
+        @if (!quizId) { <th pSortableColumn="quiz">Quiz <p-sortIcon field="quiz" /></th> }
+        <th pSortableColumn="score" class="text-right">Score <p-sortIcon field="score" /></th>
         <th>Signalement</th>
-        <th>Statut</th>
+        <th pSortableColumn="status">Statut <p-sortIcon field="status" /></th>
         <th class="text-right">Actions</th>
       </tr>
     </ng-template>

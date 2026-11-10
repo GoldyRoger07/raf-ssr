@@ -1,21 +1,27 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { Subject, debounceTime } from 'rxjs';
 
 import { MediaPicker } from '../../components/media-picker/media-picker';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { HaitiDatePipe } from '../../core/format';
 import { News } from '../../core/models';
+import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 
 const PAGE_SIZE = 20;
 
@@ -31,8 +37,11 @@ const PAGE_SIZE = 20;
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputTextModule,
     MessageModule,
+    SelectModule,
     TableModule,
     TagModule,
     TextareaModule,
@@ -47,12 +56,22 @@ export default class NewsPage {
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
 
-  protected readonly pageSize = PAGE_SIZE;
+  protected readonly table = new TableState(['title', 'published', 'publishedAt', 'updatedAt'], PAGE_SIZE);
+  protected readonly pageSizes = PAGE_SIZE_OPTIONS;
+  protected filters: { q: string; published: boolean | null; pinned: boolean | null } = { q: '', published: null, pinned: null };
+  protected readonly publishedOptions = [
+    { label: 'Publiees', value: true },
+    { label: 'Brouillons', value: false },
+  ];
+  protected readonly pinnedOptions = [
+    { label: 'Epinglees', value: true },
+    { label: 'Non epinglees', value: false },
+  ];
+  private readonly typed = new Subject<void>();
   protected readonly rows = signal<News[]>([]);
   protected readonly total = signal(0);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected page = 0;
 
   // Formulaire (creation ou modification)
   protected readonly editorOpen = signal(false);
@@ -66,6 +85,26 @@ export default class NewsPage {
   protected readonly formError = signal<string | null>(null);
 
   constructor() {
+    this.typed.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.apply());
+    this.load();
+  }
+
+  protected get filtered(): boolean {
+    return !!this.filters.q.trim() || this.filters.published !== null || this.filters.pinned !== null;
+  }
+
+  protected onInput(): void {
+    this.typed.next();
+  }
+
+  protected apply(): void {
+    this.table.restart();
+    this.load();
+  }
+
+  protected reset(): void {
+    this.filters = { q: '', published: null, pinned: null };
+    this.table.reset();
     this.load();
   }
 
@@ -168,16 +207,14 @@ export default class NewsPage {
   }
 
   protected onPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.page) {
-      this.page = page;
+    if (this.table.onLazyLoad(event)) {
       this.load();
     }
   }
 
   private load(): void {
     this.loading.set(true);
-    this.api.newsList(this.page, PAGE_SIZE).subscribe({
+    this.api.newsList(this.table.page, this.table.pageSize, this.filters, this.table.sort ?? undefined).subscribe({
       next: (page) => {
         this.rows.set(page.content);
         this.total.set(page.totalElements);

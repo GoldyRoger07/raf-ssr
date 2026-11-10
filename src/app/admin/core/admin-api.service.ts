@@ -43,6 +43,9 @@ import {
   Withdrawal,
   WithdrawalStatus,
   PayoutConfig,
+  WithdrawalFilters,
+  WithdrawalSort,
+  AnnouncementStatus,
 } from './models';
 
 /** Appels du back-office au backend (endpoints /api/admin). */
@@ -122,8 +125,26 @@ export class AdminApi {
 
   // --- Actualites de l'app joueur --------------------------------------------------
 
-  newsList(page = 0, size = 20): Observable<Page<News>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /** Tris : title, published, publishedAt, updatedAt ; sans tri, epinglees puis plus recentes. */
+  newsList(
+    page = 0,
+    size = 20,
+    filters: { q?: string; published?: boolean | null; pinned?: boolean | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<News>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    for (const key of ['published', 'pinned'] as const) {
+      const value = filters[key];
+      if (value !== null && value !== undefined) {
+        params = params.set(key, value);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<News>>(`${this.base}/news`, { params });
   }
 
@@ -141,8 +162,15 @@ export class AdminApi {
 
   // --- Leaders (super-administrateur) ---------------------------------------------
 
-  leaders(query: string, page = 0, size = 20): Observable<Page<LeaderSummary>> {
-    const params = new HttpParams().set('query', query).set('page', page).set('size', size);
+  /** Tris : name, commission, players, last30Days, total ; sans tri, l'ordre alphabetique. */
+  leaders(query: string, page = 0, size = 20, status: UserStatus | null = null, sort?: { field: string; direction: 'asc' | 'desc' }): Observable<Page<LeaderSummary>> {
+    let params = new HttpParams().set('query', query).set('page', page).set('size', size);
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<LeaderSummary>>(`${this.base}/leaders`, { params });
   }
 
@@ -169,8 +197,24 @@ export class AdminApi {
     return this.http.put<LeaderSummary>(`${this.base}/leaders/${id}/signup-bonus`, { signupBonusCredits });
   }
 
-  leaderPlayers(id: number, page = 0, size = 20): Observable<Page<LeaderPlayer>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /** Tris : name, addedAt, lastPlayed, commissions ; sans tri, le dernier rattache d'abord. */
+  leaderPlayers(
+    id: number,
+    page = 0,
+    size = 20,
+    filters: { q?: string; viaInvite?: boolean | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<LeaderPlayer>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    if (filters.viaInvite != null) {
+      params = params.set('viaInvite', filters.viaInvite);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<LeaderPlayer>>(`${this.base}/leaders/${id}/players`, { params });
   }
 
@@ -182,13 +226,39 @@ export class AdminApi {
     return this.http.delete<void>(`${this.base}/leaders/${id}/players/${playerId}`);
   }
 
-  leaderCommissions(id: number, page = 0, size = 20): Observable<Page<LeaderCommission>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /** Tris : createdAt, player, quiz, baseCredits, amount ; sans tri, la plus recente d'abord. */
+  leaderCommissions(
+    id: number,
+    page = 0,
+    size = 20,
+    filters: { q?: string; source?: 'QUIZ' | 'SOLO' | null; from?: string | null; to?: string | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<LeaderCommission>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    for (const key of ['source', 'from', 'to'] as const) {
+      const value = filters[key];
+      if (value) {
+        params = params.set(key, value);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<LeaderCommission>>(`${this.base}/leaders/${id}/commissions`, { params });
   }
 
-  leaderTransfers(id: number, page = 0, size = 20): Observable<Page<LeaderTransfer>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /** Tris : createdAt, player, credits ; sans tri, la plus recente d'abord. */
+  leaderTransfers(id: number, page = 0, size = 20, q = '', sort?: { field: string; direction: 'asc' | 'desc' }): Observable<Page<LeaderTransfer>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<LeaderTransfer>>(`${this.base}/leaders/${id}/transfers`, { params });
   }
 
@@ -202,8 +272,27 @@ export class AdminApi {
     return this.http.get<Wallet>(`${this.base}/wallet/users/${userId}`);
   }
 
-  transactions(userId: number, page = 0, size = 20): Observable<Page<WalletTransaction>> {
-    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'createdAt,desc');
+  /** Mouvements d'un joueur. Tris : createdAt, type, balanceType, amount ; sans tri, le plus recent d'abord. */
+  transactions(
+    userId: number,
+    page = 0,
+    size = 20,
+    filters: { q?: string; type?: string | null; balanceType?: string | null; from?: string | null; to?: string | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<WalletTransaction>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    for (const key of ['type', 'balanceType', 'from', 'to'] as const) {
+      const value = filters[key];
+      if (value) {
+        params = params.set(key, value);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<WalletTransaction>>(`${this.base}/wallet/users/${userId}/transactions`, {
       params,
     });
@@ -236,13 +325,42 @@ export class AdminApi {
 
   // --- Retraits -------------------------------------------------------------------
 
-  withdrawals(status: WithdrawalStatus, page = 0, size = 20): Observable<Page<AdminWithdrawal>> {
-    const params = new HttpParams().set('status', status).set('page', page).set('size', size);
+  /** File d'un statut ; sans tri, la plus ancienne demande d'abord. */
+  withdrawals(status: WithdrawalStatus, page = 0, size = 20, filters?: WithdrawalFilters, sort?: WithdrawalSort): Observable<Page<AdminWithdrawal>> {
+    let params = new HttpParams().set('status', status).set('page', page).set('size', size);
+    if (filters?.q.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    for (const key of ['provider', 'counter', 'from', 'to'] as const) {
+      const value = filters?.[key];
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(key, `${value}`);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<AdminWithdrawal>>(`${this.base}/wallet/withdrawals`, { params });
   }
 
-  playerWithdrawals(userId: number, page = 0, size = 20): Observable<Page<AdminWithdrawal>> {
-    const params = new HttpParams().set('userId', userId).set('page', page).set('size', size);
+  /** Retraits d'un joueur, tous statuts sauf filtre. Tris : createdAt, netHtg, provider, status. */
+  playerWithdrawals(
+    userId: number,
+    page = 0,
+    size = 20,
+    filters: { status?: WithdrawalStatus | null; provider?: string | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<AdminWithdrawal>> {
+    let params = new HttpParams().set('userId', userId).set('page', page).set('size', size);
+    if (filters.status) {
+      params = params.set('status', filters.status);
+    }
+    if (filters.provider) {
+      params = params.set('provider', filters.provider);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<AdminWithdrawal>>(`${this.base}/wallet/withdrawals`, { params });
   }
 
@@ -296,13 +414,37 @@ export class AdminApi {
 
   // --- Parties signalees ------------------------------------------------------------
 
-  flaggedSessions(page = 0, size = 50): Observable<Page<AdminGameSession>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /** Tris des parties : startedAt, player, quiz, score, status ; sans tri, la plus recente d'abord. */
+  flaggedSessions(page = 0, size = 50, q = '', sort?: { field: string; direction: 'asc' | 'desc' }): Observable<Page<AdminGameSession>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<AdminGameSession>>(`${this.base}/game/sessions/flagged`, { params });
   }
 
-  quizSessions(quizId: number, flaggedOnly: boolean, page = 0, size = 50): Observable<Page<AdminGameSession>> {
-    const params = new HttpParams().set('flagged', flaggedOnly).set('page', page).set('size', size);
+  quizSessions(
+    quizId: number,
+    flaggedOnly: boolean,
+    page = 0,
+    size = 50,
+    q = '',
+    status: string | null = null,
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<AdminGameSession>> {
+    let params = new HttpParams().set('flagged', flaggedOnly).set('page', page).set('size', size);
+    if (q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<AdminGameSession>>(`${this.base}/quizzes/${quizId}/sessions`, { params });
   }
 
@@ -316,8 +458,29 @@ export class AdminApi {
 
   // --- Rapprochement comptable -------------------------------------------------------
 
-  reconciliationRuns(page = 0, size = 20): Observable<Page<ReconciliationRun>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /**
+   * Historique des rapprochements. Tris : startedAt, status, findingCount, walletsChecked,
+   * totalWinningsBalance, totalCreditBalance ; sans tri, le plus recent d'abord.
+   */
+  reconciliationRuns(
+    page = 0,
+    size = 20,
+    filters: { q?: string; status?: string | null; trigger?: string | null; from?: string | null; to?: string | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<ReconciliationRun>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    for (const key of ['status', 'trigger', 'from', 'to'] as const) {
+      const value = filters[key];
+      if (value) {
+        params = params.set(key, value);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<ReconciliationRun>>(`${this.base}/reconciliation/runs`, { params });
   }
 
@@ -332,7 +495,18 @@ export class AdminApi {
   // --- Journal d'audit ------------------------------------------------------------------
 
   audit(
-    filters: { action?: string | null; entityType?: string | null; entityId?: string | null; actorId?: number | null },
+    filters: {
+      q?: string | null;
+      action?: string | null;
+      entityType?: string | null;
+      entityId?: string | null;
+      actorId?: number | null;
+      /** Jours d'Haiti, AAAA-MM-JJ, bornes incluses. */
+      from?: string | null;
+      to?: string | null;
+      /** createdAt, action ou entityType, suivi de ,asc ou ,desc. */
+      sort?: string | null;
+    },
     page = 0,
     size = 50,
   ): Observable<Page<AuditEntry>> {
@@ -351,13 +525,28 @@ export class AdminApi {
 
   // --- Comptes et roles (super-administrateur) --------------------------------------------
 
-  users(query: string, staffOnly: boolean, page = 0, size = 20): Observable<Page<UserResponse>> {
-    const params = new HttpParams()
-      .set('query', query)
-      .set('staffOnly', staffOnly)
-      .set('page', page)
-      .set('size', size)
-      .set('sort', 'createdAt,desc');
+  /**
+   * Comptes : recherche, personnel seulement, role et statut facultatifs.
+   * Tris : name, email, status, createdAt ; sans tri, les derniers crees.
+   */
+  users(
+    query: string,
+    staffOnly: boolean,
+    page = 0,
+    size = 20,
+    filters: { role?: RoleName | null; status?: UserStatus | null } = {},
+    sort?: { field: 'name' | 'email' | 'status' | 'createdAt'; direction: 'asc' | 'desc' },
+  ): Observable<Page<UserResponse>> {
+    let params = new HttpParams().set('query', query).set('staffOnly', staffOnly).set('page', page).set('size', size);
+    if (filters.role) {
+      params = params.set('role', filters.role);
+    }
+    if (filters.status) {
+      params = params.set('status', filters.status);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<UserResponse>>(`${this.base}/users`, { params });
   }
 
@@ -388,8 +577,29 @@ export class AdminApi {
 
   // --- Messages aux joueurs ------------------------------------------------------
 
-  announcements(page = 0, size = 20): Observable<Page<Announcement>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  /**
+   * Historique des messages, criteres facultatifs. Tris : scheduledAt, title, audience,
+   * status ; sans tri, le plus recent d'abord.
+   */
+  announcements(
+    page = 0,
+    size = 20,
+    filters: { q?: string; status?: AnnouncementStatus | null; audience?: AnnouncementAudience | null; important?: boolean | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Page<Announcement>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    for (const key of ['status', 'audience', 'important'] as const) {
+      const value = filters[key];
+      if (value !== null && value !== undefined) {
+        params = params.set(key, `${value}`);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<Announcement>>(`${this.base}/announcements`, { params });
   }
 

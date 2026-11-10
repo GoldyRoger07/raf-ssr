@@ -95,9 +95,34 @@
     </div>
 
     @if (r.errors.length) {
-      <p-table [value]="r.errors" [scrollable]="true" scrollHeight="320px">
+<div class="mb-3 flex flex-wrap items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <label for="e-q" class="text-xs text-slate-500">Recherche</label>
+          <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input #eQInput pInputText id="e-q" type="search" class="w-64" placeholder="Probleme, extrait ou ligne"
+                   (input)="errorsTable.filterGlobal(eQInput.value, 'contains')" />
+          </p-iconfield>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="e-reason" class="text-xs text-slate-500">Probleme</label>
+          <p-select #eReasonSelect inputId="e-reason" [options]="reasonOptions()" optionLabel="label" optionValue="value" [showClear]="true" [filter]="true"
+                    filterBy="label" placeholder="Tous les problemes" styleClass="w-64" 
+                    (onChange)="errorsTable.filter($event.value, 'reason', 'equals')" />
+        </div>
+      </div>
+      <p-table #errorsTable [value]="r.errors" [scrollable]="true" scrollHeight="320px"
+               [globalFilterFields]="['line', 'reason', 'excerpt']" [paginator]="r.errors.length > 20" [rows]="20" [rowsPerPageOptions]="[20, 50, 100]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="{first} - {last} sur {totalRecords}">
         <ng-template #header>
-          <tr><th>Ligne</th><th>Probleme</th><th>Extrait</th></tr>
+          <tr>
+            <th pSortableColumn="line">Ligne <p-sortIcon field="line" /></th>
+            <th pSortableColumn="reason">Probleme <p-sortIcon field="reason" /></th>
+            <th>Extrait</th>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="3" class="py-6 text-center text-slate-500">Aucune erreur ne correspond a ces criteres.</td></tr>
         </ng-template>
         <ng-template #body let-e>
           <tr>

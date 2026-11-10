@@ -1,22 +1,27 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { TagModule } from 'primeng/tag';
+import { Subject, debounceTime } from 'rxjs';
 
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
-import { TRANSACTION_TYPE, providerLabel, withdrawalStatus } from '../../core/labels';
+import { TRANSACTION_TYPE, WITHDRAWAL_STATUS, providerLabel, withdrawalStatus } from '../../core/labels';
+import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 import {
   AdminWithdrawal,
   BalanceType,
@@ -24,6 +29,7 @@ import {
   RetentionReason,
   TopUpRetentionView,
   WalletTransaction,
+  WithdrawalStatus,
 } from '../../core/models';
 
 const RETENTION_REASON: Record<RetentionReason, string> = {
@@ -56,9 +62,12 @@ const PAGE_SIZE = 15;
     RouterLink,
     ButtonModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputNumberModule,
     InputTextModule,
     MessageModule,
+    SelectModule,
     SelectButtonModule,
     TableModule,
     TabsModule,
@@ -80,6 +89,35 @@ export default class PlayerDetail implements OnInit {
   protected readonly id = signal(0);
 
   protected readonly pageSize = PAGE_SIZE;
+  protected readonly pageSizes = PAGE_SIZE_OPTIONS;
+
+  // Recherche, filtres et tri des onglets Mouvements et Retraits (cote serveur).
+  protected readonly transactionsTable = new TableState(['createdAt', 'type', 'balanceType', 'amount'], PAGE_SIZE);
+  protected readonly withdrawalsTable = new TableState(['createdAt', 'netHtg', 'provider', 'status'], PAGE_SIZE);
+  protected transactionFilters: { q: string; type: string | null; balanceType: string | null; from: string | null; to: string | null } = {
+    q: '',
+    type: null,
+    balanceType: null,
+    from: null,
+    to: null,
+  };
+  protected withdrawalFilters: { status: WithdrawalStatus | null; provider: string | null } = { status: null, provider: null };
+  protected readonly transactionTypeOptions = Object.entries(TRANSACTION_TYPE).map(([value, label]) => ({ value, label }));
+  protected readonly balanceTypeOptions = [
+    { label: 'Credits', value: 'CREDIT' },
+    { label: 'Gains', value: 'WINNINGS' },
+  ];
+  protected readonly withdrawalStatusOptions = Object.entries(WITHDRAWAL_STATUS).map(([value, s]) => ({ value, label: s.label }));
+  protected readonly providerOptions = ['MONCASH', 'NATCASH', 'MANUAL'].map((value) => ({ value, label: providerLabel(value) }));
+  private readonly typedTransactions = new Subject<void>();
+
+  // Retenue : liste courte, filtree et triee dans le navigateur.
+  protected readonly retentionReasonOptions = Object.entries(RETENTION_REASON).map(([value, label]) => ({ value, label }));
+  protected readonly retentionReason$ = signal<string | null>(null);
+  protected readonly retentionRows = computed(() => {
+    const reason = this.retentionReason$();
+    return (this.retention()?.entries ?? []).filter((e) => !reason || e.reason === reason);
+  });
   protected readonly typeLabels = TRANSACTION_TYPE;
   protected readonly withdrawalStatus = withdrawalStatus;
   protected readonly providerLabel = providerLabel;
@@ -92,9 +130,7 @@ export default class PlayerDetail implements OnInit {
   protected readonly withdrawals = signal<AdminWithdrawal[]>([]);
   protected readonly withdrawalsTotal = signal(0);
   protected readonly loadingWithdrawals = signal(false);
-  protected withdrawalsPage = 0;
   protected readonly loadingTransactions = signal(false);
-  protected transactionsPage = 0;
 
   // Recharge manuelle
   protected readonly topUpOpen = signal(false);
@@ -130,12 +166,13 @@ export default class PlayerDetail implements OnInit {
   protected readonly busy = signal(false);
 
   ngOnInit(): void {
+    this.typedTransactions.pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyTransactions());
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.id.set(Number(params.get('id')));
       this.player.set(null);
       this.error.set(null);
-      this.transactionsPage = 0;
-      this.withdrawalsPage = 0;
+      this.transactionsTable.restart();
+      this.withdrawalsTable.restart();
       this.reload();
     });
   }
@@ -211,16 +248,50 @@ export default class PlayerDetail implements OnInit {
   }
 
   protected onWithdrawalsPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.withdrawalsPage) {
-      this.withdrawalsPage = page;
+    if (this.withdrawalsTable.onLazyLoad(event)) {
       this.loadWithdrawals();
     }
   }
 
+  protected get transactionsFiltered(): boolean {
+    const f = this.transactionFilters;
+    return !!f.q.trim() || !!f.type || !!f.balanceType || !!f.from || !!f.to;
+  }
+
+  protected get withdrawalsFiltered(): boolean {
+    return !!this.withdrawalFilters.status || !!this.withdrawalFilters.provider;
+  }
+
+  protected onTransactionsInput(): void {
+    this.typedTransactions.next();
+  }
+
+  protected applyTransactions(): void {
+    this.transactionsTable.restart();
+    this.loadTransactions();
+  }
+
+  protected resetTransactions(): void {
+    this.transactionFilters = { q: '', type: null, balanceType: null, from: null, to: null };
+    this.transactionsTable.reset();
+    this.loadTransactions();
+  }
+
+  protected applyWithdrawals(): void {
+    this.withdrawalsTable.restart();
+    this.loadWithdrawals();
+  }
+
+  protected resetWithdrawals(): void {
+    this.withdrawalFilters = { status: null, provider: null };
+    this.withdrawalsTable.reset();
+    this.loadWithdrawals();
+  }
+
   private loadWithdrawals(): void {
     this.loadingWithdrawals.set(true);
-    this.api.playerWithdrawals(this.id(), this.withdrawalsPage, PAGE_SIZE).subscribe({
+    const t = this.withdrawalsTable;
+    this.api.playerWithdrawals(this.id(), t.page, t.pageSize, this.withdrawalFilters, t.sort ?? undefined).subscribe({
       next: (page) => {
         this.withdrawals.set(page.content);
         this.withdrawalsTotal.set(page.totalElements);
@@ -235,9 +306,7 @@ export default class PlayerDetail implements OnInit {
   }
 
   protected onTransactionsPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.transactionsPage) {
-      this.transactionsPage = page;
+    if (this.transactionsTable.onLazyLoad(event)) {
       this.loadTransactions();
     }
   }
@@ -354,7 +423,8 @@ export default class PlayerDetail implements OnInit {
 
   private loadTransactions(): void {
     this.loadingTransactions.set(true);
-    this.api.transactions(this.id(), this.transactionsPage, PAGE_SIZE).subscribe({
+    const t = this.transactionsTable;
+    this.api.transactions(this.id(), t.page, t.pageSize, this.transactionFilters, t.sort ?? undefined).subscribe({
       next: (page) => {
         this.transactions.set(page.content);
         this.transactionsTotal.set(page.totalElements);
@@ -367,7 +437,7 @@ export default class PlayerDetail implements OnInit {
   private done(summary: string, detail: string): void {
     this.busy.set(false);
     this.messages.add({ severity: 'success', summary, detail });
-    this.transactionsPage = 0;
+    this.transactionsTable.restart();
     this.reload();
   }
 

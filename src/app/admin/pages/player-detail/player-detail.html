@@ -54,19 +54,52 @@
   <p-tabs value="transactions">
     <p-tablist>
       <p-tab value="transactions">Mouvements</p-tab>
-      <p-tab value="withdrawals">Retraits ({{ withdrawals().length }})</p-tab>
+      <p-tab value="withdrawals">Retraits ({{ withdrawalsTotal() }})</p-tab>
       <p-tab value="retention">Retenue ({{ retention()?.entries?.length ?? 0 }})</p-tab>
     </p-tablist>
     <p-tabpanels>
       <p-tabpanel value="transactions">
+        <div class="mb-3 flex flex-wrap items-end gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="t-q" class="text-xs text-slate-500">Recherche</label>
+            <p-iconfield>
+              <p-inputicon class="pi pi-search" />
+              <input pInputText id="t-q" type="search" class="w-56" [(ngModel)]="transactionFilters.q" (input)="onTransactionsInput()" placeholder="Libelle ou reference" />
+            </p-iconfield>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="t-type" class="text-xs text-slate-500">Mouvement</label>
+            <p-select inputId="t-type" [options]="transactionTypeOptions" [(ngModel)]="transactionFilters.type" (ngModelChange)="applyTransactions()"
+              optionLabel="label" optionValue="value" [showClear]="true" [filter]="true" filterBy="label" placeholder="Tous" styleClass="w-56" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="t-balance" class="text-xs text-slate-500">Solde</label>
+            <p-select inputId="t-balance" [options]="balanceTypeOptions" [(ngModel)]="transactionFilters.balanceType" (ngModelChange)="applyTransactions()"
+              optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-36" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="t-from" class="text-xs text-slate-500">Du</label>
+            <input pInputText id="t-from" type="date" class="w-40" [(ngModel)]="transactionFilters.from" (change)="applyTransactions()" [max]="transactionFilters.to ?? ''" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="t-to" class="text-xs text-slate-500">au</label>
+            <input pInputText id="t-to" type="date" class="w-40" [(ngModel)]="transactionFilters.to" (change)="applyTransactions()" [min]="transactionFilters.from ?? ''" />
+          </div>
+          @if (transactionsFiltered || transactionsTable.sort) {
+            <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetTransactions()" />
+          }
+        </div>
         <p-table
           [value]="transactions()"
           [lazy]="true"
           [paginator]="transactionsTotal() > 0"
-          [first]="transactionsPage * pageSize"
+          [first]="transactionsTable.first"
           [showCurrentPageReport]="true"
           currentPageReportTemplate="{first} - {last} sur {totalRecords}"
-          [rows]="pageSize"
+          [rows]="transactionsTable.pageSize"
+          [rowsPerPageOptions]="pageSizes"
+          [sortField]="transactionsTable.sort?.field"
+          [sortOrder]="transactionsTable.sortOrder"
           [totalRecords]="transactionsTotal()"
           [loading]="loadingTransactions()"
           (onLazyLoad)="onTransactionsPage($event)"
@@ -74,10 +107,10 @@
         >
           <ng-template #header>
             <tr>
-              <th>Date</th>
-              <th>Mouvement</th>
-              <th>Solde</th>
-              <th class="text-right">Montant</th>
+              <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt" /></th>
+              <th pSortableColumn="type">Mouvement <p-sortIcon field="type" /></th>
+              <th pSortableColumn="balanceType">Solde <p-sortIcon field="balanceType" /></th>
+              <th pSortableColumn="amount" class="text-right">Montant <p-sortIcon field="amount" /></th>
               <th class="text-right">Solde apres</th>
             </tr>
           </ng-template>
@@ -98,18 +131,36 @@
             </tr>
           </ng-template>
           <ng-template #emptymessage>
-            <tr><td colspan="5" class="py-8 text-center text-slate-500">Aucun mouvement.</td></tr>
+            <tr><td colspan="5" class="py-8 text-center text-slate-500">{{ transactionsFiltered ? 'Aucun mouvement ne correspond a ces criteres.' : 'Aucun mouvement.' }}</td></tr>
           </ng-template>
         </p-table>
       </p-tabpanel>
 
       <p-tabpanel value="withdrawals">
+        <div class="mb-3 flex flex-wrap items-end gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="w-status" class="text-xs text-slate-500">Statut</label>
+            <p-select inputId="w-status" [options]="withdrawalStatusOptions" [(ngModel)]="withdrawalFilters.status" (ngModelChange)="applyWithdrawals()"
+              optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-44" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="w-provider" class="text-xs text-slate-500">Moyen</label>
+            <p-select inputId="w-provider" [options]="providerOptions" [(ngModel)]="withdrawalFilters.provider" (ngModelChange)="applyWithdrawals()"
+              optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-44" />
+          </div>
+          @if (withdrawalsFiltered || withdrawalsTable.sort) {
+            <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetWithdrawals()" />
+          }
+        </div>
         <p-table
           [value]="withdrawals()"
           [lazy]="true"
           [paginator]="withdrawalsTotal() > 0"
-          [first]="withdrawalsPage * pageSize"
-          [rows]="pageSize"
+          [first]="withdrawalsTable.first"
+          [rows]="withdrawalsTable.pageSize"
+          [rowsPerPageOptions]="pageSizes"
+          [sortField]="withdrawalsTable.sort?.field"
+          [sortOrder]="withdrawalsTable.sortOrder"
           [totalRecords]="withdrawalsTotal()"
           [loading]="loadingWithdrawals()"
           [showCurrentPageReport]="true"
@@ -119,10 +170,10 @@
         >
           <ng-template #header>
             <tr>
-              <th>Demande</th>
-              <th>A verser</th>
-              <th>Moyen</th>
-              <th>Statut</th>
+              <th pSortableColumn="createdAt">Demande <p-sortIcon field="createdAt" /></th>
+              <th pSortableColumn="netHtg">A verser <p-sortIcon field="netHtg" /></th>
+              <th pSortableColumn="provider">Moyen <p-sortIcon field="provider" /></th>
+              <th pSortableColumn="status">Statut <p-sortIcon field="status" /></th>
             </tr>
           </ng-template>
           <ng-template #body let-row>
@@ -139,7 +190,7 @@
             </tr>
           </ng-template>
           <ng-template #emptymessage>
-            <tr><td colspan="4" class="py-8 text-center text-slate-500">Aucun retrait.</td></tr>
+            <tr><td colspan="4" class="py-8 text-center text-slate-500">{{ withdrawalsFiltered ? 'Aucun retrait ne correspond a ces criteres.' : 'Aucun retrait.' }}</td></tr>
           </ng-template>
         </p-table>
       </p-tabpanel>
@@ -149,13 +200,29 @@
           Gourdes d'une recharge qui ne formaient pas un credit entier ({{ retention()?.htgRate ?? '…' }} HTG le credit).
           Elles sont ajoutees automatiquement a la recharge suivante. 50 derniers mouvements.
         </p>
-        <p-table [value]="retention()?.entries ?? []" dataKey="id">
+        <div class="mb-3 flex flex-wrap items-end gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="ret-reason" class="text-xs text-slate-500">Mouvement</label>
+            <p-select inputId="ret-reason" [options]="retentionReasonOptions" [ngModel]="retentionReason$()" (ngModelChange)="retentionReason$.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-56" />
+          </div>
+        </div>
+        <p-table #retentionTable [value]="retentionRows()" dataKey="id" [paginator]="retentionRows().length > 0" [rows]="pageSize"
+                 [rowsPerPageOptions]="pageSizes" [showCurrentPageReport]="true" currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+                 [globalFilterFields]="['note', 'topUpRequestId']">
+          <ng-template #caption>
+            <p-iconfield class="w-full max-w-xs">
+              <p-inputicon class="pi pi-search" />
+              <input pInputText type="search" class="w-full" placeholder="Note ou n° de recharge" aria-label="Rechercher dans la retenue"
+                     (input)="retentionTable.filterGlobal($any($event.target).value, 'contains')" />
+            </p-iconfield>
+          </ng-template>
           <ng-template #header>
             <tr>
-              <th>Date</th>
-              <th>Mouvement</th>
-              <th class="text-right">Montant</th>
-              <th class="text-right">Retenue apres</th>
+              <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt" /></th>
+              <th pSortableColumn="reason">Mouvement <p-sortIcon field="reason" /></th>
+              <th pSortableColumn="amountHtg" class="text-right">Montant <p-sortIcon field="amountHtg" /></th>
+              <th pSortableColumn="balanceAfterHtg" class="text-right">Retenue apres <p-sortIcon field="balanceAfterHtg" /></th>
             </tr>
           </ng-template>
           <ng-template #body let-r>

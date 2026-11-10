@@ -6,14 +6,17 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { Subscription, interval } from 'rxjs';
+import { Subject, Subscription, debounceTime, interval } from 'rxjs';
 
 import { PlayerSearch } from '../../components/player-search/player-search';
 import { AdminApi } from '../../core/admin-api.service';
@@ -30,6 +33,8 @@ import {
 } from '../../core/models';
 
 const PAGE_SIZE = 10;
+const PAGE_SIZES = [10, 20, 50];
+const HISTORY_SORT_FIELDS = ['scheduledAt', 'title', 'audience', 'status'];
 const FIRST_NAME = '{prenom}';
 const LINK_PATTERN = /^\/(?![/\\])\S*$/;
 
@@ -48,8 +53,11 @@ type Severity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputTextModule,
     MessageModule,
+    SelectModule,
     SelectButtonModule,
     TableModule,
     TagModule,
@@ -146,13 +154,37 @@ export default class Announcements {
 
   // --- Historique -------------------------------------------------------------
 
-  protected readonly pageSize = PAGE_SIZE;
+  protected pageSize = PAGE_SIZE;
+  protected readonly pageSizes = PAGE_SIZES;
   protected page = 0;
+  protected historyFilters: {
+    q: string;
+    status: AnnouncementStatus | null;
+    audience: AnnouncementAudience | null;
+    important: boolean | null;
+  } = { q: '', status: null, audience: null, important: null };
+  protected historySort: { field: string; direction: 'asc' | 'desc' } | null = null;
+  protected readonly historyStatusOptions: { label: string; value: AnnouncementStatus }[] = [
+    { label: 'Programmes', value: 'SCHEDULED' },
+    { label: 'En cours', value: 'SENDING' },
+    { label: 'Envoyes', value: 'SENT' },
+    { label: 'Annules', value: 'CANCELLED' },
+  ];
+  protected readonly historyAudienceOptions: { label: string; value: AnnouncementAudience }[] = [
+    { label: 'Un joueur', value: 'ONE_PLAYER' },
+    { label: 'Tous les joueurs', value: 'ALL_PLAYERS' },
+  ];
+  protected readonly importantOptions = [
+    { label: 'Importants', value: true },
+    { label: 'Non importants', value: false },
+  ];
+  private readonly historyTyped = new Subject<void>();
   protected readonly rows = signal<Announcement[]>([]);
   protected readonly total = signal(0);
   protected readonly loading = signal(true);
 
   constructor() {
+    this.historyTyped.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.applyHistory());
     // Portee de l'envoi, recalculee quand les destinataires changent.
     let countSubscription: Subscription | undefined;
     effect(() => {
@@ -354,8 +386,34 @@ export default class Announcements {
 
   // --- Historique ---------------------------------------------------------------
 
+  protected get historyFiltersActive(): boolean {
+    const f = this.historyFilters;
+    return f.q.trim() !== '' || f.status !== null || f.audience !== null || f.important !== null || this.historySort !== null;
+  }
+
+  protected onHistoryInput(): void {
+    this.historyTyped.next();
+  }
+
+  protected applyHistory(): void {
+    this.page = 0;
+    this.load(true);
+  }
+
+  protected resetHistory(): void {
+    this.historyFilters = { q: '', status: null, audience: null, important: null };
+    this.historySort = null;
+    this.applyHistory();
+  }
+
   protected onLazyLoad(event: TableLazyLoadEvent): void {
-    this.page = Math.floor((event.first ?? 0) / PAGE_SIZE);
+    const rows = event.rows ?? this.pageSize;
+    const field = typeof event.sortField === 'string' && HISTORY_SORT_FIELDS.includes(event.sortField) ? event.sortField : null;
+    const sort = field ? { field, direction: event.sortOrder === -1 ? ('desc' as const) : ('asc' as const) } : null;
+    const sortChanged = sort?.field !== this.historySort?.field || sort?.direction !== this.historySort?.direction;
+    this.page = sortChanged || rows !== this.pageSize ? 0 : Math.floor((event.first ?? 0) / rows);
+    this.pageSize = rows;
+    this.historySort = sort;
     this.load(true);
   }
 
@@ -363,7 +421,7 @@ export default class Announcements {
     if (showLoading) {
       this.loading.set(true);
     }
-    this.api.announcements(this.page, PAGE_SIZE).subscribe({
+    this.api.announcements(this.page, this.pageSize, this.historyFilters, this.historySort ?? undefined).subscribe({
       next: (page) => {
         this.rows.set(page.content);
         this.total.set(page.totalElements);

@@ -1,14 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import { TableModule } from 'primeng/table';
+import { TableModule, TablePageEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -19,6 +21,32 @@ import { AuthService } from '../../core/auth.service';
 import { Category, CategoryInput, GameMode } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
 
+/** Une ligne du tableau : la categorie et le nom de sa parente, pour l'afficher et trier dessus. */
+type CategoryRow = Category & { parentName: string };
+
+type SortField = 'name' | 'parentName' | 'active' | 'groupEnabled' | 'soloEnabled';
+interface CategorySort {
+  field: SortField;
+  direction: 'asc' | 'desc';
+}
+
+/** Filtre sur la parente : sans parente, ou une categorie precise. */
+type ParentFilter = 'ROOT' | number;
+
+const SORT_FIELDS: SortField[] = ['name', 'parentName', 'active', 'groupEnabled', 'soloEnabled'];
+const PAGE_SIZES = [10, 20, 50, 100];
+const DEFAULT_PAGE_SIZE = 20;
+
+interface Option<T> {
+  label: string;
+  value: T;
+}
+
+/** Minuscules sans accents : « Societe » trouve « Société ». */
+function fold(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
 @Component({
   selector: 'admin-categories',
   imports: [
@@ -27,6 +55,8 @@ import { QuestionApi } from '../../core/question-api.service';
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputTextModule,
     MessageModule,
     SelectModule,
@@ -42,6 +72,8 @@ export default class Categories {
   private readonly api = inject(QuestionApi);
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   /**
    * Suppression et disponibilite par mode de jeu sont reservees aux
    * administrateurs (cote backend aussi) : les modes engagent de l'argent.
@@ -66,12 +98,167 @@ export default class Categories {
     this.categories().filter((c) => c.id !== this.editing()?.id),
   );
 
+  // Recherche, filtres, tri et pagination : tout se fait dans le navigateur, la liste
+  // complete etant chargee d'un coup. L'etat vit dans l'URL pour garder la vue au retour.
+  protected readonly query = signal('');
+  protected readonly state = signal<boolean | null>(null);
+  protected readonly parent = signal<ParentFilter | null>(null);
+  protected readonly group = signal<boolean | null>(null);
+  protected readonly solo = signal<boolean | null>(null);
+  protected readonly sort = signal<CategorySort | null>(null);
+  protected readonly first = signal(0);
+  protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+
+  protected readonly stateOptions: Option<boolean>[] = [
+    { label: 'Active', value: true },
+    { label: 'Desactivee', value: false },
+  ];
+  protected readonly modeOptions: Option<boolean>[] = [
+    { label: 'Propose', value: true },
+    { label: 'Non propose', value: false },
+  ];
+
+  /** « Sans parente », puis les categories qui ont au moins une sous-categorie. */
+  protected readonly parentFilterOptions = computed<Option<ParentFilter>[]>(() => {
+    const parentIds = new Set(this.categories().map((c) => c.parentId).filter((id) => id != null));
+    return [
+      { label: 'Sans parente', value: 'ROOT' },
+      ...this.categories()
+        .filter((c) => parentIds.has(c.id))
+        .map((c) => ({ label: c.name, value: c.id })),
+    ];
+  });
+
+  protected readonly activeCount = computed(
+    () =>
+      [this.state(), this.parent(), this.group(), this.solo()].filter((v) => v !== null).length +
+      (this.query().trim() ? 1 : 0),
+  );
+
+  protected readonly rows = computed<CategoryRow[]>(() => {
+    const names = new Map(this.categories().map((c) => [c.id, c.name]));
+    const needle = fold(this.query().trim());
+    const [state, parent, group, solo] = [this.state(), this.parent(), this.group(), this.solo()];
+    const rows = this.categories()
+      .map((c) => ({ ...c, parentName: c.parentId ? (names.get(c.parentId) ?? '') : '' }))
+      .filter(
+        (c) =>
+          (!needle || fold(`${c.name} ${c.description ?? ''} ${c.slug}`).includes(needle)) &&
+          (state === null || c.active === state) &&
+          (parent === null || (parent === 'ROOT' ? !c.parentId : c.parentId === parent)) &&
+          (group === null || c.groupEnabled === group) &&
+          (solo === null || c.soloEnabled === solo),
+      );
+    const sort = this.sort();
+    if (sort) {
+      const sign = sort.direction === 'desc' ? -1 : 1;
+      rows.sort((a, b) => {
+        const x = a[sort.field];
+        const y = b[sort.field];
+        const byField =
+          typeof x === 'string' && typeof y === 'string'
+            ? x.localeCompare(y, 'fr', { sensitivity: 'base' })
+            : Number(x) - Number(y);
+        // A egalite, ordre alphabetique, pour un resultat stable.
+        return sign * byField || a.name.localeCompare(b.name, 'fr');
+      });
+    }
+    return rows;
+  });
+
   constructor() {
+    this.readUrl(this.route.snapshot.queryParams);
     this.load();
   }
 
-  protected parentName(id: number | undefined): string {
-    return id ? (this.categories().find((c) => c.id === id)?.name ?? '') : '';
+  /** Un critere a change : retour a la premiere page. */
+  protected apply(): void {
+    this.first.set(0);
+    this.writeUrl();
+  }
+
+  /** Efface recherche, filtres et tri : retour a l'ordre alphabetique. */
+  protected reset(): void {
+    this.query.set('');
+    this.state.set(null);
+    this.parent.set(null);
+    this.group.set(null);
+    this.solo.set(null);
+    this.sort.set(null);
+    this.apply();
+  }
+
+  protected onSort(event: { field: string; order: number }): void {
+    if (!SORT_FIELDS.includes(event.field as SortField)) {
+      return;
+    }
+    const next: CategorySort = { field: event.field as SortField, direction: event.order === -1 ? 'desc' : 'asc' };
+    const current = this.sort();
+    if (current?.field !== next.field || current?.direction !== next.direction) {
+      this.sort.set(next);
+      this.apply();
+    }
+  }
+
+  /**
+   * Le tableau est en tri personnalise : `rows` arrive deja trie (sans accents, a la
+   * francaise), le tableau ne doit donc pas le retrier lui-meme.
+   */
+  protected keepComputedOrder(): void {}
+
+  protected onPage(event: TablePageEvent): void {
+    this.first.set(event.first);
+    this.pageSize.set(event.rows);
+    this.writeUrl();
+  }
+
+  /** Restaure la vue depuis l'URL ; une valeur inconnue est ignoree. */
+  private readUrl(params: Params): void {
+    const bool = (value: unknown) => (value === 'true' ? true : value === 'false' ? false : null);
+    this.query.set(params['query'] ?? '');
+    this.state.set(bool(params['active']));
+    this.group.set(bool(params['group']));
+    this.solo.set(bool(params['solo']));
+    const parent = params['parent'];
+    this.parent.set(parent === 'ROOT' ? 'ROOT' : Number(parent) > 0 ? Number(parent) : null);
+    const [field, direction] = `${params['sort'] ?? ''}`.split(',');
+    this.sort.set(
+      SORT_FIELDS.includes(field as SortField)
+        ? { field: field as SortField, direction: direction === 'desc' ? 'desc' : 'asc' }
+        : null,
+    );
+    const size = Number(params['size']);
+    this.pageSize.set(PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE);
+    this.first.set(Math.max(0, Number(params['page']) || 0) * this.pageSize());
+  }
+
+  private writeUrl(): void {
+    const queryParams: Params = {};
+    if (this.query().trim()) {
+      queryParams['query'] = this.query().trim();
+    }
+    for (const [key, value] of [
+      ['active', this.state()],
+      ['parent', this.parent()],
+      ['group', this.group()],
+      ['solo', this.solo()],
+    ] as const) {
+      if (value !== null) {
+        queryParams[key] = `${value}`;
+      }
+    }
+    const sort = this.sort();
+    if (sort) {
+      queryParams['sort'] = `${sort.field},${sort.direction}`;
+    }
+    const page = Math.floor(this.first() / this.pageSize());
+    if (page > 0) {
+      queryParams['page'] = page;
+    }
+    if (this.pageSize() !== DEFAULT_PAGE_SIZE) {
+      queryParams['size'] = this.pageSize();
+    }
+    this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl: true });
   }
 
   protected openCreate(): void {

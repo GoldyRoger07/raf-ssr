@@ -10,6 +10,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -23,6 +24,9 @@ import { HaitiDatePipe } from '../../core/format';
 import { RoleName, UserResponse, UserStatus } from '../../core/models';
 
 const PAGE_SIZE = 20;
+const PAGE_SIZES = [10, 20, 50, 100];
+const SORT_FIELDS = ['name', 'email', 'status', 'createdAt'] as const;
+type AccountSortField = (typeof SORT_FIELDS)[number];
 
 const ROLES: { value: RoleName; label: string; description: string }[] = [
   { value: 'PLAYER', label: 'Joueur', description: 'Achete des tickets et joue' },
@@ -53,6 +57,7 @@ const ROLES: { value: RoleName; label: string; description: string }[] = [
     InputIconModule,
     InputTextModule,
     MessageModule,
+    SelectModule,
     SelectButtonModule,
     TableModule,
     TagModule,
@@ -66,9 +71,13 @@ export default class Accounts {
   private readonly messages = inject(MessageService);
   protected readonly me = inject(AuthService).user;
 
-  protected readonly pageSize = PAGE_SIZE;
+  protected pageSize = PAGE_SIZE;
+  protected readonly pageSizes = PAGE_SIZES;
+  protected roleFilter: RoleName | null = null;
+  protected statusFilter: UserStatus | null = null;
+  protected sort: { field: AccountSortField; direction: 'asc' | 'desc' } | null = null;
   protected readonly roles = ROLES;
-  protected readonly statusOptions = [
+  protected readonly statusOptions: { label: string; value: UserStatus }[] = [
     { label: 'Actif', value: 'ACTIVE' },
     { label: 'Suspendu', value: 'SUSPENDED' },
     { label: 'Banni', value: 'BANNED' },
@@ -109,10 +118,32 @@ export default class Accounts {
     this.load();
   }
 
+  /** Criteres actifs en plus de « Personnel seulement », recherche comprise. */
+  protected get activeCount(): number {
+    return [this.roleFilter, this.statusFilter].filter((v) => v !== null).length + (this.query.trim() ? 1 : 0);
+  }
+
+  protected reset(): void {
+    this.query = '';
+    this.roleFilter = null;
+    this.statusFilter = null;
+    this.sort = null;
+    this.reload();
+  }
+
   protected onLazyLoad(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.page) {
-      this.page = page;
+    const rows = event.rows ?? this.pageSize;
+    const page = Math.floor((event.first ?? 0) / rows);
+    const field = typeof event.sortField === 'string' ? event.sortField : null;
+    const sort =
+      field && (SORT_FIELDS as readonly string[]).includes(field)
+        ? { field: field as AccountSortField, direction: event.sortOrder === -1 ? ('desc' as const) : ('asc' as const) }
+        : null;
+    const sortChanged = sort?.field !== this.sort?.field || sort?.direction !== this.sort?.direction;
+    if (page !== this.page || rows !== this.pageSize || sortChanged) {
+      this.page = sortChanged || rows !== this.pageSize ? 0 : page;
+      this.pageSize = rows;
+      this.sort = sort;
       this.load();
     }
   }
@@ -176,7 +207,9 @@ export default class Accounts {
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api.users(this.query.trim(), this.staffOnly, this.page, PAGE_SIZE).subscribe({
+    this.api
+      .users(this.query.trim(), this.staffOnly, this.page, this.pageSize, { role: this.roleFilter, status: this.statusFilter }, this.sort ?? undefined)
+      .subscribe({
       next: (page) => {
         this.rows.set(page.content);
         this.total.set(page.totalElements);

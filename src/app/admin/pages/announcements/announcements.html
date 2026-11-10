@@ -237,24 +237,56 @@
 <!-- Historique -->
 <div class="mt-10">
   <h2 class="mb-3 text-lg font-semibold">Messages envoyes et programmes</h2>
+  <div class="mb-3 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex flex-col gap-1">
+      <label for="h-q" class="text-xs text-slate-500">Recherche</label>
+      <p-iconfield>
+        <p-inputicon class="pi pi-search" />
+        <input pInputText id="h-q" type="search" class="w-60" [(ngModel)]="historyFilters.q" (input)="onHistoryInput()" placeholder="Titre, texte ou destinataire" />
+      </p-iconfield>
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="h-status" class="text-xs text-slate-500">Statut</label>
+      <p-select inputId="h-status" [options]="historyStatusOptions" [(ngModel)]="historyFilters.status" (ngModelChange)="applyHistory()"
+        optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-40" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="h-audience" class="text-xs text-slate-500">Destinataires</label>
+      <p-select inputId="h-audience" [options]="historyAudienceOptions" [(ngModel)]="historyFilters.audience" (ngModelChange)="applyHistory()"
+        optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-44" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="h-important" class="text-xs text-slate-500">Importance</label>
+      <p-select inputId="h-important" [options]="importantOptions" [(ngModel)]="historyFilters.important" (ngModelChange)="applyHistory()"
+        optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-44" />
+    </div>
+    @if (historyFiltersActive) {
+      <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetHistory()" />
+    }
+  </div>
   <p-table
     [value]="rows()"
     [lazy]="true"
-    [paginator]="total() > pageSize"
+    [paginator]="total() > 0"
     [first]="page * pageSize"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="historySort?.field"
+    [sortOrder]="historySort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Envoi</th>
-        <th>Message</th>
-        <th>Destinataires</th>
+        <th pSortableColumn="scheduledAt">Envoi <p-sortIcon field="scheduledAt" /></th>
+        <th pSortableColumn="title">Message <p-sortIcon field="title" /></th>
+        <th pSortableColumn="audience">Destinataires <p-sortIcon field="audience" /></th>
         <th>Moyens</th>
-        <th>Statut</th>
+        <th pSortableColumn="status">Statut <p-sortIcon field="status" /></th>
         <th>Suivi</th>
         <th class="text-right"></th>
       </tr>
@@ -302,7 +334,11 @@
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="7" class="py-6 text-center text-sm text-slate-500">Aucun message pour le moment.</td></tr>
+      <tr>
+        <td colspan="7" class="py-6 text-center text-sm text-slate-500">
+          {{ historyFiltersActive ? 'Aucun message ne correspond a ces criteres.' : 'Aucun message pour le moment.' }}
+        </td>
+      </tr>
     </ng-template>
   </p-table>
 </div>

@@ -6,6 +6,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -14,7 +16,7 @@ import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
-import { Observable } from 'rxjs';
+import { Observable, Subject, debounceTime } from 'rxjs';
 
 import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
 import { errorMessage } from '../../core/api';
@@ -22,6 +24,7 @@ import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { PLAY_MODE, quizStatus } from '../../core/labels';
 import { Economics, Leaderboard, Quiz, RewardTier, SoloEconomics } from '../../core/models';
 import { QuizApi } from '../../core/quiz-api.service';
+import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 
 interface TierRow {
   rankFrom: number | null;
@@ -45,6 +48,8 @@ interface TierRow {
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputNumberModule,
     InputTextModule,
     MessageModule,
@@ -75,9 +80,15 @@ export default class QuizDetail implements OnInit {
   protected readonly economics = signal<Economics | null>(null);
   protected readonly soloEconomics = signal<SoloEconomics | null>(null);
   protected readonly leaderboard = signal<Leaderboard | null>(null);
-  protected readonly leaderboardSize = 50;
+  protected readonly leaderboardTable = new TableState(['rank', 'player', 'score', 'reward'], 50);
+  protected readonly pageSizes = PAGE_SIZE_OPTIONS;
+  protected leaderboardFilters: { q: string; rewarded: boolean | null } = { q: '', rewarded: null };
+  protected readonly rewardedOptions = [
+    { label: 'Avec un gain', value: true },
+    { label: 'Sans gain', value: false },
+  ];
+  private readonly leaderboardTyped = new Subject<void>();
   protected readonly loadingLeaderboard = signal(false);
-  protected leaderboardPage = 0;
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
 
@@ -122,6 +133,7 @@ export default class QuizDetail implements OnInit {
   });
 
   ngOnInit(): void {
+    this.leaderboardTyped.pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyLeaderboard());
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
 
@@ -133,7 +145,7 @@ export default class QuizDetail implements OnInit {
         this.economics.set(null);
         this.soloEconomics.set(null);
         this.leaderboard.set(null);
-        this.leaderboardPage = 0;
+        this.leaderboardTable.restart();
         if (quiz.gameMode === 'GROUP' && quiz.rewards.length) {
           this.api.economics(id).subscribe((e) => this.economics.set(e));
         }
@@ -149,17 +161,38 @@ export default class QuizDetail implements OnInit {
   }
 
   protected onLeaderboardPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / this.leaderboardSize);
     const quiz = this.quiz();
-    if (quiz && page !== this.leaderboardPage) {
-      this.leaderboardPage = page;
+    if (quiz && this.leaderboardTable.onLazyLoad(event)) {
       this.loadLeaderboard(quiz.id);
     }
   }
 
+  protected get leaderboardFiltered(): boolean {
+    return !!this.leaderboardFilters.q.trim() || this.leaderboardFilters.rewarded !== null;
+  }
+
+  protected onLeaderboardInput(): void {
+    this.leaderboardTyped.next();
+  }
+
+  protected applyLeaderboard(): void {
+    const quiz = this.quiz();
+    if (quiz) {
+      this.leaderboardTable.restart();
+      this.loadLeaderboard(quiz.id);
+    }
+  }
+
+  protected resetLeaderboard(): void {
+    this.leaderboardFilters = { q: '', rewarded: null };
+    this.leaderboardTable.reset();
+    this.applyLeaderboard();
+  }
+
   private loadLeaderboard(id: number): void {
     this.loadingLeaderboard.set(true);
-    this.api.leaderboard(id, this.leaderboardPage, this.leaderboardSize).subscribe({
+    const t = this.leaderboardTable;
+    this.api.leaderboard(id, t.page, t.pageSize, this.leaderboardFilters, t.sort ?? undefined).subscribe({
       next: (board) => {
         this.leaderboard.set(board);
         this.loadingLeaderboard.set(false);

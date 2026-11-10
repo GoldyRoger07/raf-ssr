@@ -13,28 +13,51 @@
   </div>
 </div>
 
-<div class="mb-4 flex flex-wrap gap-3">
-  <p-iconfield class="w-full max-w-sm">
-    <p-inputicon class="pi pi-search" />
-    <input pInputText type="search" class="w-full" [(ngModel)]="search" (input)="onSearch()" placeholder="Rechercher dans les enonces" />
-  </p-iconfield>
-  <p-select [options]="categories()" [(ngModel)]="categoryId" optionLabel="name" optionValue="id" [showClear]="true"
-            [filter]="true" placeholder="Toutes les categories" (onChange)="reload()" styleClass="w-64" />
-  <p-select [options]="sources" [(ngModel)]="source" optionLabel="label" optionValue="value" [showClear]="true"
-            placeholder="Toutes les origines" (onChange)="reload()" styleClass="w-56" />
+<div class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex w-full max-w-sm flex-col gap-1">
+    <label for="q-search" class="text-xs text-slate-500">Recherche</label>
+    <p-iconfield class="w-full">
+      <p-inputicon class="pi pi-search" />
+      <input pInputText id="q-search" type="search" class="w-full" [(ngModel)]="query" (input)="onInput()" placeholder="Rechercher dans les enonces" />
+    </p-iconfield>
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="q-category" class="text-xs text-slate-500">Categorie</label>
+    <p-select inputId="q-category" [options]="categories()" [(ngModel)]="categoryId" optionLabel="name" optionValue="id" [showClear]="true"
+              [filter]="true" filterBy="name" placeholder="Toutes" (onChange)="apply()" styleClass="w-56" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="q-source" class="text-xs text-slate-500">Origine</label>
+    <p-select inputId="q-source" [options]="sources" [(ngModel)]="source" optionLabel="label" optionValue="value" [showClear]="true"
+              placeholder="Toutes" (onChange)="apply()" styleClass="w-44" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="q-difficulty" class="text-xs text-slate-500">Difficulte</label>
+    <p-select inputId="q-difficulty" [options]="difficulties" [(ngModel)]="difficulty" optionLabel="label" optionValue="value" [showClear]="true"
+              placeholder="Toutes" (onChange)="apply()" styleClass="w-36" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="q-type" class="text-xs text-slate-500">Type</label>
+    <p-select inputId="q-type" [options]="types" [(ngModel)]="type" optionLabel="label" optionValue="value" [showClear]="true"
+              placeholder="Tous" (onChange)="apply()" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="q-usage" class="text-xs text-slate-500">Utilisation</label>
+    <p-select inputId="q-usage" [options]="usages" [(ngModel)]="usage" optionLabel="label" optionValue="value" [showClear]="true"
+              placeholder="Toutes" (onChange)="apply()" styleClass="w-44" />
+  </div>
+  @if (activeCount || sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
 </div>
 
-@if (search.trim().length >= 2) {
-  <p class="mb-2 text-sm text-slate-500">Recherche dans toutes les questions, tous statuts et categories confondus.</p>
-} @else {
-  <p-tabs [value]="status()" (valueChange)="selectTab($event)">
-    <p-tablist>
-      @for (s of statuses; track s.value) {
-        <p-tab [value]="s.value">{{ s.label }}</p-tab>
-      }
-    </p-tablist>
-  </p-tabs>
-}
+<p-tabs [value]="status()" (valueChange)="selectTab($event)">
+  <p-tablist>
+    @for (t of tabs; track t.value) {
+      <p-tab [value]="t.value">{{ t.label }}</p-tab>
+    }
+  </p-tablist>
+</p-tabs>
 
 @if (error(); as message) {
   <p-message severity="error" class="my-4" [text]="message" />
@@ -49,18 +72,21 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Question</th>
-        <th>Categorie</th>
-        <th>Difficulte</th>
-        <th class="text-right">Reussite</th>
-        <th>Statut</th>
+        <th pSortableColumn="text">Question <p-sortIcon field="text" /></th>
+        <th pSortableColumn="category">Categorie <p-sortIcon field="category" /></th>
+        <th pSortableColumn="difficulty">Difficulte <p-sortIcon field="difficulty" /></th>
+        <th pSortableColumn="successRate" class="text-right">Reussite <p-sortIcon field="successRate" /></th>
+        <th pSortableColumn="status">Statut <p-sortIcon field="status" /></th>
         <th class="text-right">Actions</th>
       </tr>
     </ng-template>
@@ -107,7 +133,9 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6" class="py-10 text-center text-slate-500">Aucune question.</td>
+        <td colspan="6" class="py-10 text-center text-slate-500">
+          {{ activeCount ? 'Aucune question ne correspond a ces criteres.' : 'Aucune question.' }}
+        </td>
       </tr>
     </ng-template>
   </p-table>

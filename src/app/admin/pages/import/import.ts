@@ -1,7 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
@@ -10,6 +13,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { errorMessage } from '../../core/api';
 import { Category, ImportReport, QuestionStatus } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
+import { distinctOptions } from '../../core/table-state';
 
 /** Modele telechargeable : meme format que l'exemple du backend (docs/exemple-import-questions.csv). */
 const TEMPLATE = [
@@ -20,7 +24,18 @@ const TEMPLATE = [
 
 @Component({
   selector: 'admin-import',
-  imports: [FormsModule, RouterLink, ButtonModule, MessageModule, SelectModule, TableModule, ToggleSwitchModule],
+  imports: [
+    FormsModule,
+    RouterLink,
+    ButtonModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    MessageModule,
+    SelectModule,
+    TableModule,
+    ToggleSwitchModule,
+  ],
   templateUrl: './import.html',
 })
 export default class Import {
@@ -34,6 +49,8 @@ export default class Import {
   protected readonly file = signal<File | null>(null);
   protected readonly importing = signal(false);
   protected readonly report = signal<ImportReport | null>(null);
+  /** Problemes distincts du rapport, pour le filtre. */
+  protected readonly reasonOptions = computed(() => distinctOptions(this.report()?.errors, 'reason'));
   protected readonly error = signal<string | null>(null);
 
   constructor() {

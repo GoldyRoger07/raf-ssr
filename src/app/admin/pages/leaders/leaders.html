@@ -12,6 +12,11 @@
       <p-inputicon class="pi pi-search" />
       <input pInputText type="search" class="w-full" [(ngModel)]="query" (input)="onInput()" placeholder="Telephone, email ou nom" />
     </p-iconfield>
+    <p-select [options]="statusOptions" [(ngModel)]="status" (ngModelChange)="apply()" optionLabel="label" optionValue="value"
+              [showClear]="true" placeholder="Tous les statuts" styleClass="w-44" ariaLabel="Filtrer par statut" />
+    @if (activeCount || sort) {
+      <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+    }
     <p-button label="Nommer un leader" icon="pi pi-plus" (onClick)="openPromote()" />
   </div>
 </div>
@@ -24,22 +29,27 @@
   <p-table
     [value]="rows()"
     [lazy]="true"
-    [paginator]="total() > pageSize"
+    [paginator]="total() > 0"
     [first]="page * pageSize"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Leader</th>
+        <th pSortableColumn="name">Leader <p-sortIcon field="name" /></th>
         <th>Contact</th>
-        <th class="text-right">Commission</th>
-        <th class="text-right">Joueurs</th>
-        <th class="text-right">Touche (30 j)</th>
-        <th class="text-right">Touche (total)</th>
+        <th pSortableColumn="commission" class="text-right">Commission <p-sortIcon field="commission" /></th>
+        <th pSortableColumn="players" class="text-right">Joueurs <p-sortIcon field="players" /></th>
+        <th pSortableColumn="last30Days" class="text-right">Touche (30 j) <p-sortIcon field="last30Days" /></th>
+        <th pSortableColumn="total" class="text-right">Touche (total) <p-sortIcon field="total" /></th>
       </tr>
     </ng-template>
     <ng-template #body let-l>
@@ -63,7 +73,7 @@
     <ng-template #emptymessage>
       <tr>
         <td colspan="6" class="py-10 text-center text-slate-500">
-          {{ query.trim() ? 'Aucun leader ne correspond.' : 'Aucun leader pour l\'instant.' }}
+          {{ activeCount ? 'Aucun leader ne correspond.' : 'Aucun leader pour l\'instant.' }}
         </td>
       </tr>
     </ng-template>

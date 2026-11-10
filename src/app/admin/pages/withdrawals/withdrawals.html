@@ -24,6 +24,37 @@
   </p-tablist>
 </p-tabs>
 
+<div class="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex flex-col gap-1">
+    <label for="w-q" class="text-xs text-slate-500">Recherche</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-search" />
+      <input pInputText id="w-q" type="search" class="w-64" [(ngModel)]="filters.q" (input)="onInput()" placeholder="Joueur, telephone, n° de demande" />
+    </p-iconfield>
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="w-provider" class="text-xs text-slate-500">Moyen</label>
+    <p-select inputId="w-provider" [options]="providerOptions" [(ngModel)]="filters.provider" (ngModelChange)="apply()"
+      optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-44" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="w-counter" class="text-xs text-slate-500">Origine</label>
+    <p-select inputId="w-counter" [options]="counterOptions" [(ngModel)]="filters.counter" (ngModelChange)="apply()"
+      optionLabel="label" optionValue="value" [showClear]="true" placeholder="Toutes" styleClass="w-52" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="w-from" class="text-xs text-slate-500">Demande du</label>
+    <input pInputText id="w-from" type="date" class="w-40" [(ngModel)]="filters.from" (change)="apply()" [max]="filters.to ?? ''" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="w-to" class="text-xs text-slate-500">au</label>
+    <input pInputText id="w-to" type="date" class="w-40" [(ngModel)]="filters.to" (change)="apply()" [min]="filters.from ?? ''" />
+  </div>
+  @if (activeCount || sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
+</div>
+
 @if (error(); as message) {
   <p-message severity="error" class="my-4" [text]="message" />
 }
@@ -37,17 +68,20 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="withdrawal.id"
   >
     <ng-template #header>
       <tr>
-        <th>Demande</th>
-        <th>Joueur</th>
-        <th>A verser</th>
-        <th>Moyen</th>
+        <th pSortableColumn="createdAt">Demande <p-sortIcon field="createdAt" /></th>
+        <th pSortableColumn="player">Joueur <p-sortIcon field="player" /></th>
+        <th pSortableColumn="netHtg">A verser <p-sortIcon field="netHtg" /></th>
+        <th pSortableColumn="provider">Moyen <p-sortIcon field="provider" /></th>
         <th>Statut</th>
         <th class="text-right">Actions</th>
       </tr>
@@ -130,7 +164,9 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6" class="py-10 text-center text-slate-500">Aucune demande dans cet etat.</td>
+        <td colspan="6" class="py-10 text-center text-slate-500">
+          {{ activeCount ? 'Aucune demande ne correspond a ces criteres.' : 'Aucune demande dans cet etat.' }}
+        </td>
       </tr>
     </ng-template>
   </p-table>

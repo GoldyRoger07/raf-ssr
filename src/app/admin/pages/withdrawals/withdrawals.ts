@@ -1,26 +1,45 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
+import { Subject, debounceTime } from 'rxjs';
 
 import { CashPickupDialog } from '../../components/cash-pickup-dialog/cash-pickup-dialog';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { HaitiDatePipe, HtgPipe } from '../../core/format';
 import { WITHDRAWAL_STATUS, providerLabel, withdrawalStatus } from '../../core/labels';
-import { AdminWithdrawal, PayoutConfig, Withdrawal, WithdrawalStatus } from '../../core/models';
+import {
+  AdminWithdrawal,
+  PaymentProvider,
+  PayoutConfig,
+  Withdrawal,
+  WithdrawalFilters,
+  WithdrawalSort,
+  WithdrawalSortField,
+  WithdrawalStatus,
+} from '../../core/models';
 
 const TABS: WithdrawalStatus[] = ['PENDING', 'APPROVED', 'SENDING', 'PAID', 'REJECTED'];
 const PAGE_SIZE = 20;
+const PAGE_SIZES = [10, 20, 50, 100];
+const SORT_FIELDS: WithdrawalSortField[] = ['createdAt', 'player', 'netHtg', 'provider'];
+const PROVIDERS: PaymentProvider[] = ['MONCASH', 'NATCASH', 'MANUAL'];
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const NO_FILTERS: WithdrawalFilters = { q: '', provider: null, counter: null, from: null, to: null };
 
 @Component({
   selector: 'admin-withdrawals',
@@ -30,8 +49,11 @@ const PAGE_SIZE = 20;
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputTextModule,
     MessageModule,
+    SelectModule,
     TableModule,
     TabsModule,
     TagModule,
@@ -47,11 +69,21 @@ export default class Withdrawals {
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly tabs = TABS;
   protected readonly withdrawalStatus = withdrawalStatus;
   protected readonly providerLabel = providerLabel;
-  protected readonly pageSize = PAGE_SIZE;
+  protected pageSize = PAGE_SIZE;
+  protected readonly pageSizes = PAGE_SIZES;
+  protected filters: WithdrawalFilters = { ...NO_FILTERS };
+  protected sort: WithdrawalSort | null = null;
+  protected readonly providerOptions = PROVIDERS.map((p) => ({ label: providerLabel(p), value: p }));
+  protected readonly counterOptions = [
+    { label: 'Saisis au guichet', value: true },
+    { label: 'Demandes des joueurs', value: false },
+  ];
+  private readonly typed = new Subject<void>();
 
   protected readonly status = signal<WithdrawalStatus>(this.initialStatus());
   protected readonly rows = signal<AdminWithdrawal[]>([]);
@@ -72,6 +104,8 @@ export default class Withdrawals {
   protected payoutReference = '';
 
   constructor() {
+    this.readUrl(this.route.snapshot.queryParams);
+    this.typed.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.apply());
     this.load();
     this.api.payoutConfig().subscribe({
       next: (config) => this.payout.set(config),
@@ -90,23 +124,91 @@ export default class Withdrawals {
       return;
     }
     this.status.set(status);
+    this.apply();
+  }
+
+  /** Criteres actifs, recherche comprise. */
+  protected get activeCount(): number {
+    const f = this.filters;
+    return [f.provider, f.counter, f.from, f.to].filter((v) => v !== null && v !== '').length + (f.q.trim() ? 1 : 0);
+  }
+
+  protected onInput(): void {
+    this.typed.next();
+  }
+
+  /** Un critere a change : retour a la premiere page. */
+  protected apply(): void {
     this.page = 0;
-    this.router.navigate([], { queryParams: { statut: status }, replaceUrl: true });
+    this.writeUrl();
     this.load();
   }
 
+  protected reset(): void {
+    this.filters = { ...NO_FILTERS };
+    this.sort = null;
+    this.apply();
+  }
+
   protected onLazyLoad(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.page) {
-      this.page = page;
+    const rows = event.rows ?? this.pageSize;
+    const page = Math.floor((event.first ?? 0) / rows);
+    const field = typeof event.sortField === 'string' ? event.sortField : null;
+    const sort: WithdrawalSort | null =
+      field && SORT_FIELDS.includes(field as WithdrawalSortField)
+        ? { field: field as WithdrawalSortField, direction: event.sortOrder === -1 ? 'desc' : 'asc' }
+        : null;
+    const sortChanged = sort?.field !== this.sort?.field || sort?.direction !== this.sort?.direction;
+    if (page !== this.page || rows !== this.pageSize || sortChanged) {
+      this.page = sortChanged || rows !== this.pageSize ? 0 : page;
+      this.pageSize = rows;
+      this.sort = sort;
+      this.writeUrl();
       this.load();
     }
+  }
+
+  /** Restaure la vue depuis l'URL ; une valeur inconnue est ignoree. */
+  private readUrl(params: Params): void {
+    this.filters = {
+      q: params['q'] ?? '',
+      provider: PROVIDERS.includes(params['moyen']) ? params['moyen'] : null,
+      counter: params['guichet'] === 'true' ? true : params['guichet'] === 'false' ? false : null,
+      from: DATE.test(params['du'] ?? '') ? params['du'] : null,
+      to: DATE.test(params['au'] ?? '') ? params['au'] : null,
+    };
+    const [field, direction] = `${params['tri'] ?? ''}`.split(',');
+    this.sort = SORT_FIELDS.includes(field as WithdrawalSortField)
+      ? { field: field as WithdrawalSortField, direction: direction === 'desc' ? 'desc' : 'asc' }
+      : null;
+    const size = Number(params['taille']);
+    this.pageSize = PAGE_SIZES.includes(size) ? size : PAGE_SIZE;
+    this.page = Math.max(0, Number(params['page']) || 0);
+  }
+
+  private writeUrl(): void {
+    const f = this.filters;
+    const queryParams: Params = { statut: this.status() };
+    const set = (key: string, value: unknown) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams[key] = `${value}`;
+      }
+    };
+    set('q', f.q.trim());
+    set('moyen', f.provider);
+    set('guichet', f.counter);
+    set('du', f.from);
+    set('au', f.to);
+    set('tri', this.sort ? `${this.sort.field},${this.sort.direction}` : null);
+    set('page', this.page > 0 ? this.page : null);
+    set('taille', this.pageSize !== PAGE_SIZE ? this.pageSize : null);
+    this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl: true });
   }
 
   protected load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api.withdrawals(this.status(), this.page, PAGE_SIZE).subscribe({
+    this.api.withdrawals(this.status(), this.page, this.pageSize, this.filters, this.sort ?? undefined).subscribe({
       next: (page) => {
         this.rows.set(page.content);
         this.total.set(page.totalElements);

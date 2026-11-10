@@ -3,7 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -16,6 +19,7 @@ import { errorMessage } from '../../core/api';
 import { difficultyLabel, questionStatus } from '../../core/labels';
 import { AiStatus, Category, Difficulty, GenerationReport, Question, QuestionType } from '../../core/models';
 import { QuestionApi } from '../../core/question-api.service';
+import { distinctOptions } from '../../core/table-state';
 
 /**
  * Generation de questions par IA : un moyen de plus d'alimenter la banque, a
@@ -28,7 +32,10 @@ import { QuestionApi } from '../../core/question-api.service';
     FormsModule,
     RouterLink,
     ButtonModule,
+    IconFieldModule,
+    InputIconModule,
     InputNumberModule,
+    InputTextModule,
     MessageModule,
     SelectModule,
     SelectButtonModule,
@@ -69,6 +76,8 @@ export default class Generate {
   protected readonly generating = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly report = signal<GenerationReport | null>(null);
+  /** Motifs de rejet distincts, pour le filtre. */
+  protected readonly rejectionReasonOptions = computed(() => distinctOptions(this.report()?.rejections, 'reason'));
   /** Questions generees, mises a jour au fil de la relecture (publiees, supprimees). */
   protected readonly questions = signal<Question[]>([]);
   protected readonly busy = signal<number | 'all' | null>(null);

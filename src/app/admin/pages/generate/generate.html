@@ -112,9 +112,33 @@ AI_MODEL=claude-sonnet-5-5</code>
     </div>
 
     @if (r.rejections.length) {
-      <p-table [value]="r.rejections" styleClass="mb-6">
+<div class="mb-3 flex flex-wrap items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <label for="rj-q" class="text-xs text-slate-500">Recherche</label>
+          <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input #rjQInput pInputText id="rj-q" type="search" class="w-64" placeholder="Question ou motif"
+                   (input)="rejectionsTable.filterGlobal(rjQInput.value, 'contains')" />
+          </p-iconfield>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="rj-reason" class="text-xs text-slate-500">Motif</label>
+          <p-select #rjReasonSelect inputId="rj-reason" [options]="rejectionReasonOptions()" optionLabel="label" optionValue="value" [showClear]="true" [filter]="true"
+                    filterBy="label" placeholder="Tous les motifs" styleClass="w-64" 
+                    (onChange)="rejectionsTable.filter($event.value, 'reason', 'equals')" />
+        </div>
+      </div>
+      <p-table #rejectionsTable [value]="r.rejections" styleClass="mb-6"
+               [globalFilterFields]="['excerpt', 'reason']" [paginator]="r.rejections.length > 20" [rows]="20" [rowsPerPageOptions]="[20, 50, 100]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="{first} - {last} sur {totalRecords}">
         <ng-template #header>
-          <tr><th>Question</th><th>Motif du rejet</th></tr>
+          <tr>
+            <th pSortableColumn="excerpt">Question <p-sortIcon field="excerpt" /></th>
+            <th pSortableColumn="reason">Motif du rejet <p-sortIcon field="reason" /></th>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="2" class="py-6 text-center text-slate-500">Aucun rejet ne correspond a ces criteres.</td></tr>
         </ng-template>
         <ng-template #body let-e>
           <tr>

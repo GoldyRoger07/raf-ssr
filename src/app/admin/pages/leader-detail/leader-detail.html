@@ -64,6 +64,23 @@
     <p-tabpanels>
       <p-tabpanel value="players">
         <div class="mb-4 flex flex-wrap items-end gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="lp-q" class="text-xs text-slate-500">Recherche</label>
+            <p-iconfield>
+              <p-inputicon class="pi pi-search" />
+              <input pInputText id="lp-q" type="search" class="w-60" [(ngModel)]="playersFilters.q" (input)="onInput('players')" placeholder="Nom, email ou telephone" />
+            </p-iconfield>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="lp-invite" class="text-xs text-slate-500">Rattache</label>
+            <p-select inputId="lp-invite" [options]="viaInviteOptions" [(ngModel)]="playersFilters.viaInvite" (ngModelChange)="applyPlayers()"
+              optionLabel="label" optionValue="value" [showClear]="true" placeholder="Tous" styleClass="w-52" />
+          </div>
+          @if (playersFiltered || playersTable.sort) {
+            <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetPlayers()" />
+          }
+        </div>
+        <div class="mb-4 flex flex-wrap items-end gap-3">
           <div class="flex w-full max-w-md flex-col gap-1">
             <span class="text-xs text-slate-500">Ajouter un joueur (il ne doit avoir aucun autre leader). Les joueurs inscrits avec le lien d'invitation du leader sont ajoutes automatiquement.</span>
             <player-search (selected)="addPlayer($event)" />
@@ -74,17 +91,19 @@
         </div>
 
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <p-table [value]="players()" [lazy]="true" [paginator]="playersTotal() > pageSize" [first]="playersPage * pageSize"
-                   [rows]="pageSize" [totalRecords]="playersTotal()" [loading]="playersLoading()"
+          <p-table [value]="players()" [lazy]="true" [paginator]="playersTotal() > 0" [first]="playersTable.first"
+                   [rows]="playersTable.pageSize" [totalRecords]="playersTotal()" [loading]="playersLoading()"
+                   [rowsPerPageOptions]="pageSizes" [showCurrentPageReport]="true" currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+                   [sortField]="playersTable.sort?.field" [sortOrder]="playersTable.sortOrder"
                    (onLazyLoad)="onPlayersPage($event)" dataKey="id">
             <ng-template #header>
               <tr>
-                <th>Joueur</th>
+                <th pSortableColumn="name">Joueur <p-sortIcon field="name" /></th>
                 <th>Contact</th>
-                <th>Rattache le</th>
+                <th pSortableColumn="addedAt">Rattache le <p-sortIcon field="addedAt" /></th>
                 <th>Bonus d'invitation</th>
-                <th>Derniere partie</th>
-                <th class="text-right">A rapporte</th>
+                <th pSortableColumn="lastPlayed">Derniere partie <p-sortIcon field="lastPlayed" /></th>
+                <th pSortableColumn="commissions" class="text-right">A rapporte <p-sortIcon field="commissions" /></th>
                 <th></th>
               </tr>
             </ng-template>
@@ -128,7 +147,9 @@
             </ng-template>
             <ng-template #emptymessage>
               <tr>
-                <td colspan="7" class="py-10 text-center text-slate-500">Aucun joueur : ajoutez-en avec la recherche ci-dessus.</td>
+                <td colspan="7" class="py-10 text-center text-slate-500">
+                  {{ playersFiltered ? 'Aucun joueur ne correspond a ces criteres.' : 'Aucun joueur : ajoutez-en avec la recherche ci-dessus.' }}
+                </td>
               </tr>
             </ng-template>
           </p-table>
@@ -136,18 +157,45 @@
       </p-tabpanel>
 
       <p-tabpanel value="commissions">
+        <div class="mb-4 flex flex-wrap items-end gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="lc-q" class="text-xs text-slate-500">Recherche</label>
+            <p-iconfield>
+              <p-inputicon class="pi pi-search" />
+              <input pInputText id="lc-q" type="search" class="w-60" [(ngModel)]="commissionsFilters.q" (input)="onInput('commissions')" placeholder="Joueur ou quiz" />
+            </p-iconfield>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="lc-source" class="text-xs text-slate-500">Origine</label>
+            <p-select inputId="lc-source" [options]="sourceOptions" [(ngModel)]="commissionsFilters.source" (ngModelChange)="applyCommissions()"
+              optionLabel="label" optionValue="value" [showClear]="true" placeholder="Toutes" styleClass="w-44" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="lc-from" class="text-xs text-slate-500">Du</label>
+            <input pInputText id="lc-from" type="date" class="w-40" [(ngModel)]="commissionsFilters.from" (change)="applyCommissions()" [max]="commissionsFilters.to ?? ''" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="lc-to" class="text-xs text-slate-500">au</label>
+            <input pInputText id="lc-to" type="date" class="w-40" [(ngModel)]="commissionsFilters.to" (change)="applyCommissions()" [min]="commissionsFilters.from ?? ''" />
+          </div>
+          @if (commissionsFiltered || commissionsTable.sort) {
+            <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetCommissions()" />
+          }
+        </div>
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <p-table [value]="commissions()" [lazy]="true" [paginator]="commissionsTotal() > pageSize"
-                   [first]="commissionsPage * pageSize" [rows]="pageSize" [totalRecords]="commissionsTotal()"
+          <p-table [value]="commissions()" [lazy]="true" [paginator]="commissionsTotal() > 0"
+                   [first]="commissionsTable.first" [rows]="commissionsTable.pageSize" [totalRecords]="commissionsTotal()"
+                   [rowsPerPageOptions]="pageSizes" [showCurrentPageReport]="true" currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+                   [sortField]="commissionsTable.sort?.field" [sortOrder]="commissionsTable.sortOrder"
                    [loading]="commissionsLoading()" (onLazyLoad)="onCommissionsPage($event)" dataKey="id">
             <ng-template #header>
               <tr>
-                <th>Date</th>
-                <th>Joueur</th>
-                <th>Partie perdue</th>
-                <th class="text-right">Prix paye</th>
+                <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt" /></th>
+                <th pSortableColumn="player">Joueur <p-sortIcon field="player" /></th>
+                <th pSortableColumn="quiz">Partie perdue <p-sortIcon field="quiz" /></th>
+                <th pSortableColumn="baseCredits" class="text-right">Prix paye <p-sortIcon field="baseCredits" /></th>
                 <th class="text-right">Taux</th>
-                <th class="text-right">Commission</th>
+                <th pSortableColumn="amount" class="text-right">Commission <p-sortIcon field="amount" /></th>
               </tr>
             </ng-template>
             <ng-template #body let-c>
@@ -170,7 +218,9 @@
             </ng-template>
             <ng-template #emptymessage>
               <tr>
-                <td colspan="6" class="py-10 text-center text-slate-500">Aucune commission versee pour l'instant.</td>
+                <td colspan="6" class="py-10 text-center text-slate-500">
+                  {{ commissionsFiltered ? 'Aucune commission ne correspond a ces criteres.' : 'Aucune commission versee pour l\'instant.' }}
+                </td>
               </tr>
             </ng-template>
           </p-table>
@@ -182,15 +232,29 @@
           <span>Envoye ces 30 jours : <strong>{{ l.transfersLast30DaysCredits | credits }}</strong></span>
           <span>Envoye au total : <strong>{{ l.transfersTotalCredits | credits }}</strong></span>
         </div>
+        <div class="mb-4 flex flex-wrap items-end gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="lt-q" class="text-xs text-slate-500">Recherche</label>
+            <p-iconfield>
+              <p-inputicon class="pi pi-search" />
+              <input pInputText id="lt-q" type="search" class="w-60" [(ngModel)]="transfersQuery" (input)="onInput('transfers')" placeholder="Nom ou telephone du joueur" />
+            </p-iconfield>
+          </div>
+          @if (transfersQuery.trim() || transfersTable.sort) {
+            <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="resetTransfers()" />
+          }
+        </div>
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <p-table [value]="transfers()" [lazy]="true" [paginator]="transfersTotal() > pageSize"
-                   [first]="transfersPage * pageSize" [rows]="pageSize" [totalRecords]="transfersTotal()"
+          <p-table [value]="transfers()" [lazy]="true" [paginator]="transfersTotal() > 0"
+                   [first]="transfersTable.first" [rows]="transfersTable.pageSize" [totalRecords]="transfersTotal()"
+                   [rowsPerPageOptions]="pageSizes" [showCurrentPageReport]="true" currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+                   [sortField]="transfersTable.sort?.field" [sortOrder]="transfersTable.sortOrder"
                    [loading]="transfersLoading()" (onLazyLoad)="onTransfersPage($event)" dataKey="id">
             <ng-template #header>
               <tr>
-                <th>Date</th>
-                <th>Joueur recharge</th>
-                <th class="text-right">Credits envoyes</th>
+                <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt" /></th>
+                <th pSortableColumn="player">Joueur recharge <p-sortIcon field="player" /></th>
+                <th pSortableColumn="credits" class="text-right">Credits envoyes <p-sortIcon field="credits" /></th>
                 <th class="text-right">Solde du leader apres</th>
               </tr>
             </ng-template>
@@ -206,7 +270,9 @@
             </ng-template>
             <ng-template #emptymessage>
               <tr>
-                <td colspan="4" class="py-10 text-center text-slate-500">Aucune recharge effectuee par ce leader pour l'instant.</td>
+                <td colspan="4" class="py-10 text-center text-slate-500">
+                  {{ transfersQuery.trim() ? 'Aucune recharge ne correspond.' : 'Aucune recharge effectuee par ce leader pour l\'instant.' }}
+                </td>
               </tr>
             </ng-template>
           </p-table>

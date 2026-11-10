@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_BASE_URL, Page } from './api';
-import { AiStatus, Category, CategoryInput, GenerateInput, GenerationReport, ImportReport, PoolStatus, Question, QuestionInput, QuestionNeighbors, QuestionSource, QuestionStatus } from './models';
+import { AiStatus, Category, CategoryInput, GenerateInput, GenerationReport, ImportReport, PoolStatus, Question, QuestionFilters, QuestionInput, QuestionNeighbors, QuestionSort, QuestionStatus } from './models';
 
 /** Banque de questions et categories (moderateurs et administrateurs). */
 @Injectable()
@@ -14,24 +14,22 @@ export class QuestionApi {
 
   // --- Questions ------------------------------------------------------------------
 
-  list(status: QuestionStatus, categoryId: number | null, page = 0, size = 20, source: QuestionSource | null = null): Observable<Page<Question>> {
-    let params = new HttpParams()
-      .set('status', status)
-      .set('page', page)
-      .set('size', size)
-      .set('sort', 'createdAt,desc');
-    if (categoryId) {
-      params = params.set('categoryId', categoryId);
+  /** Liste filtree et triee ; sans tri, les plus recentes d'abord. */
+  list(filters: QuestionFilters, page = 0, size = 20, sort?: QuestionSort): Observable<Page<Question>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    const { query, ...criteria } = filters;
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
     }
-    if (source) {
-      params = params.set('source', source);
+    for (const [key, value] of Object.entries(criteria)) {
+      if (value !== null && value !== undefined) {
+        params = params.set(key, `${value}`);
+      }
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
     }
     return this.http.get<Page<Question>>(this.base, { params });
-  }
-
-  search(term: string, page = 0, size = 20): Observable<Page<Question>> {
-    const params = new HttpParams().set('q', term).set('page', page).set('size', size);
-    return this.http.get<Page<Question>>(`${this.base}/search`, { params });
   }
 
   get(id: number): Observable<Question> {

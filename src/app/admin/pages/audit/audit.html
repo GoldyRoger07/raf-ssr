@@ -7,16 +7,31 @@
 
 <div class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
   <div class="flex flex-col gap-1">
+    <label for="audit-q" class="text-xs text-slate-500">Recherche</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-search" />
+      <input pInputText id="audit-q" type="search" class="w-64" [(ngModel)]="q" (input)="onInput()" placeholder="Auteur, action, contenu, IP" />
+    </p-iconfield>
+  </div>
+  <div class="flex flex-col gap-1">
     <label for="action" class="text-xs text-slate-500">Action</label>
-    <p-select inputId="action" [options]="actions()" [(ngModel)]="action" [showClear]="true" [filter]="true" placeholder="Toutes" styleClass="w-64" />
+    <p-select inputId="action" [options]="actions()" [(ngModel)]="action" (ngModelChange)="apply()" [showClear]="true" [filter]="true" placeholder="Toutes" styleClass="w-64" />
   </div>
   <div class="flex flex-col gap-1">
     <label for="type" class="text-xs text-slate-500">Type d'objet</label>
-    <p-select inputId="type" [options]="entityTypes()" [(ngModel)]="entityType" [showClear]="true" placeholder="Tous" styleClass="w-48" />
+    <p-select inputId="type" [options]="entityTypes()" [(ngModel)]="entityType" (ngModelChange)="apply()" [showClear]="true" placeholder="Tous" styleClass="w-48" />
   </div>
   <div class="flex flex-col gap-1">
     <label for="entityId" class="text-xs text-slate-500">Identifiant de l'objet</label>
-    <input pInputText id="entityId" [(ngModel)]="entityId" class="w-36" (keyup.enter)="apply()" />
+    <input pInputText id="entityId" [(ngModel)]="entityId" class="w-36" (input)="onInput()" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="audit-from" class="text-xs text-slate-500">Du</label>
+    <input pInputText id="audit-from" type="date" class="w-40" [(ngModel)]="from" (change)="apply()" [max]="to ?? ''" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="audit-to" class="text-xs text-slate-500">au</label>
+    <input pInputText id="audit-to" type="date" class="w-40" [(ngModel)]="to" (change)="apply()" [min]="from ?? ''" />
   </div>
   @if (actorId) {
     <div class="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-sm dark:bg-orange-500/10">
@@ -24,8 +39,9 @@
       <button type="button" class="pi pi-times text-xs" aria-label="Retirer le filtre auteur" (click)="actorId = null; apply()"></button>
     </div>
   }
-  <p-button label="Filtrer" icon="pi pi-filter" (onClick)="apply()" />
-  <p-button label="Reinitialiser" severity="secondary" [text]="true" (onClick)="reset()" />
+  @if (activeCount || sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
 </div>
 
 @if (error(); as message) {
@@ -41,17 +57,20 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'asc' ? 1 : -1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Date</th>
+        <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt" /></th>
         <th>Auteur</th>
-        <th>Action</th>
-        <th>Objet</th>
+        <th pSortableColumn="action">Action <p-sortIcon field="action" /></th>
+        <th pSortableColumn="entityType">Objet <p-sortIcon field="entityType" /></th>
         <th>Changement</th>
       </tr>
     </ng-template>

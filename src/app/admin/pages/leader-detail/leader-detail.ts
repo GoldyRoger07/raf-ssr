@@ -1,21 +1,28 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { TagModule } from 'primeng/tag';
+import { Subject, debounceTime } from 'rxjs';
 
 import { PlayerSearch } from '../../components/player-search/player-search';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { LeaderCommission, LeaderPlayer, LeaderSummary, LeaderTransfer, PlayerSummary } from '../../core/models';
+import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 
 const PAGE_SIZE = 20;
 
@@ -31,8 +38,12 @@ const PAGE_SIZE = 20;
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
     InputNumberModule,
+    InputTextModule,
     MessageModule,
+    SelectModule,
     TableModule,
     TabsModule,
     TagModule,
@@ -51,23 +62,43 @@ export default class LeaderDetail {
   private readonly id = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
 
   protected readonly pageSize = PAGE_SIZE;
+  protected readonly pageSizes = PAGE_SIZE_OPTIONS;
+
+  // Recherche, filtres et tri des trois onglets (cote serveur).
+  protected readonly playersTable = new TableState(['name', 'addedAt', 'lastPlayed', 'commissions'], PAGE_SIZE);
+  protected readonly commissionsTable = new TableState(['createdAt', 'player', 'quiz', 'baseCredits', 'amount'], PAGE_SIZE);
+  protected readonly transfersTable = new TableState(['createdAt', 'player', 'credits'], PAGE_SIZE);
+  protected playersFilters: { q: string; viaInvite: boolean | null } = { q: '', viaInvite: null };
+  protected commissionsFilters: { q: string; source: 'QUIZ' | 'SOLO' | null; from: string | null; to: string | null } = {
+    q: '',
+    source: null,
+    from: null,
+    to: null,
+  };
+  protected transfersQuery = '';
+  protected readonly viaInviteOptions = [
+    { label: 'Par son lien', value: true },
+    { label: 'Par un administrateur', value: false },
+  ];
+  protected readonly sourceOptions = [
+    { label: 'Quiz en groupe', value: 'QUIZ' },
+    { label: 'Partie solo', value: 'SOLO' },
+  ];
+  private readonly typed = new Subject<'players' | 'commissions' | 'transfers'>();
   protected readonly leader = signal<LeaderSummary | null>(null);
   protected readonly error = signal<string | null>(null);
 
   protected readonly players = signal<LeaderPlayer[]>([]);
   protected readonly playersTotal = signal(0);
   protected readonly playersLoading = signal(false);
-  protected playersPage = 0;
 
   protected readonly commissions = signal<LeaderCommission[]>([]);
   protected readonly commissionsTotal = signal(0);
   protected readonly commissionsLoading = signal(false);
-  protected commissionsPage = 0;
 
   protected readonly transfers = signal<LeaderTransfer[]>([]);
   protected readonly transfersTotal = signal(0);
   protected readonly transfersLoading = signal(false);
-  protected transfersPage = 0;
 
   // Commission
   protected readonly commissionOpen = signal(false);
@@ -84,6 +115,9 @@ export default class LeaderDetail {
   protected readonly adding = signal(false);
 
   constructor() {
+    this.typed.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe((tab) =>
+      tab === 'players' ? this.applyPlayers() : tab === 'commissions' ? this.applyCommissions() : this.applyTransfers(),
+    );
     this.loadLeader();
     this.loadPlayers();
     this.loadCommissions();
@@ -158,7 +192,7 @@ export default class LeaderDetail {
       next: () => {
         this.adding.set(false);
         this.messages.add({ severity: 'success', summary: 'Joueur ajoute', detail: `${player.firstName} ${player.lastName}` });
-        this.playersPage = 0;
+        this.playersTable.restart();
         this.loadPlayers();
         this.loadLeader();
       },
@@ -215,32 +249,73 @@ export default class LeaderDetail {
   }
 
   protected onPlayersPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.playersPage) {
-      this.playersPage = page;
+    if (this.playersTable.onLazyLoad(event)) {
       this.loadPlayers();
     }
   }
 
   protected onCommissionsPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.commissionsPage) {
-      this.commissionsPage = page;
+    if (this.commissionsTable.onLazyLoad(event)) {
       this.loadCommissions();
     }
   }
 
   protected onTransfersPage(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.transfersPage) {
-      this.transfersPage = page;
+    if (this.transfersTable.onLazyLoad(event)) {
       this.loadTransfers();
     }
   }
 
+  protected onInput(tab: 'players' | 'commissions' | 'transfers'): void {
+    this.typed.next(tab);
+  }
+
+  protected get playersFiltered(): boolean {
+    return !!this.playersFilters.q.trim() || this.playersFilters.viaInvite !== null;
+  }
+
+  protected get commissionsFiltered(): boolean {
+    const f = this.commissionsFilters;
+    return !!f.q.trim() || f.source !== null || !!f.from || !!f.to;
+  }
+
+  protected applyPlayers(): void {
+    this.playersTable.restart();
+    this.loadPlayers();
+  }
+
+  protected applyCommissions(): void {
+    this.commissionsTable.restart();
+    this.loadCommissions();
+  }
+
+  protected applyTransfers(): void {
+    this.transfersTable.restart();
+    this.loadTransfers();
+  }
+
+  protected resetPlayers(): void {
+    this.playersFilters = { q: '', viaInvite: null };
+    this.playersTable.reset();
+    this.loadPlayers();
+  }
+
+  protected resetCommissions(): void {
+    this.commissionsFilters = { q: '', source: null, from: null, to: null };
+    this.commissionsTable.reset();
+    this.loadCommissions();
+  }
+
+  protected resetTransfers(): void {
+    this.transfersQuery = '';
+    this.transfersTable.reset();
+    this.loadTransfers();
+  }
+
   private loadTransfers(): void {
     this.transfersLoading.set(true);
-    this.api.leaderTransfers(this.id, this.transfersPage, PAGE_SIZE).subscribe({
+    const t = this.transfersTable;
+    this.api.leaderTransfers(this.id, t.page, t.pageSize, this.transfersQuery, t.sort ?? undefined).subscribe({
       next: (page) => {
         this.transfers.set(page.content);
         this.transfersTotal.set(page.totalElements);
@@ -259,7 +334,8 @@ export default class LeaderDetail {
 
   private loadPlayers(): void {
     this.playersLoading.set(true);
-    this.api.leaderPlayers(this.id, this.playersPage, PAGE_SIZE).subscribe({
+    const t = this.playersTable;
+    this.api.leaderPlayers(this.id, t.page, t.pageSize, this.playersFilters, t.sort ?? undefined).subscribe({
       next: (page) => {
         this.players.set(page.content);
         this.playersTotal.set(page.totalElements);
@@ -271,7 +347,8 @@ export default class LeaderDetail {
 
   private loadCommissions(): void {
     this.commissionsLoading.set(true);
-    this.api.leaderCommissions(this.id, this.commissionsPage, PAGE_SIZE).subscribe({
+    const t = this.commissionsTable;
+    this.api.leaderCommissions(this.id, t.page, t.pageSize, this.commissionsFilters, t.sort ?? undefined).subscribe({
       next: (page) => {
         this.commissions.set(page.content);
         this.commissionsTotal.set(page.totalElements);

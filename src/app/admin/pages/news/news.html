@@ -14,15 +14,41 @@
   <p-message severity="error" [text]="message" />
 }
 
+<div class="mb-4 mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex flex-col gap-1">
+    <label for="n-q" class="text-xs text-slate-500">Recherche</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-search" />
+      <input pInputText id="n-q" type="search" class="w-64" [(ngModel)]="filters.q" (input)="onInput()" placeholder="Titre ou texte" />
+    </p-iconfield>
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="n-published" class="text-xs text-slate-500">Etat</label>
+    <p-select inputId="n-published" [options]="publishedOptions" [(ngModel)]="filters.published" (ngModelChange)="apply()"
+      optionLabel="label" optionValue="value" [showClear]="true" placeholder="Toutes" styleClass="w-40" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <label for="n-pinned" class="text-xs text-slate-500">Epinglage</label>
+    <p-select inputId="n-pinned" [options]="pinnedOptions" [(ngModel)]="filters.pinned" (ngModelChange)="apply()"
+      optionLabel="label" optionValue="value" [showClear]="true" placeholder="Toutes" styleClass="w-44" />
+  </div>
+  @if (filtered || table.sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
+</div>
+
+
 <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-  <p-table [value]="rows()" [lazy]="true" [paginator]="total() > pageSize" [first]="page * pageSize" [rows]="pageSize"
+  <p-table [value]="rows()" [lazy]="true" [paginator]="total() > 0" [first]="table.first" [rows]="table.pageSize"
+           [rowsPerPageOptions]="pageSizes" [showCurrentPageReport]="true" currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+           [sortField]="table.sort?.field" [sortOrder]="table.sortOrder"
            [totalRecords]="total()" [loading]="loading()" (onLazyLoad)="onPage($event)" dataKey="id">
     <ng-template #header>
       <tr>
-        <th>Actualite</th>
-        <th>Etat</th>
-        <th>Publiee le</th>
-        <th>Modifiee le</th>
+        <th pSortableColumn="title">Actualite <p-sortIcon field="title" /></th>
+        <th pSortableColumn="published">Etat <p-sortIcon field="published" /></th>
+        <th pSortableColumn="publishedAt">Publiee le <p-sortIcon field="publishedAt" /></th>
+        <th pSortableColumn="updatedAt">Modifiee le <p-sortIcon field="updatedAt" /></th>
         <th></th>
       </tr>
     </ng-template>
@@ -63,7 +89,9 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="5" class="py-10 text-center text-slate-500">Aucune actualite : creez la premiere avec « Nouvelle actualite ».</td>
+        <td colspan="5" class="py-10 text-center text-slate-500">
+          {{ filtered ? 'Aucune actualite ne correspond a ces criteres.' : 'Aucune actualite : creez la premiere avec « Nouvelle actualite ».' }}
+        </td>
       </tr>
     </ng-template>
   </p-table>

@@ -42,16 +42,38 @@
       d'en avoir trouve la cause : le journal d'audit et l'historique du portefeuille concerne sont les premiers indices.
     </p>
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <p-table [value]="r.findings!" [scrollable]="true" scrollHeight="560px">
+<div class="mb-3 flex flex-wrap items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <label for="f-q" class="text-xs text-slate-500">Recherche</label>
+          <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input #fQInput pInputText id="f-q" type="search" class="w-64" placeholder="Controle, objet, detail, n° de joueur"
+                   (input)="findingsTable.filterGlobal(fQInput.value, 'contains')" />
+          </p-iconfield>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="f-check" class="text-xs text-slate-500">Controle</label>
+          <p-select #fCheckSelect inputId="f-check" [options]="checkOptions()" optionLabel="label" optionValue="value" [showClear]="true" [filter]="true"
+                    filterBy="label" placeholder="Tous les controles" styleClass="w-64" 
+                    (onChange)="findingsTable.filter($event.value, 'check', 'equals')" />
+        </div>
+      </div>
+      <p-table #findingsTable [value]="r.findings!" [scrollable]="true" scrollHeight="560px"
+               [globalFilterFields]="['check', 'checkDescription', 'referenceType', 'referenceId', 'userId', 'detail']"
+               [paginator]="r.findings!.length > 20" [rows]="20" [rowsPerPageOptions]="[20, 50, 100]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="{first} - {last} sur {totalRecords}">
         <ng-template #header>
           <tr>
-            <th>Controle</th>
-            <th>Joueur</th>
-            <th>Objet</th>
-            <th class="text-right">Attendu</th>
-            <th class="text-right">Enregistre</th>
+            <th pSortableColumn="check">Controle <p-sortIcon field="check" /></th>
+            <th pSortableColumn="userId">Joueur <p-sortIcon field="userId" /></th>
+            <th pSortableColumn="referenceType">Objet <p-sortIcon field="referenceType" /></th>
+            <th pSortableColumn="expectedValue" class="text-right">Attendu <p-sortIcon field="expectedValue" /></th>
+            <th pSortableColumn="actualValue" class="text-right">Enregistre <p-sortIcon field="actualValue" /></th>
             <th>Detail</th>
           </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="6" class="py-6 text-center text-slate-500">Aucun ecart ne correspond a ces criteres.</td></tr>
         </ng-template>
         <ng-template #body let-f>
           <tr>

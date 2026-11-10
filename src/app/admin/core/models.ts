@@ -256,6 +256,25 @@ export interface LeaderCommission {
 export type BalanceType = 'CREDIT' | 'WINNINGS';
 /** WINNINGS : recharge payee par le joueur avec ses gains ; jamais un moyen de retrait. */
 export type PaymentProvider = 'MONCASH' | 'NATCASH' | 'MANUAL' | 'WINNINGS';
+
+/** Criteres de la file des retraits, en plus du statut ; tous facultatifs. */
+export interface WithdrawalFilters {
+  /** Nom, email, telephone, numero de destination ou numero de demande (42 ou #42). */
+  q: string;
+  provider: PaymentProvider | null;
+  /** true : saisis au guichet, false : demandes des joueurs. */
+  counter: boolean | null;
+  /** Jours d'Haiti, AAAA-MM-JJ, bornes incluses. */
+  from: string | null;
+  to: string | null;
+}
+
+export type WithdrawalSortField = 'createdAt' | 'player' | 'netHtg' | 'provider';
+
+export interface WithdrawalSort {
+  field: WithdrawalSortField;
+  direction: 'asc' | 'desc';
+}
 export type WithdrawalStatus =
   | 'AWAITING_OTP'
   | 'PENDING'
@@ -507,6 +526,27 @@ export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 /** Origine d'une question : saisie, import CSV ou generation par IA. */
 export type QuestionSource = 'MANUAL' | 'IMPORT' | 'AI';
 
+/** Frequence de service d'une question ; SUSPICIOUS : 20 services ou plus et 95 % de reussite ou plus. */
+export type QuestionUsage = 'NEVER_SERVED' | 'SERVED' | 'SUSPICIOUS';
+
+/** Criteres de la liste des questions, tous facultatifs et cumulables. */
+export interface QuestionFilters {
+  query?: string;
+  status?: QuestionStatus | null;
+  categoryId?: number | null;
+  source?: QuestionSource | null;
+  difficulty?: Difficulty | null;
+  type?: QuestionType | null;
+  usage?: QuestionUsage | null;
+}
+
+export type QuestionSortField = 'text' | 'category' | 'difficulty' | 'successRate' | 'status' | 'createdAt';
+
+export interface QuestionSort {
+  field: QuestionSortField;
+  direction: 'asc' | 'desc';
+}
+
 // --- Retenue de recharge ---------------------------------------------------------
 
 /** KEPT : reste d'une recharge ; USED : reprise par une recharge ; ADJUSTMENT : correction. */
@@ -547,6 +587,23 @@ export type SoloStatsPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'ALL_TIME';
 export type SoloPerfectFilter = 'ALL' | 'WITH' | 'WITHOUT' | 'NEVER_PLAYED';
 export type SoloResultFilter = 'ALL' | 'PROFIT' | 'LOSS';
 export type SoloStatsSort = 'RECENT' | 'MOST_PLAYED' | 'MOST_PERFECT' | 'BEST_RESULT' | 'WORST_RESULT' | 'LAST_PLAYED';
+
+/** Criteres de la liste des quiz de groupe, en plus du statut ; tous facultatifs. */
+export interface GroupQuizFilters {
+  q: string;
+  categoryId: number | null;
+  /** true : gratuits, false : payants. */
+  free: boolean | null;
+  /** true : quiz de test seulement, false : hors quiz de test. */
+  test: boolean | null;
+}
+
+export type GroupQuizSortField = 'title' | 'category' | 'ticketPrice' | 'players' | 'deadline' | 'createdAt';
+
+export interface GroupQuizSort {
+  field: GroupQuizSortField;
+  direction: 'asc' | 'desc';
+}
 
 export interface SoloStatsFilters {
   period: SoloStatsPeriod;

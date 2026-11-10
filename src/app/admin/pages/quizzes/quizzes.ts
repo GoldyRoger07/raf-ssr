@@ -18,6 +18,9 @@ import { quizStatus } from '../../core/labels';
 import {
   Category,
   GameMode,
+  GroupQuizFilters,
+  GroupQuizSort,
+  GroupQuizSortField,
   Quiz,
   QuizStatus,
   SoloQuizStatsRow,
@@ -47,7 +50,11 @@ const SOLO_TABS: { status: QuizStatus; label: string }[] = [
 ];
 
 const PAGE_SIZE = 20;
+const PAGE_SIZES = [10, 20, 50, 100];
 const SEARCH_DELAY_MS = 300;
+
+const DEFAULT_GROUP_FILTERS: GroupQuizFilters = { q: '', categoryId: null, free: null, test: null };
+const GROUP_SORT_FIELDS: GroupQuizSortField[] = ['title', 'category', 'ticketPrice', 'players', 'deadline', 'createdAt'];
 
 const DEFAULT_SOLO_FILTERS: SoloStatsFilters = {
   period: 'ALL_TIME',
@@ -85,7 +92,8 @@ export default class Quizzes {
   private readonly router = inject(Router);
   private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
 
-  protected readonly pageSize = PAGE_SIZE;
+  protected pageSize = PAGE_SIZE;
+  protected readonly pageSizes = PAGE_SIZES;
   protected readonly quizStatus = quizStatus;
   protected readonly modeOptions = [
     { label: 'En groupe', value: 'GROUP' },
@@ -127,16 +135,36 @@ export default class Quizzes {
     { label: 'Derniere partie', value: 'LAST_PLAYED' },
   ];
   protected readonly categories = signal<Category[]>([]);
+
+  // --- En groupe : recherche, filtres et tri par colonne ----------------------------
+  protected groupFilters: GroupQuizFilters = { ...DEFAULT_GROUP_FILTERS };
+  protected groupSort: GroupQuizSort | null = null;
+  protected readonly priceOptions = [
+    { label: 'Gratuits', value: true },
+    { label: 'Payants', value: false },
+  ];
+  protected readonly testOptions = [
+    { label: 'Hors quiz de test', value: false },
+    { label: 'Quiz de test seulement', value: true },
+  ];
+
   protected filters: SoloStatsFilters = { ...DEFAULT_SOLO_FILTERS };
   protected readonly soloRows = signal<SoloQuizStatsRow[]>([]);
   protected readonly summary = signal<SoloQuizStatsSummary | null>(null);
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
+    this.readGroupUrl();
     this.load();
     this.questionApi.categories().subscribe({
       next: (categories) => this.categories.set([...categories].sort((a, b) => a.name.localeCompare(b.name, 'fr'))),
     });
+  }
+
+  /** Criteres actifs de la vue En groupe (recherche et tri compris). */
+  protected get groupFiltersActive(): boolean {
+    const f = this.groupFilters;
+    return f.q.trim() !== '' || f.categoryId != null || f.free != null || f.test != null || this.groupSort != null;
   }
 
   protected get filtersActive(): boolean {
@@ -148,6 +176,7 @@ export default class Quizzes {
 
   protected applyFilters(): void {
     this.page = 0;
+    this.syncUrl();
     this.load();
   }
 
@@ -159,7 +188,12 @@ export default class Quizzes {
   }
 
   protected resetFilters(): void {
-    this.filters = { ...DEFAULT_SOLO_FILTERS };
+    if (this.mode() === 'SOLO') {
+      this.filters = { ...DEFAULT_SOLO_FILTERS };
+    } else {
+      this.groupFilters = { ...DEFAULT_GROUP_FILTERS };
+      this.groupSort = null;
+    }
     this.applyFilters();
   }
 
@@ -194,9 +228,22 @@ export default class Quizzes {
   }
 
   protected onLazyLoad(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.page) {
-      this.page = page;
+    const rows = event.rows ?? this.pageSize;
+    const page = Math.floor((event.first ?? 0) / rows);
+    // Tri par colonne en groupe seulement ; en solo, il passe par « Trier par ».
+    let sort = this.groupSort;
+    if (this.mode() === 'GROUP') {
+      const field = typeof event.sortField === 'string' ? event.sortField : null;
+      sort = field && GROUP_SORT_FIELDS.includes(field as GroupQuizSortField)
+        ? { field: field as GroupQuizSortField, direction: event.sortOrder === -1 ? 'desc' : 'asc' }
+        : null;
+    }
+    const sortChanged = sort?.field !== this.groupSort?.field || sort?.direction !== this.groupSort?.direction;
+    if (page !== this.page || rows !== this.pageSize || sortChanged) {
+      this.page = sortChanged || rows !== this.pageSize ? 0 : page;
+      this.pageSize = rows;
+      this.groupSort = sort;
+      this.syncUrl();
       this.load();
     }
   }
@@ -205,7 +252,7 @@ export default class Quizzes {
     this.loading.set(true);
     this.error.set(null);
     if (this.mode() === 'SOLO') {
-      this.api.soloStats(this.status(), this.filters, this.page, PAGE_SIZE).subscribe({
+      this.api.soloStats(this.status(), this.filters, this.page, this.pageSize).subscribe({
         next: (stats) => {
           this.soloRows.set(stats.page.content);
           this.summary.set(stats.summary);
@@ -219,7 +266,7 @@ export default class Quizzes {
       });
       return;
     }
-    this.api.list(this.status(), this.mode(), this.page, PAGE_SIZE).subscribe({
+    this.api.list(this.status(), this.mode(), this.page, this.pageSize, this.groupFilters, this.groupSort ?? undefined).subscribe({
       next: (page) => {
         this.rows.set(page.content);
         this.total.set(page.totalElements);
@@ -232,11 +279,41 @@ export default class Quizzes {
     });
   }
 
+  /** Mode et statut ; pour la vue En groupe, aussi recherche, filtres et tri. */
   private syncUrl(): void {
+    const group = this.mode() === 'GROUP';
+    const f = this.groupFilters;
     this.router.navigate([], {
-      queryParams: { mode: this.mode() === 'SOLO' ? 'solo' : null, statut: this.status() },
+      queryParams: {
+        mode: group ? null : 'solo',
+        statut: this.status(),
+        q: group && f.q.trim() ? f.q.trim() : null,
+        sujet: group ? f.categoryId : null,
+        gratuit: group && f.free != null ? f.free : null,
+        test: group && f.test != null ? f.test : null,
+        tri: group && this.groupSort ? `${this.groupSort.field},${this.groupSort.direction}` : null,
+        page: this.page > 0 ? this.page : null,
+        taille: this.pageSize !== PAGE_SIZE ? this.pageSize : null,
+      },
       replaceUrl: true,
     });
+  }
+
+  private readGroupUrl(): void {
+    const bool = (value: string | null) => (value === 'true' ? true : value === 'false' ? false : null);
+    this.groupFilters = {
+      q: this.query.get('q') ?? '',
+      categoryId: Number(this.query.get('sujet')) || null,
+      free: bool(this.query.get('gratuit')),
+      test: bool(this.query.get('test')),
+    };
+    const [field, direction] = (this.query.get('tri') ?? '').split(',');
+    this.groupSort = GROUP_SORT_FIELDS.includes(field as GroupQuizSortField)
+      ? { field: field as GroupQuizSortField, direction: direction === 'desc' ? 'desc' : 'asc' }
+      : null;
+    const size = Number(this.query.get('taille'));
+    this.pageSize = PAGE_SIZES.includes(size) ? size : PAGE_SIZE;
+    this.page = Math.max(0, Number(this.query.get('page')) || 0);
   }
 
   private initialStatus(): QuizStatus {

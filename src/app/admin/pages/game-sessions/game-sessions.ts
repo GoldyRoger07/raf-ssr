@@ -1,15 +1,20 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { Observable } from 'rxjs';
+import { Observable, Subject, debounceTime } from 'rxjs';
 
 import { AdminApi } from '../../core/admin-api.service';
 import { Page, errorMessage } from '../../core/api';
@@ -18,6 +23,8 @@ import { AdminGameSession, GameReview } from '../../core/models';
 import { Severity } from '../../core/labels';
 
 const PAGE_SIZE = 50;
+const PAGE_SIZES = [20, 50, 100];
+const SORT_FIELDS = ['startedAt', 'player', 'quiz', 'score', 'status'];
 
 const SESSION_STATUS: Record<string, { label: string; severity: Severity }> = {
   IN_PROGRESS: { label: 'En cours', severity: 'info' },
@@ -37,7 +44,11 @@ const SESSION_STATUS: Record<string, { label: string; severity: Severity }> = {
     RouterLink,
     ButtonModule,
     DialogModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
     MessageModule,
+    SelectModule,
     TableModule,
     TagModule,
     TextareaModule,
@@ -50,7 +61,7 @@ export default class GameSessions {
   private readonly api = inject(AdminApi);
   private readonly messages = inject(MessageService);
 
-  protected readonly pageSize = PAGE_SIZE;
+  protected pageSize = PAGE_SIZE;
   protected readonly quizId = Number(inject(ActivatedRoute).snapshot.queryParamMap.get('quiz')) || null;
   protected flaggedOnly = this.quizId === null;
 
@@ -84,8 +95,31 @@ export default class GameSessions {
   protected reason = '';
   protected readonly busy = signal(false);
 
+  protected q = '';
+  protected statusFilter: string | null = null;
+  protected sort: { field: string; direction: 'asc' | 'desc' } | null = null;
+  protected readonly pageSizes = PAGE_SIZES;
+  protected readonly statusOptions = Object.entries(SESSION_STATUS).map(([value, s]) => ({ value, label: s.label }));
+  private readonly typed = new Subject<void>();
+
   constructor() {
+    this.typed.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.toggleFlagged());
     this.load();
+  }
+
+  protected get activeCount(): number {
+    return (this.q.trim() ? 1 : 0) + (this.statusFilter ? 1 : 0);
+  }
+
+  protected onInput(): void {
+    this.typed.next();
+  }
+
+  protected reset(): void {
+    this.q = '';
+    this.statusFilter = null;
+    this.sort = null;
+    this.toggleFlagged();
   }
 
   protected status(status: string): { label: string; severity: Severity } {
@@ -98,9 +132,15 @@ export default class GameSessions {
   }
 
   protected onLazyLoad(event: TableLazyLoadEvent): void {
-    const page = Math.floor((event.first ?? 0) / PAGE_SIZE);
-    if (page !== this.page) {
-      this.page = page;
+    const rows = event.rows ?? this.pageSize;
+    const page = Math.floor((event.first ?? 0) / rows);
+    const field = typeof event.sortField === 'string' && SORT_FIELDS.includes(event.sortField) ? event.sortField : null;
+    const sort = field ? { field, direction: event.sortOrder === -1 ? ('desc' as const) : ('asc' as const) } : null;
+    const sortChanged = sort?.field !== this.sort?.field || sort?.direction !== this.sort?.direction;
+    if (page !== this.page || rows !== this.pageSize || sortChanged) {
+      this.page = sortChanged || rows !== this.pageSize ? 0 : page;
+      this.pageSize = rows;
+      this.sort = sort;
       this.load();
     }
   }
@@ -151,8 +191,8 @@ export default class GameSessions {
     this.error.set(null);
     const request: Observable<Page<AdminGameSession>> =
       this.quizId !== null
-        ? this.api.quizSessions(this.quizId, this.flaggedOnly, this.page, PAGE_SIZE)
-        : this.api.flaggedSessions(this.page, PAGE_SIZE);
+        ? this.api.quizSessions(this.quizId, this.flaggedOnly, this.page, this.pageSize, this.q, this.statusFilter, this.sort ?? undefined)
+        : this.api.flaggedSessions(this.page, this.pageSize, this.q, this.sort ?? undefined);
     request.subscribe({
       next: (page) => {
         this.rows.set(page.content);

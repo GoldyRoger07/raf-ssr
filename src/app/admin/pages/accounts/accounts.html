@@ -14,6 +14,13 @@
     <p-toggleswitch inputId="staffOnly" [(ngModel)]="staffOnly" (onChange)="reload()" />
     <label for="staffOnly" class="text-sm">Personnel seulement</label>
   </div>
+  <p-select inputId="role-filter" [options]="roles" [(ngModel)]="roleFilter" (ngModelChange)="reload()" optionLabel="label" optionValue="value"
+            [showClear]="true" placeholder="Tous les roles" styleClass="w-48" ariaLabel="Filtrer par role" />
+  <p-select inputId="status-filter" [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="reload()" optionLabel="label" optionValue="value"
+            [showClear]="true" placeholder="Tous les statuts" styleClass="w-44" ariaLabel="Filtrer par statut" />
+  @if (activeCount || sort) {
+    <p-button label="Reinitialiser" icon="pi pi-filter-slash" severity="secondary" [text]="true" (onClick)="reset()" />
+  }
 </div>
 
 @if (error(); as message) {
@@ -29,17 +36,20 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     [rows]="pageSize"
+    [rowsPerPageOptions]="pageSizes"
     [totalRecords]="total()"
     [loading]="loading()"
+    [sortField]="sort?.field"
+    [sortOrder]="sort?.direction === 'desc' ? -1 : 1"
     (onLazyLoad)="onLazyLoad($event)"
     dataKey="id"
   >
     <ng-template #header>
       <tr>
-        <th>Compte</th>
+        <th pSortableColumn="name">Compte <p-sortIcon field="name" /></th>
         <th>Roles</th>
-        <th>Statut</th>
-        <th>Cree le</th>
+        <th pSortableColumn="status">Statut <p-sortIcon field="status" /></th>
+        <th pSortableColumn="createdAt">Cree le <p-sortIcon field="createdAt" /></th>
         <th class="text-right"></th>
       </tr>
     </ng-template>

@@ -15,6 +15,8 @@ import {
   SoloQuizInput,
   SoloQuizStats,
   SoloStatsFilters,
+  GroupQuizFilters,
+  GroupQuizSort,
 } from './models';
 
 /** Quiz : configuration et cycle de vie (administrateurs). */
@@ -24,8 +26,24 @@ export class QuizApi {
   private readonly apiUrl = inject(API_BASE_URL);
   private readonly base = `${this.apiUrl}/api/admin/quizzes`;
 
-  list(status: QuizStatus, mode: GameMode, page = 0, size = 20): Observable<Page<Quiz>> {
-    const params = new HttpParams().set('status', status).set('mode', mode).set('page', page).set('size', size);
+  /** Quiz d'un statut et d'un mode, recherche et filtres facultatifs ; sans tri, les plus recents. */
+  list(status: QuizStatus, mode: GameMode, page = 0, size = 20, filters?: GroupQuizFilters, sort?: GroupQuizSort): Observable<Page<Quiz>> {
+    let params = new HttpParams().set('status', status).set('mode', mode).set('page', page).set('size', size);
+    if (filters?.q.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    if (filters?.categoryId != null) {
+      params = params.set('categoryId', filters.categoryId);
+    }
+    if (filters?.free != null) {
+      params = params.set('free', filters.free);
+    }
+    if (filters?.test != null) {
+      params = params.set('test', filters.test);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
     return this.http.get<Page<Quiz>>(this.base, { params });
   }
 
@@ -148,8 +166,27 @@ export class QuizApi {
     return this.http.post<Quiz>(`${this.apiUrl}/api/admin/quizzes/${id}/finalize`, {});
   }
 
-  leaderboard(id: number, page = 0, size = 50): Observable<Leaderboard> {
-    const params = new HttpParams().set('page', page).set('size', size);
-    return this.http.get<Leaderboard>(`${this.apiUrl}/api/quizzes/${id}/leaderboard`, { params });
+  /**
+   * Classement final vu du back-office. Tris : rank, player, score, reward ; sans tri, le rang.
+   * `rewarded` : avec (true) ou sans (false) gain.
+   */
+  leaderboard(
+    id: number,
+    page = 0,
+    size = 50,
+    filters: { q?: string; rewarded?: boolean | null } = {},
+    sort?: { field: string; direction: 'asc' | 'desc' },
+  ): Observable<Leaderboard> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q?.trim()) {
+      params = params.set('q', filters.q.trim());
+    }
+    if (filters.rewarded != null) {
+      params = params.set('rewarded', filters.rewarded);
+    }
+    if (sort) {
+      params = params.set('sort', `${sort.field},${sort.direction}`);
+    }
+    return this.http.get<Leaderboard>(`${this.base}/${id}/leaderboard`, { params });
   }
 }
