@@ -254,11 +254,16 @@ const EMAIL: HelpTopic = {
           ),
           image: 'img/aide/gmail-recherche.svg',
         },
-        { text: t('Ouvre l’email de RAF et touche le lien de confirmation.', 'Ouvri imèl RAF la epi peze sou lyen konfimasyon an.') },
         {
           text: t(
-            'RAF s’ouvre et affiche « Adresse email confirmée ! ». C’est terminé.',
-            'RAF ap louvri epi l ap ekri « Adresse email confirmée ! ». Ou fini.',
+            'Ouvre l’email de RAF. Saisis le code à 6 chiffres dans l’app RAF, ou touche le lien de confirmation : l’un ou l’autre suffit.',
+            'Ouvri imèl RAF la. Antre kòd 6 chif la nan aplikasyon RAF la, oswa peze sou lyen konfimasyon an : youn ou lòt ase.',
+          ),
+        },
+        {
+          text: t(
+            'RAF affiche « Email confirmé ». C’est terminé.',
+            'RAF ap ekri « Email confirmé ». Ou fini.',
           ),
           image: 'img/aide/app-email-confirme.webp',
         },
@@ -270,7 +275,7 @@ const EMAIL: HelpTopic = {
     spam: spamNode('resend'),
     resend: {
       kind: 'steps',
-      title: t('Recevoir un nouveau lien', 'Resevwa yon nouvo lyen'),
+      title: t('Recevoir un nouvel email', 'Resevwa yon nouvo imèl'),
       steps: [
         PROFILE_STEP,
         { text: t('À côté de ton email, touche « Renvoyer ».', 'Bò kote imèl ou, peze « Renvoyer ».'), image: 'img/aide/app-email-profil.webp' },
@@ -282,8 +287,8 @@ const EMAIL: HelpTopic = {
         },
         {
           text: t(
-            'Le lien dit « n’est plus valable » ? Utilise le lien du dernier email reçu.',
-            'Lyen an di « n’est plus valable » ? Sèvi ak lyen ki nan dènye imèl ou resevwa a.',
+            'Le code ou le lien ne marche plus ? Utilise ceux du dernier email reçu : chaque nouvel email annule le précédent.',
+            'Kòd la oswa lyen an pa mache ankò ? Sèvi ak sa ki nan dènye imèl ou resevwa a : chak nouvo imèl anile ansyen an.',
           ),
         },
       ],
