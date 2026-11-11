@@ -40,6 +40,14 @@ export default class PlayerApp {
     });
   }
 
+  protected setSoloQuizzesVisible(visible: boolean): void {
+    this.save({ soloQuizzesVisible: visible }, (config) =>
+      config.soloQuizzesVisible
+        ? { summary: 'Quiz solo visibles', detail: 'Les joueurs retrouvent les quiz solo ouverts et peuvent de nouveau y jouer.' }
+        : { summary: 'Quiz solo masques', detail: "Tous les quiz solo ouverts disparaissent de l'app ; les parties en cours vont a leur terme." },
+    );
+  }
+
   protected setEmailReminder(enabled: boolean): void {
     this.save({ emailReminderEnabled: enabled }, (config) =>
       config.emailReminderEnabled

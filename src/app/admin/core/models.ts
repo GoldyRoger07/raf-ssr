@@ -1055,4 +1055,6 @@ export interface PlayerAppConfig {
   onlineTopUpEnabled: boolean;
   /** Envoi automatique des retraits MonCash / NatCash a l'approbation (payouts Tranzak). */
   autoPayoutEnabled: boolean;
+  /** Quiz solo ouverts montres aux joueurs ; coupe, ils sont tous masques. */
+  soloQuizzesVisible: boolean;
 }
