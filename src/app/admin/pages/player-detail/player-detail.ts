@@ -25,6 +25,7 @@ import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 import {
   AdminWithdrawal,
   BalanceType,
+  LinkedAccount,
   PlayerSummary,
   RetentionReason,
   TopUpRetentionView,
@@ -129,6 +130,7 @@ export default class PlayerDetail implements OnInit {
   protected readonly transactionsTotal = signal(0);
   protected readonly withdrawals = signal<AdminWithdrawal[]>([]);
   protected readonly withdrawalsTotal = signal(0);
+  protected readonly linkedAccounts = signal<LinkedAccount[]>([]);
   protected readonly loadingWithdrawals = signal(false);
   protected readonly loadingTransactions = signal(false);
 
@@ -210,6 +212,12 @@ export default class PlayerDetail implements OnInit {
     this.loadTransactions();
     this.loadWithdrawals();
     this.loadRetention();
+    this.loadLinkedAccounts();
+  }
+
+  private loadLinkedAccounts(): void {
+    this.linkedAccounts.set([]);
+    this.api.linkedAccounts(this.id()).subscribe({ next: (accounts) => this.linkedAccounts.set(accounts) });
   }
 
   private loadRetention(): void {

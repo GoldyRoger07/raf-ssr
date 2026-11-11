@@ -95,6 +95,12 @@
         <td>
           <a [routerLink]="['/admin/joueurs', row.playerId]" class="font-medium hover:text-orange-600">{{ row.playerName }}</a>
           <div class="text-xs text-slate-500">{{ row.playerPhone }}</div>
+          @if (row.linkedAccounts) {
+            <a [routerLink]="['/admin/joueurs', row.playerId]" class="mt-1 inline-flex items-center gap-1 text-xs text-red-600 hover:underline"
+               title="Comptes vus sur un meme appareil : voir l'onglet Comptes lies de la fiche">
+              <i class="pi pi-link"></i>{{ row.linkedAccounts }} {{ row.linkedAccounts > 1 ? 'comptes lies' : 'compte lie' }}
+            </a>
+          }
         </td>
         <td>
           <div class="font-semibold">{{ row.withdrawal.netHtg | htg }}</div>
@@ -106,6 +112,14 @@
           <div>{{ providerLabel(row.withdrawal.provider) }}</div>
           @if (row.withdrawal.destinationNumber) {
             <div class="text-xs text-slate-500">{{ row.withdrawal.destinationNumber }}</div>
+          }
+          @if (row.destinationUsedBy.length) {
+            <div class="mt-1 max-w-56 text-xs text-red-600">
+              <i class="pi pi-exclamation-triangle mr-1"></i>Numero aussi utilise par
+              @for (other of row.destinationUsedBy; track other.playerId; let last = $last) {
+                <a [routerLink]="['/admin/joueurs', other.playerId]" class="font-medium hover:underline">{{ other.playerName }}</a>{{ last ? '' : ', ' }}
+              }
+            </div>
           }
           @if (row.withdrawal.initiatedByAdminId) {
             <div class="text-xs text-slate-500">saisi au guichet</div>

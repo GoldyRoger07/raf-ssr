@@ -28,6 +28,7 @@ import {
   DepositNumbers,
   LeaderCommission,
   LeaderTransfer,
+  LinkedAccount,
   News,
   NewsRequest,
   LeaderPlayer,
@@ -264,6 +265,11 @@ export class AdminApi {
 
   player(id: number): Observable<PlayerSummary> {
     return this.http.get<PlayerSummary>(`${this.base}/players/${id}`);
+  }
+
+  /** Comptes vus sur un appareil du joueur : ils partagent la limite solo du jour. */
+  linkedAccounts(id: number): Observable<LinkedAccount[]> {
+    return this.http.get<LinkedAccount[]>(`${this.base}/players/${id}/linked-accounts`);
   }
 
   // --- Portefeuille -------------------------------------------------------------

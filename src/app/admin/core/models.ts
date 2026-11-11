@@ -127,6 +127,17 @@ export interface PlayerSummary {
   createdAt: string;
 }
 
+/** Compte vu sur au moins un appareil du joueur (en-tete X-Device-Id de l'app). */
+export interface LinkedAccount {
+  playerId: number;
+  playerName: string;
+  email: string;
+  phone: string;
+  test: boolean;
+  sharedDevices: number;
+  lastSeenAt: string;
+}
+
 /** Filtres de la liste des joueurs ; une valeur absente ou nulle ne filtre pas. */
 export interface PlayerFilters {
   emailVerified?: boolean | null;
@@ -319,6 +330,10 @@ export interface AdminWithdrawal {
   playerName: string;
   playerEmail: string;
   playerPhone: string;
+  /** Comptes vus sur au moins un appareil du joueur. */
+  linkedAccounts: number;
+  /** Autres comptes dont le numero de reception est le telephone ou a deja recu un retrait. */
+  destinationUsedBy: { playerId: number; playerName: string }[];
 }
 
 export interface WalletTransaction {

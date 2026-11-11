@@ -16,6 +16,10 @@
         @if (p.test) {
           <p-tag value="Compte de test" severity="warn" icon="pi pi-flask" />
         }
+        @if (linkedAccounts().length) {
+          <p-tag [value]="linkedAccounts().length + (linkedAccounts().length > 1 ? ' comptes lies' : ' compte lie')"
+                 severity="danger" icon="pi pi-link" title="Comptes vus sur un meme appareil que ce joueur : voir l'onglet Comptes lies" />
+        }
         <span class="text-xs text-slate-500">Inscrit le {{ p.createdAt | haitiDate }}</span>
       </div>
     </div>
@@ -56,6 +60,7 @@
       <p-tab value="transactions">Mouvements</p-tab>
       <p-tab value="withdrawals">Retraits ({{ withdrawalsTotal() }})</p-tab>
       <p-tab value="retention">Retenue ({{ retention()?.entries?.length ?? 0 }})</p-tab>
+      <p-tab value="linked">Comptes lies ({{ linkedAccounts().length }})</p-tab>
     </p-tablist>
     <p-tabpanels>
       <p-tabpanel value="transactions">
@@ -245,6 +250,39 @@
           </ng-template>
           <ng-template #emptymessage>
             <tr><td colspan="4" class="py-8 text-center text-slate-500">Aucune retenue pour ce joueur.</td></tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <p-tabpanel value="linked">
+        <p class="mb-3 text-sm text-slate-500">
+          Comptes vus sur au moins un appareil de ce joueur (identifiant envoye par l'app). Ils partagent la limite d'une partie
+          solo par sujet et par jour. Un meme telephone familial ou un cybercafe lie aussi des joueurs honnetes : c'est un indice,
+          pas une preuve.
+        </p>
+        <p-table [value]="linkedAccounts()" dataKey="playerId">
+          <ng-template #header>
+            <tr>
+              <th>Joueur</th>
+              <th class="text-right">Appareils communs</th>
+              <th>Vu pour la derniere fois</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-a>
+            <tr>
+              <td>
+                <a [routerLink]="['/admin/joueurs', a.playerId]" class="font-medium hover:text-orange-600">{{ a.playerName }}</a>
+                @if (a.test) {
+                  <p-tag value="Test" severity="warn" styleClass="ml-2" />
+                }
+                <div class="text-xs text-slate-500">{{ a.phone }} - {{ a.email }}</div>
+              </td>
+              <td class="text-right">{{ a.sharedDevices }}</td>
+              <td class="text-sm text-slate-500">{{ a.lastSeenAt | haitiDate }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr><td colspan="3" class="py-8 text-center text-slate-500">Aucun autre compte vu sur ses appareils.</td></tr>
           </ng-template>
         </p-table>
       </p-tabpanel>
