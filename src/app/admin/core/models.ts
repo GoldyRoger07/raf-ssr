@@ -1098,3 +1098,42 @@ export interface PlayerAppConfig {
   /** Premiere partie solo payante offerte, une fois par compte et par groupe de comptes lies. */
   firstSoloFreeEnabled: boolean;
 }
+
+/**
+ * Profil fraudeur : durcit les parties solo des joueurs qui y sont rattaches (et de leurs
+ * comptes lies). Valeurs affichees au joueur ; le gain du sans-faute ne change pas.
+ */
+export interface FraudProfile {
+  id: number;
+  name: string;
+  /** Hausse du prix d'entree, 0 a 200 %. */
+  priceIncreasePercent: number;
+  /** Baisse des secondes par question, 0 a 80 % (au moins 1 s). */
+  durationDecreasePercent: number;
+  /** Hausse du nombre de questions, 0 a 100 %. */
+  questionsIncreasePercent: number;
+  suspectCount: number;
+}
+
+export interface FraudProfileInput {
+  name: string;
+  priceIncreasePercent: number;
+  durationDecreasePercent: number;
+  questionsIncreasePercent: number;
+}
+
+/** Joueur suspecte de fraude et son profil. */
+export interface FraudSuspect {
+  playerId: number;
+  playerName: string;
+  email: string;
+  phone: string;
+  profileId: number;
+  profileName: string;
+  note: string;
+  addedBy: number | null;
+  addedAt: string;
+  updatedAt: string;
+  /** Comptes lies par appareil, touches eux aussi par le profil. */
+  linkedAccounts: number;
+}

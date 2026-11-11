@@ -46,6 +46,9 @@ import {
   WithdrawalStatus,
   PayoutConfig,
   PayoutSpecialCase,
+  FraudProfile,
+  FraudProfileInput,
+  FraudSuspect,
   WithdrawalFilters,
   WithdrawalSort,
   AnnouncementStatus,
@@ -410,6 +413,37 @@ export class AdminApi {
 
   removeSpecialCase(userId: number): Observable<PayoutSpecialCase[]> {
     return this.http.delete<PayoutSpecialCase[]>(`${this.base}/wallet/payout-special-cases/${userId}`);
+  }
+
+  // --- Fraude : profils et joueurs suspectes -----------------------------------
+
+  fraudProfiles(): Observable<FraudProfile[]> {
+    return this.http.get<FraudProfile[]>(`${this.base}/fraud/profiles`);
+  }
+
+  createFraudProfile(input: FraudProfileInput): Observable<FraudProfile[]> {
+    return this.http.post<FraudProfile[]>(`${this.base}/fraud/profiles`, input);
+  }
+
+  updateFraudProfile(id: number, input: FraudProfileInput): Observable<FraudProfile[]> {
+    return this.http.put<FraudProfile[]>(`${this.base}/fraud/profiles/${id}`, input);
+  }
+
+  deleteFraudProfile(id: number): Observable<FraudProfile[]> {
+    return this.http.delete<FraudProfile[]>(`${this.base}/fraud/profiles/${id}`);
+  }
+
+  fraudSuspects(): Observable<FraudSuspect[]> {
+    return this.http.get<FraudSuspect[]>(`${this.base}/fraud/suspects`);
+  }
+
+  /** Ajoute un joueur (deja liste : profil et note mis a jour) ; renvoie la liste a jour. */
+  addFraudSuspect(userId: number, profileId: number, note: string): Observable<FraudSuspect[]> {
+    return this.http.post<FraudSuspect[]>(`${this.base}/fraud/suspects`, { userId, profileId, note });
+  }
+
+  removeFraudSuspect(userId: number): Observable<FraudSuspect[]> {
+    return this.http.delete<FraudSuspect[]>(`${this.base}/fraud/suspects/${userId}`);
   }
 
   /** Clot un retrait verse en partie : le reste non verse revient dans les gains du joueur. */

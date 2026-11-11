@@ -25,6 +25,8 @@ import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 import {
   AdminWithdrawal,
   BalanceType,
+  FraudProfile,
+  FraudSuspect,
   LinkedAccount,
   PlayerSummary,
   RetentionReason,
@@ -263,6 +265,87 @@ export default class PlayerDetail implements OnInit {
     this.loadWithdrawals();
     this.loadRetention();
     this.loadLinkedAccounts();
+    this.loadFraud();
+  }
+
+  // Fraudeurs : profil applique a ce joueur (et a ses comptes lies), ajout depuis la fiche
+  // ou depuis l'onglet Comptes lies.
+  protected readonly fraudProfiles = signal<FraudProfile[]>([]);
+  protected readonly fraudSuspects = signal<FraudSuspect[]>([]);
+  protected readonly fraudEntry = computed(() => this.fraudSuspects().find((s) => s.playerId === this.id()) ?? null);
+  /** Comptes lies listes comme fraudeurs : leur profil touche aussi ce joueur. */
+  protected readonly fraudViaLinked = computed(() => {
+    const linked = new Set(this.linkedAccounts().map((a) => a.playerId));
+    return this.fraudSuspects().filter((s) => linked.has(s.playerId));
+  });
+  protected readonly fraudOpen = signal(false);
+  protected readonly fraudBusy = signal(false);
+  protected readonly fraudTarget = signal<{ id: number; name: string } | null>(null);
+  protected fraudProfileId: number | null = null;
+  protected fraudNote = '';
+
+  protected isSuspect(playerId: number): boolean {
+    return this.fraudSuspects().some((s) => s.playerId === playerId);
+  }
+
+  private loadFraud(): void {
+    this.api.fraudProfiles().subscribe({ next: (list) => this.fraudProfiles.set(list) });
+    this.api.fraudSuspects().subscribe({ next: (list) => this.fraudSuspects.set(list) });
+  }
+
+  protected openFraud(target: { id: number; name: string }): void {
+    const existing = this.fraudSuspects().find((s) => s.playerId === target.id);
+    this.fraudTarget.set(target);
+    this.fraudProfileId = existing?.profileId ?? this.fraudProfiles()[0]?.id ?? null;
+    this.fraudNote = existing?.note ?? '';
+    this.fraudOpen.set(true);
+  }
+
+  protected openFraudForPlayer(): void {
+    const p = this.player();
+    if (p) {
+      this.openFraud({ id: p.id, name: `${p.firstName} ${p.lastName}` });
+    }
+  }
+
+  protected saveFraud(): void {
+    const target = this.fraudTarget();
+    if (!target || this.fraudProfileId == null || !this.fraudNote.trim()) {
+      return;
+    }
+    this.fraudBusy.set(true);
+    this.api.addFraudSuspect(target.id, this.fraudProfileId, this.fraudNote.trim()).subscribe({
+      next: (list) => {
+        this.fraudBusy.set(false);
+        this.fraudOpen.set(false);
+        this.fraudSuspects.set(list);
+        this.messages.add({ severity: 'success', summary: 'Liste des fraudeurs', detail: `${target.name} : ses prochaines parties solo suivent le profil.` });
+      },
+      error: (error) => {
+        this.fraudBusy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
+  protected removeFraud(): void {
+    const target = this.fraudTarget();
+    if (!target) {
+      return;
+    }
+    this.fraudBusy.set(true);
+    this.api.removeFraudSuspect(target.id).subscribe({
+      next: (list) => {
+        this.fraudBusy.set(false);
+        this.fraudOpen.set(false);
+        this.fraudSuspects.set(list);
+        this.messages.add({ severity: 'success', summary: 'Retire de la liste', detail: `${target.name} retrouvera les valeurs normales.` });
+      },
+      error: (error) => {
+        this.fraudBusy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+      },
+    });
   }
 
   private loadLinkedAccounts(): void {

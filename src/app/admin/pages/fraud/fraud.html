@@ -1,0 +1,158 @@
+<p-confirmdialog />
+
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Fraudeurs</h1>
+  <p class="text-sm text-slate-500">
+    Parties solo durcies pour les joueurs suspectes de fraude et leurs comptes lies par appareil. Ils voient dans l'app le
+    prix, le temps et le nombre de questions ajustes : le prix encaisse est celui affiche. Le gain du sans-faute ne change
+    pas, et ils n'ont plus de premiere partie offerte.
+  </p>
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" styleClass="mb-4" />
+}
+
+<section class="mb-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+    <i class="pi pi-sliders-h text-2xl text-violet-600"></i>
+    <div class="flex-1">
+      <h2 class="font-semibold">Profils</h2>
+      <p class="text-sm text-slate-500">Un changement ne touche que les parties qui demarrent ensuite.</p>
+    </div>
+    <p-button label="Nouveau profil" icon="pi pi-plus" (onClick)="newProfile()" />
+  </div>
+  <p-table [value]="profiles()" dataKey="id">
+    <ng-template #header>
+      <tr>
+        <th>Profil</th>
+        <th class="text-right">Prix d'entree</th>
+        <th class="text-right">Temps par question</th>
+        <th class="text-right">Questions</th>
+        <th class="text-right">Joueurs</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-p>
+      <tr>
+        <td class="font-medium">{{ p.name }}</td>
+        <td class="text-right">+{{ p.priceIncreasePercent }} %</td>
+        <td class="text-right">-{{ p.durationDecreasePercent }} %</td>
+        <td class="text-right">+{{ p.questionsIncreasePercent }} %</td>
+        <td class="text-right">{{ p.suspectCount }}</td>
+        <td class="whitespace-nowrap text-right">
+          <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier" (onClick)="editProfile(p)" />
+          <p-button icon="pi pi-trash" severity="danger" [text]="true" ariaLabel="Supprimer" [disabled]="p.suspectCount > 0"
+                    [title]="p.suspectCount > 0 ? 'Des joueurs y sont rattaches : changez-leur de profil d\'abord' : ''"
+                    (onClick)="deleteProfile(p)" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="6" class="py-8 text-center text-slate-500">Aucun profil. Creez-en un avant d'ajouter des joueurs.</td></tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+    <i class="pi pi-ban text-2xl text-red-600"></i>
+    <div class="flex-1">
+      <h2 class="font-semibold">Joueurs suspectes ({{ suspects().length }})</h2>
+      <p class="text-sm text-slate-500">
+        Le profil s'applique aussi a leurs comptes lies ; si plusieurs profils se croisent, la valeur la plus severe l'emporte.
+      </p>
+    </div>
+    <p-button label="Ajouter un joueur" icon="pi pi-user-plus" [disabled]="!profiles().length" (onClick)="newSuspect()" />
+  </div>
+  <p-table [value]="suspects()" dataKey="playerId">
+    <ng-template #header>
+      <tr>
+        <th>Joueur</th>
+        <th>Profil</th>
+        <th>Note</th>
+        <th>Ajoute le</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-s>
+      <tr>
+        <td>
+          <a [routerLink]="['/admin/joueurs', s.playerId]" class="font-medium hover:text-orange-600">{{ s.playerName }}</a>
+          @if (s.linkedAccounts) {
+            <p-tag [value]="'+' + s.linkedAccounts + (s.linkedAccounts > 1 ? ' comptes lies' : ' compte lie')" severity="danger"
+                   icon="pi pi-link" styleClass="ml-2" />
+          }
+          <div class="text-xs text-slate-500">{{ s.phone }} - {{ s.email }}</div>
+        </td>
+        <td>{{ s.profileName }}</td>
+        <td class="max-w-xs text-sm">{{ s.note }}</td>
+        <td class="text-sm text-slate-500">{{ s.addedAt | haitiDate }}</td>
+        <td class="whitespace-nowrap text-right">
+          <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier" (onClick)="editSuspect(s)" />
+          <p-button icon="pi pi-times" severity="danger" [text]="true" ariaLabel="Retirer" (onClick)="removeSuspect(s)" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="5" class="py-8 text-center text-slate-500">Aucun joueur suspecte.</td></tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-dialog [header]="editingId == null ? 'Nouveau profil' : 'Modifier le profil'" [(visible)]="profileOpen" [modal]="true"
+          [style]="{ width: '30rem' }" [draggable]="false">
+  <div class="flex flex-col gap-4">
+    <label class="flex flex-col gap-1 text-sm">
+      Nom
+      <input pInputText [(ngModel)]="draft.name" maxlength="80" placeholder="Ex. Leger, Severe" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm">
+      Hausse du prix d'entree (0 a {{ limits.price }} %)
+      <p-inputnumber [(ngModel)]="draft.priceIncreasePercent" [min]="0" [max]="limits.price" suffix=" %" [showButtons]="true" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm">
+      Baisse du temps par question (0 a {{ limits.duration }} %, au moins 1 seconde)
+      <p-inputnumber [(ngModel)]="draft.durationDecreasePercent" [min]="0" [max]="limits.duration" suffix=" %" [showButtons]="true" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm">
+      Hausse du nombre de questions (0 a {{ limits.questions }} %)
+      <p-inputnumber [(ngModel)]="draft.questionsIncreasePercent" [min]="0" [max]="limits.questions" suffix=" %" [showButtons]="true" />
+    </label>
+    <p class="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+      Exemple, quiz a 5 credits, 20 s par question et 10 questions : {{ preview() }}.
+      Arrondis contre le joueur : prix et questions vers le haut, secondes vers le bas.
+    </p>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="profileOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" [disabled]="!draft.name.trim()" (onClick)="saveProfile()" />
+  </ng-template>
+</p-dialog>
+
+<p-dialog [header]="'Joueur suspecte'" [(visible)]="suspectOpen" [modal]="true" [style]="{ width: '32rem' }" [draggable]="false">
+  <div class="flex flex-col gap-4">
+    @if (candidate(); as c) {
+      <div class="flex items-center gap-2 text-sm">
+        <span class="font-medium">{{ c.name }}</span>
+        <p-button icon="pi pi-times" severity="secondary" [text]="true" size="small" ariaLabel="Changer de joueur"
+                  (onClick)="candidate.set(null)" />
+      </div>
+    } @else {
+      <player-search (selected)="choose($event)" />
+    }
+    <label class="flex flex-col gap-1 text-sm">
+      Profil
+      <p-select [options]="profiles()" optionLabel="name" optionValue="id" [(ngModel)]="suspectProfileId" appendTo="body" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm">
+      Pourquoi ce joueur est suspecte (obligatoire)
+      <input pInputText [(ngModel)]="suspectNote" maxlength="255" />
+    </label>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="suspectOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" [disabled]="!candidate() || suspectProfileId == null || !suspectNote.trim()"
+              (onClick)="saveSuspect()" />
+  </ng-template>
+</p-dialog>

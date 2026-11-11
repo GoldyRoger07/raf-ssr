@@ -24,6 +24,13 @@
           <p-tag value="Paiement par tranches accepte" severity="info" icon="pi pi-check-square"
                  [title]="'Accepte le ' + (p.payoutTermsAcceptedAt | haitiDate)" />
         }
+        @if (fraudEntry(); as f) {
+          <p-tag [value]="'Fraudeur : ' + f.profileName" severity="danger" icon="pi pi-ban" [title]="f.note" />
+        }
+        @for (f of fraudViaLinked(); track f.playerId) {
+          <p-tag [value]="'Profil ' + f.profileName + ' via ' + f.playerName" severity="danger" icon="pi pi-ban"
+                 title="Un compte lie est liste comme fraudeur : son profil s'applique aussi a ce joueur" />
+        }
         @if (linkedAccounts().length) {
           <p-tag [value]="linkedAccounts().length + (linkedAccounts().length > 1 ? ' comptes lies' : ' compte lie')"
                  severity="danger" icon="pi pi-link" title="Comptes vus sur un meme appareil que ce joueur : voir l'onglet Comptes lies" />
@@ -40,6 +47,9 @@
       <p-button [label]="p.payoutSpecialCase ? 'Retirer des cas particuliers' : 'Cas de retrait particulier'" icon="pi pi-percentage"
                 severity="secondary" [outlined]="true" [loading]="specialBusy()" (onClick)="toggleSpecialCase()"
                 [title]="p.payoutSpecialCase ? 'Ses prochains retraits seront payes en une fois' : 'Ses retraits pourront etre verses par tranches ; il devra accepter avant sa prochaine partie solo'" />
+      <p-button [label]="fraudEntry() ? 'Profil fraudeur' : 'Marquer fraudeur'" icon="pi pi-ban" severity="danger"
+                [outlined]="true" [disabled]="!fraudProfiles().length" (onClick)="openFraudForPlayer()"
+                [title]="fraudProfiles().length ? 'Parties solo durcies selon un profil, comptes lies compris' : 'Creez d\'abord un profil dans Fraudeurs'" />
       <p-button label="Modifier l'email" icon="pi pi-envelope" severity="secondary" [outlined]="true" (onClick)="openEmail()" />
       <p-button label="Modifier le numero" icon="pi pi-phone" severity="secondary" [outlined]="true" (onClick)="openPhone()" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
@@ -277,6 +287,7 @@
               <th>Joueur</th>
               <th class="text-right">Appareils communs</th>
               <th>Vu pour la derniere fois</th>
+              <th></th>
             </tr>
           </ng-template>
           <ng-template #body let-a>
@@ -290,10 +301,19 @@
               </td>
               <td class="text-right">{{ a.sharedDevices }}</td>
               <td class="text-sm text-slate-500">{{ a.lastSeenAt | haitiDate }}</td>
+              <td class="whitespace-nowrap text-right">
+                @if (isSuspect(a.playerId)) {
+                  <p-tag value="Fraudeur" severity="danger" icon="pi pi-ban" />
+                }
+                <p-button icon="pi pi-ban" severity="danger" [text]="true" [disabled]="!fraudProfiles().length"
+                          [ariaLabel]="isSuspect(a.playerId) ? 'Profil fraudeur' : 'Marquer fraudeur'"
+                          [title]="isSuspect(a.playerId) ? 'Profil fraudeur' : 'Marquer fraudeur'"
+                          (onClick)="openFraud({ id: a.playerId, name: a.playerName })" />
+              </td>
             </tr>
           </ng-template>
           <ng-template #emptymessage>
-            <tr><td colspan="3" class="py-8 text-center text-slate-500">Aucun autre compte vu sur ses appareils.</td></tr>
+            <tr><td colspan="4" class="py-8 text-center text-slate-500">Aucun autre compte vu sur ses appareils.</td></tr>
           </ng-template>
         </p-table>
       </p-tabpanel>
@@ -378,6 +398,34 @@
   <ng-template #footer>
     <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="adjustOpen.set(false)" />
     <p-button label="Appliquer" [loading]="busy()" [disabled]="!adjustAmount || !adjustReason.trim()" (onClick)="adjust()" />
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Liste des fraudeurs" [(visible)]="fraudOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+  @if (fraudTarget(); as t) {
+    <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+      <span class="font-medium">{{ t.name }}</span> et ses comptes lies verront et joueront en solo les valeurs du profil a leur
+      prochaine partie. Le gain du sans-faute ne change pas ; plus de premiere partie offerte.
+    </p>
+  }
+  <div class="flex flex-col gap-4">
+    <label class="flex flex-col gap-1 text-sm">
+      Profil
+      <p-select [options]="fraudProfiles()" optionLabel="name" optionValue="id" [(ngModel)]="fraudProfileId" appendTo="body" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm">
+      Pourquoi ce joueur est suspecte (obligatoire)
+      <input pInputText [(ngModel)]="fraudNote" maxlength="255" />
+    </label>
+  </div>
+  <ng-template #footer>
+    @if (fraudTarget(); as t) {
+      @if (isSuspect(t.id)) {
+        <p-button label="Retirer de la liste" severity="danger" [text]="true" [loading]="fraudBusy()" (onClick)="removeFraud()" />
+      }
+    }
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="fraudOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="fraudBusy()" [disabled]="fraudProfileId == null || !fraudNote.trim()" (onClick)="saveFraud()" />
   </ng-template>
 </p-dialog>
 
