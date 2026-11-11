@@ -42,8 +42,10 @@ import {
   Wallet,
   WalletTransaction,
   Withdrawal,
+  WithdrawalInstallment,
   WithdrawalStatus,
   PayoutConfig,
+  PayoutSpecialCase,
   WithdrawalFilters,
   WithdrawalSort,
   AnnouncementStatus,
@@ -385,6 +387,34 @@ export class AdminApi {
 
   reject(id: number, reason: string): Observable<Withdrawal> {
     return this.http.post<Withdrawal>(`${this.base}/wallet/withdrawals/${id}/reject`, { reason });
+  }
+
+  /** Verse une tranche (montant net) d'un retrait MonCash / NatCash approuve. */
+  payInstallment(id: number, amountHtg: number, payoutReference: string): Observable<Withdrawal> {
+    return this.http.post<Withdrawal>(`${this.base}/wallet/withdrawals/${id}/installments`, { amountHtg, payoutReference });
+  }
+
+  installments(id: number): Observable<WithdrawalInstallment[]> {
+    return this.http.get<WithdrawalInstallment[]>(`${this.base}/wallet/withdrawals/${id}/installments`);
+  }
+
+  /** Cas de retrait particuliers, le plus recemment ajoute d'abord. */
+  specialCases(): Observable<PayoutSpecialCase[]> {
+    return this.http.get<PayoutSpecialCase[]>(`${this.base}/wallet/payout-special-cases`);
+  }
+
+  /** Ajoute un joueur (deja present : note mise a jour) ; renvoie la liste a jour. */
+  addSpecialCase(userId: number, note: string | null): Observable<PayoutSpecialCase[]> {
+    return this.http.post<PayoutSpecialCase[]>(`${this.base}/wallet/payout-special-cases`, { userId, note });
+  }
+
+  removeSpecialCase(userId: number): Observable<PayoutSpecialCase[]> {
+    return this.http.delete<PayoutSpecialCase[]>(`${this.base}/wallet/payout-special-cases/${userId}`);
+  }
+
+  /** Clot un retrait verse en partie : le reste non verse revient dans les gains du joueur. */
+  closeWithdrawal(id: number, reason: string): Observable<Withdrawal> {
+    return this.http.post<Withdrawal>(`${this.base}/wallet/withdrawals/${id}/close`, { reason });
   }
 
   sendPickupCode(id: number): Observable<unknown> {

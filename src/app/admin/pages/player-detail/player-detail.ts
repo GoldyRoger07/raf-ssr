@@ -179,6 +179,56 @@ export default class PlayerDetail implements OnInit {
     });
   }
 
+  // Cas de retrait particulier : retraits par tranches, accord avant le solo.
+  protected readonly specialOpen = signal(false);
+  protected readonly specialBusy = signal(false);
+  protected specialNote = '';
+
+  protected toggleSpecialCase(): void {
+    const p = this.player();
+    if (!p) {
+      return;
+    }
+    if (!p.payoutSpecialCase) {
+      this.specialNote = '';
+      this.specialOpen.set(true);
+      return;
+    }
+    this.specialBusy.set(true);
+    this.api.removeSpecialCase(p.id).subscribe({
+      next: () => {
+        this.specialBusy.set(false);
+        this.player.set({ ...p, payoutSpecialCase: false, payoutSpecialCaseNote: null });
+        this.messages.add({ severity: 'success', summary: 'Retire des cas particuliers', detail: 'Ses prochains retraits seront payes en une fois.' });
+      },
+      error: (error) => {
+        this.specialBusy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
+  protected addSpecialCase(): void {
+    const p = this.player();
+    if (!p) {
+      return;
+    }
+    const note = this.specialNote.trim() || null;
+    this.specialBusy.set(true);
+    this.api.addSpecialCase(p.id, note).subscribe({
+      next: () => {
+        this.specialBusy.set(false);
+        this.specialOpen.set(false);
+        this.player.set({ ...p, payoutSpecialCase: true, payoutSpecialCaseNote: note });
+        this.messages.add({ severity: 'success', summary: 'Cas particulier ajoute', detail: 'Il verra l\u2019accord avant sa prochaine partie solo.' });
+      },
+      error: (error) => {
+        this.specialBusy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
   /** Compte de test : son activite sort du tableau de bord, il voit les quiz de test. */
   protected toggleTest(): void {
     const p = this.player();

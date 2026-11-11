@@ -8,6 +8,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
@@ -18,6 +19,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { Subject, debounceTime } from 'rxjs';
 
 import { CashPickupDialog } from '../../components/cash-pickup-dialog/cash-pickup-dialog';
+import { PlayerSearch } from '../../components/player-search/player-search';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { HaitiDatePipe, HtgPipe } from '../../core/format';
@@ -26,8 +28,11 @@ import {
   AdminWithdrawal,
   PaymentProvider,
   PayoutConfig,
+  PayoutSpecialCase,
+  PlayerSummary,
   Withdrawal,
   WithdrawalFilters,
+  WithdrawalInstallment,
   WithdrawalSort,
   WithdrawalSortField,
   WithdrawalStatus,
@@ -51,6 +56,7 @@ const NO_FILTERS: WithdrawalFilters = { q: '', provider: null, counter: null, fr
     DialogModule,
     IconFieldModule,
     InputIconModule,
+    InputNumberModule,
     InputTextModule,
     MessageModule,
     SelectModule,
@@ -59,6 +65,7 @@ const NO_FILTERS: WithdrawalFilters = { q: '', provider: null, counter: null, fr
     TagModule,
     TextareaModule,
     CashPickupDialog,
+    PlayerSearch,
     HtgPipe,
     HaitiDatePipe,
   ],
@@ -107,6 +114,7 @@ export default class Withdrawals {
     this.readUrl(this.route.snapshot.queryParams);
     this.typed.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.apply());
     this.load();
+    this.loadSpecialCases();
     this.api.payoutConfig().subscribe({
       next: (config) => this.payout.set(config),
       error: () => this.payout.set(null),
@@ -315,6 +323,133 @@ export default class Withdrawals {
       next: () => {
         this.payOpen.set(false);
         this.done('Versement enregistre', `${row.playerName} est prevenu.`);
+      },
+      error: (error) => this.fail(error),
+    });
+  }
+
+  // --- Cas de retrait particuliers -----------------------------------------------
+
+  protected readonly specialCases = signal<PayoutSpecialCase[]>([]);
+  protected readonly specialOpen = signal(false);
+  protected readonly specialCandidate = signal<{ id: number; name: string } | null>(null);
+  protected readonly specialAddOpen = signal(false);
+  protected specialNote = '';
+
+  private loadSpecialCases(): void {
+    this.api.specialCases().subscribe({ next: (list) => this.specialCases.set(list) });
+  }
+
+  /** Recherche de la section : le joueur choisi est ajoute avec la note saisie. */
+  protected chooseSpecial(player: PlayerSummary): void {
+    this.specialCandidate.set({ id: player.id, name: `${player.firstName} ${player.lastName}` });
+  }
+
+  /** Bouton d'une ligne de retrait : fenetre pour la note, puis ajout. */
+  protected openSpecialFromRow(row: AdminWithdrawal): void {
+    this.specialCandidate.set({ id: row.playerId, name: row.playerName });
+    this.specialNote = '';
+    this.specialAddOpen.set(true);
+  }
+
+  protected addSpecial(): void {
+    const candidate = this.specialCandidate();
+    if (!candidate) {
+      return;
+    }
+    this.busy.set(true);
+    this.api.addSpecialCase(candidate.id, this.specialNote.trim() || null).subscribe({
+      next: (list) => {
+        this.specialCases.set(list);
+        this.specialCandidate.set(null);
+        this.specialNote = '';
+        this.specialAddOpen.set(false);
+        this.done('Cas particulier ajoute', `${candidate.name} verra l'accord avant sa prochaine partie solo.`);
+      },
+      error: (error) => this.fail(error),
+    });
+  }
+
+  protected removeSpecial(entry: PayoutSpecialCase): void {
+    this.confirmation.confirm({
+      header: 'Retirer des cas particuliers',
+      message: entry.partiallyPaidWithdrawal
+        ? `${entry.playerName} a un retrait verse en partie : il se terminera normalement. Ses prochains retraits seront payes en une fois.`
+        : `Ses prochains retraits seront payes en une fois et il ne verra plus l'accord. Son accord eventuel reste enregistre.`,
+      acceptLabel: 'Retirer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.busy.set(true);
+        this.api.removeSpecialCase(entry.playerId).subscribe({
+          next: (list) => {
+            this.specialCases.set(list);
+            this.done('Retire des cas particuliers', entry.playerName);
+          },
+          error: (error) => this.fail(error),
+        });
+      },
+    });
+  }
+
+  // --- Tranches ------------------------------------------------------------------
+
+  protected readonly installmentOpen = signal(false);
+  protected readonly installments = signal<WithdrawalInstallment[]>([]);
+  protected installmentAmount: number | null = null;
+  protected installmentReference = '';
+  protected readonly closeOpen = signal(false);
+  protected closeReason = '';
+
+  protected remaining(w: Withdrawal): number {
+    return w.netHtg - (w.paidHtg ?? 0) - (w.refundedHtg ?? 0);
+  }
+
+  protected openInstallment(row: AdminWithdrawal): void {
+    this.selected.set(row);
+    this.installmentAmount = null;
+    this.installmentReference = '';
+    this.installments.set([]);
+    this.installmentOpen.set(true);
+    this.api.installments(row.withdrawal.id).subscribe({ next: (list) => this.installments.set(list) });
+  }
+
+  protected payInstallment(): void {
+    const row = this.selected();
+    const amount = this.installmentAmount;
+    if (!row || !amount || amount <= 0 || !this.installmentReference.trim()) {
+      return;
+    }
+    this.busy.set(true);
+    this.api.payInstallment(row.withdrawal.id, amount, this.installmentReference.trim()).subscribe({
+      next: (result) => {
+        this.installmentOpen.set(false);
+        this.done(
+          result.status === 'PAID' ? 'Retrait entierement verse' : 'Tranche enregistree',
+          result.status === 'PAID'
+            ? `${row.playerName} a recu ses ${result.netHtg} HTG.`
+            : `${result.paidHtg} HTG verses sur ${result.netHtg} ; reste ${this.remaining(result)} HTG. ${row.playerName} est prevenu.`,
+        );
+      },
+      error: (error) => this.fail(error),
+    });
+  }
+
+  protected openClose(row: AdminWithdrawal): void {
+    this.selected.set(row);
+    this.closeReason = '';
+    this.closeOpen.set(true);
+  }
+
+  protected closeWithdrawal(): void {
+    const row = this.selected();
+    if (!row || !this.closeReason.trim()) {
+      return;
+    }
+    this.busy.set(true);
+    this.api.closeWithdrawal(row.withdrawal.id, this.closeReason.trim()).subscribe({
+      next: (result) => {
+        this.closeOpen.set(false);
+        this.done('Retrait clos', `${result.refundedHtg} HTG rendus aux gains de ${row.playerName}.`);
       },
       error: (error) => this.fail(error),
     });

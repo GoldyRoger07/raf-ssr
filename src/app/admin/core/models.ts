@@ -125,6 +125,11 @@ export interface PlayerSummary {
   creditBalance: number;
   winningsBalanceHtg: number;
   createdAt: string;
+  /** Accord du paiement des retraits par tranches, null s'il n'a pas accepte. */
+  payoutTermsAcceptedAt: string | null;
+  /** Dans la liste des cas de retrait particuliers. */
+  payoutSpecialCase: boolean;
+  payoutSpecialCaseNote: string | null;
 }
 
 /** Compte vu sur au moins un appareil du joueur (en-tete X-Device-Id de l'app). */
@@ -290,10 +295,20 @@ export type WithdrawalStatus =
   | 'AWAITING_OTP'
   | 'PENDING'
   | 'APPROVED'
+  | 'PARTIALLY_PAID'
   | 'SENDING'
   | 'PAID'
   | 'REJECTED'
   | 'CANCELLED';
+
+/** Tranche deja versee d'un retrait (versement manuel). */
+export interface WithdrawalInstallment {
+  id: number;
+  amountHtg: number;
+  payoutReference: string;
+  adminId: number | null;
+  createdAt: string;
+}
 
 export interface Withdrawal {
   id: number;
@@ -301,6 +316,10 @@ export interface Withdrawal {
   amountHtg: number;
   feeHtg: number;
   netHtg: number;
+  /** Deja verse : somme des tranches, ou le net une fois paye en une fois. */
+  paidHtg: number;
+  /** Reste non verse rendu aux gains a la cloture d'un retrait paye en partie. */
+  refundedHtg: number;
   provider: PaymentProvider;
   destinationNumber?: string;
   status: WithdrawalStatus;
@@ -334,6 +353,25 @@ export interface AdminWithdrawal {
   linkedAccounts: number;
   /** Autres comptes dont le numero de reception est le telephone ou a deja recu un retrait. */
   destinationUsedBy: { playerId: number; playerName: string }[];
+  /** Cas de retrait particulier : retrait fractionnable par tranches. */
+  specialCase: boolean;
+}
+
+/**
+ * Cas de retrait particulier : joueur dont les retraits peuvent etre verses par tranches.
+ * Lui seul voit l'accord avant le solo ; tant qu'il ne l'a pas coche, il ne joue pas en solo.
+ */
+export interface PayoutSpecialCase {
+  playerId: number;
+  playerName: string;
+  email: string;
+  phone: string;
+  note: string | null;
+  addedAt: string;
+  addedBy: number | null;
+  termsAcceptedAt: string | null;
+  /** Un de ses retraits est en cours de versement par tranches. */
+  partiallyPaidWithdrawal: boolean;
 }
 
 export interface WalletTransaction {

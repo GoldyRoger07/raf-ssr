@@ -16,6 +16,14 @@
         @if (p.test) {
           <p-tag value="Compte de test" severity="warn" icon="pi pi-flask" />
         }
+        @if (p.payoutSpecialCase) {
+          <p-tag value="Cas de retrait particulier" severity="warn" icon="pi pi-percentage"
+                 [title]="p.payoutSpecialCaseNote || 'Retraits payables par tranches'" />
+        }
+        @if (p.payoutTermsAcceptedAt) {
+          <p-tag value="Paiement par tranches accepte" severity="info" icon="pi pi-check-square"
+                 [title]="'Accepte le ' + (p.payoutTermsAcceptedAt | haitiDate)" />
+        }
         @if (linkedAccounts().length) {
           <p-tag [value]="linkedAccounts().length + (linkedAccounts().length > 1 ? ' comptes lies' : ' compte lie')"
                  severity="danger" icon="pi pi-link" title="Comptes vus sur un meme appareil que ce joueur : voir l'onglet Comptes lies" />
@@ -29,6 +37,9 @@
       <p-button [label]="p.test ? 'Ce n\'est plus un test' : 'Compte de test'" icon="pi pi-flask" severity="secondary"
                 [outlined]="true" [loading]="testBusy()" (onClick)="toggleTest()"
                 [title]="p.test ? '' : 'Il jouera gratuitement et sans limite, sans rien gagner ; ses parties ne compteront pas pour les vrais joueurs ni au tableau de bord, et il verra les quiz de test'" />
+      <p-button [label]="p.payoutSpecialCase ? 'Retirer des cas particuliers' : 'Cas de retrait particulier'" icon="pi pi-percentage"
+                severity="secondary" [outlined]="true" [loading]="specialBusy()" (onClick)="toggleSpecialCase()"
+                [title]="p.payoutSpecialCase ? 'Ses prochains retraits seront payes en une fois' : 'Ses retraits pourront etre verses par tranches ; il devra accepter avant sa prochaine partie solo'" />
       <p-button label="Modifier l'email" icon="pi pi-envelope" severity="secondary" [outlined]="true" (onClick)="openEmail()" />
       <p-button label="Modifier le numero" icon="pi pi-phone" severity="secondary" [outlined]="true" (onClick)="openPhone()" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
@@ -371,6 +382,18 @@
 </p-dialog>
 
 <!-- Correction de l'email -->
+<p-dialog header="Cas de retrait particulier" [(visible)]="specialOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
+  <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+    Ses retraits pourront etre verses par tranches. Avant sa prochaine partie solo, il devra accepter que RAF puisse le payer en
+    plusieurs fois.
+  </p>
+  <input pInputText [(ngModel)]="specialNote" maxlength="255" class="w-full" placeholder="Note (facultative)" />
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="specialOpen.set(false)" />
+    <p-button label="Ajouter" [loading]="specialBusy()" (onClick)="addSpecialCase()" />
+  </ng-template>
+</p-dialog>
+
 <p-dialog header="Modifier l'email" [(visible)]="emailOpen" [modal]="true" [style]="{ width: '28rem' }" [draggable]="false">
   <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
     Pour une adresse mal saisie a l'inscription. L'adresse repasse non verifiee et un nouveau lien de confirmation
