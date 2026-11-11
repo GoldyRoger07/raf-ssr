@@ -48,6 +48,14 @@ export default class PlayerApp {
     );
   }
 
+  protected setFirstSoloFree(enabled: boolean): void {
+    this.save({ firstSoloFreeEnabled: enabled }, (config) =>
+      config.firstSoloFreeEnabled
+        ? { summary: 'Premiere partie solo offerte', detail: "Les joueurs qui n'ont jamais paye de partie solo jouent la premiere gratuitement." }
+        : { summary: 'Offre coupee', detail: 'Toutes les parties solo payantes sont de nouveau facturees.' },
+    );
+  }
+
   protected setEmailReminder(enabled: boolean): void {
     this.save({ emailReminderEnabled: enabled }, (config) =>
       config.emailReminderEnabled

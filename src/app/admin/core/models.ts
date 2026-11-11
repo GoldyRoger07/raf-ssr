@@ -1095,4 +1095,6 @@ export interface PlayerAppConfig {
   autoPayoutEnabled: boolean;
   /** Quiz solo ouverts montres aux joueurs ; coupe, ils sont tous masques. */
   soloQuizzesVisible: boolean;
+  /** Premiere partie solo payante offerte, une fois par compte et par groupe de comptes lies. */
+  firstSoloFreeEnabled: boolean;
 }
