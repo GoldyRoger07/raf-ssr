@@ -1,0 +1,103 @@
+<p-confirmdialog />
+
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">Anti-fraude</h1>
+  <p class="text-sm text-slate-500">
+    Un joueur vise ne peut pas faire de sans-faute en solo : s'il repond juste a tout, 1 a 3 bonnes reponses, tirees au
+    hasard, sont comptees fausses a la correction, avant que le score lui soit affiche. Une partie avec deja une erreur
+    n'est pas touchee. La commission du leader est versee comme pour une defaite. Le staff n'est jamais vise ; les comptes
+    de test le sont. Seules les parties qui demarrent ensuite sont concernees.
+  </p>
+</div>
+
+@if (error(); as message) {
+  <p-message severity="error" [text]="message" styleClass="mb-4" />
+}
+
+@if (overview(); as o) {
+  <section class="mb-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex items-center gap-3 px-5 py-4">
+      <i class="pi pi-shield text-2xl text-red-600"></i>
+      <div class="flex-1">
+        <h2 class="font-semibold">Pour tous les joueurs</h2>
+        <p class="text-sm text-slate-500">
+          Active : aucun joueur ne peut faire de sans-faute en solo, comptes de test compris. Moderateurs, admins et super
+          admins exclus.
+        </p>
+      </div>
+      <p-toggleswitch
+        inputId="anti-fraud-all"
+        [ngModel]="o.allPlayers"
+        [disabled]="busy()"
+        (ngModelChange)="setAllPlayers($event)"
+      />
+      <label for="anti-fraud-all" class="w-16 text-sm font-medium">{{ o.allPlayers ? 'Active' : 'Coupe' }}</label>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <i class="pi pi-user-minus text-2xl text-red-600"></i>
+      <div class="flex-1">
+        <h2 class="font-semibold">Joueurs vises ({{ o.targets.length }})</h2>
+        <p class="text-sm text-slate-500">
+          Ce compte seul : ses comptes lies par appareil ne sont pas touches.
+          @if (o.allPlayers) { L'interrupteur « pour tous » est active : tous les joueurs sont vises en ce moment. }
+        </p>
+      </div>
+      <p-button label="Ajouter un joueur" icon="pi pi-user-plus" (onClick)="newTarget()" />
+    </div>
+    <p-table [value]="o.targets" dataKey="playerId">
+      <ng-template #header>
+        <tr>
+          <th>Joueur</th>
+          <th>Note</th>
+          <th>Ajoute le</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-t>
+        <tr>
+          <td>
+            <a [routerLink]="['/admin/joueurs', t.playerId]" class="font-medium hover:text-orange-600">{{ t.playerName }}</a>
+            @if (t.test) {
+              <p-tag value="Test" severity="secondary" icon="pi pi-flask" styleClass="ml-2" />
+            }
+            <div class="text-xs text-slate-500">{{ t.phone }} - {{ t.email }}</div>
+          </td>
+          <td class="max-w-xs text-sm">{{ t.note }}</td>
+          <td class="text-sm text-slate-500">{{ t.addedAt | haitiDate }}</td>
+          <td class="whitespace-nowrap text-right">
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" ariaLabel="Modifier la note" (onClick)="editTarget(t)" />
+            <p-button icon="pi pi-times" severity="danger" [text]="true" ariaLabel="Retirer" (onClick)="removeTarget(t)" />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr><td colspan="4" class="py-8 text-center text-slate-500">Aucun joueur vise.</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+}
+
+<p-dialog header="Anti-fraude" [(visible)]="targetOpen" [modal]="true" [style]="{ width: '32rem' }" [draggable]="false">
+  <div class="flex flex-col gap-4">
+    @if (candidate(); as c) {
+      <div class="flex items-center gap-2 text-sm">
+        <span class="font-medium">{{ c.name }}</span>
+        <p-button icon="pi pi-times" severity="secondary" [text]="true" size="small" ariaLabel="Changer de joueur"
+                  (onClick)="candidate.set(null)" />
+      </div>
+    } @else {
+      <player-search (selected)="choose($event)" />
+    }
+    <label class="flex flex-col gap-1 text-sm">
+      Pourquoi ce joueur est vise (obligatoire)
+      <input pInputText [(ngModel)]="note" maxlength="255" />
+    </label>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="targetOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="busy()" [disabled]="!candidate() || !note.trim()" (onClick)="saveTarget()" />
+  </ng-template>
+</p-dialog>

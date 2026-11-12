@@ -135,6 +135,18 @@
     </div>
   }
   @if (review(); as r) {
+    @if (r.antiFraud) {
+      <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <i class="pi pi-shield mr-1"></i>
+        Anti-fraude actif sur cette partie.
+        @if (r.realCorrectCount !== r.correctCount) {
+          Score affiche au joueur : {{ r.score }} ({{ r.correctCount }} bonnes) ; vrai score : {{ r.realScore }}
+          ({{ r.realCorrectCount }} bonnes).
+        } @else {
+          Aucune reponse faussee (la partie n'etait pas un sans-faute).
+        }
+      </div>
+    }
     <table class="w-full text-sm">
       <thead class="text-left text-slate-500">
         <tr>
@@ -151,7 +163,13 @@
             <td class="py-2 pr-2">{{ item.text }}</td>
             <td class="py-2 pr-2">
               @if (item.chosenChoiceId) {
-                <i [class]="item.correct ? 'pi pi-check text-green-600' : 'pi pi-times text-red-600'"></i>
+                @if (item.antiFraudVoided) {
+                  <i class="pi pi-check text-green-600"></i>
+                  <span class="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300"
+                        title="Reponse juste, comptee fausse au joueur par l'anti-fraude">Anti-fraude</span>
+                } @else {
+                  <i [class]="item.correct ? 'pi pi-check text-green-600' : 'pi pi-times text-red-600'"></i>
+                }
               } @else {
                 <span class="text-slate-400">sans reponse</span>
               }

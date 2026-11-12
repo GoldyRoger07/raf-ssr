@@ -147,6 +147,12 @@ export default [
             loadComponent: () => import('./pages/fraud/fraud'),
           },
           {
+            path: 'anti-fraude',
+            title: 'Anti-fraude - RAF Admin',
+            canActivate: [adminGuard],
+            loadComponent: () => import('./pages/anti-fraud/anti-fraud'),
+          },
+          {
             path: 'comptes',
             title: 'Comptes et roles - RAF Admin',
             canActivate: [superAdminGuard],

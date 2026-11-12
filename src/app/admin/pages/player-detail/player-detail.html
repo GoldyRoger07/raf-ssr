@@ -27,6 +27,12 @@
         @if (fraudEntry(); as f) {
           <p-tag [value]="'Fraudeur : ' + f.profileName" severity="danger" icon="pi pi-ban" [title]="f.note" />
         }
+        @if (antiFraudEntry(); as a) {
+          <p-tag value="Anti-fraude" severity="danger" icon="pi pi-shield" [title]="'Pas de sans-faute en solo : ' + a.note" />
+        } @else if (antiFraud()?.allPlayers) {
+          <p-tag value="Anti-fraude (tous)" severity="warn" icon="pi pi-shield"
+                 title="L'anti-fraude est active pour tous les joueurs (staff exclu)" />
+        }
         @for (f of fraudViaLinked(); track f.playerId) {
           <p-tag [value]="'Profil ' + f.profileName + ' via ' + f.playerName" severity="danger" icon="pi pi-ban"
                  title="Un compte lie est liste comme fraudeur : son profil s'applique aussi a ce joueur" />
@@ -50,6 +56,9 @@
       <p-button [label]="fraudEntry() ? 'Profil fraudeur' : 'Marquer fraudeur'" icon="pi pi-ban" severity="danger"
                 [outlined]="true" [disabled]="!fraudProfiles().length" (onClick)="openFraudForPlayer()"
                 [title]="fraudProfiles().length ? 'Parties solo durcies selon un profil, comptes lies compris' : 'Creez d\'abord un profil dans Fraudeurs'" />
+      <p-button [label]="antiFraudEntry() ? 'Anti-fraude active' : 'Anti-fraude'" icon="pi pi-shield" severity="danger"
+                [outlined]="true" (onClick)="openAntiFraud()"
+                title="Ce compte ne pourra plus faire de sans-faute en solo (ses comptes lies ne sont pas touches)" />
       <p-button label="Modifier l'email" icon="pi pi-envelope" severity="secondary" [outlined]="true" (onClick)="openEmail()" />
       <p-button label="Modifier le numero" icon="pi pi-phone" severity="secondary" [outlined]="true" (onClick)="openPhone()" />
       <p-button label="Ajuster un solde" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" (onClick)="openAdjust()" />
@@ -477,5 +486,23 @@
   <ng-template #footer>
     <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="phoneOpen.set(false)" />
     <p-button label="Enregistrer" [loading]="busy()" [disabled]="!newPhone.trim()" (onClick)="changePhone()" />
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Anti-fraude" [(visible)]="antiFraudOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+  <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">
+    A partir de sa prochaine partie solo, ce compte ne pourra plus faire de sans-faute : s'il repond juste a tout, 1 a 3
+    bonnes reponses seront comptees fausses. Ses comptes lies ne sont pas touches.
+  </p>
+  <label class="flex flex-col gap-1 text-sm">
+    Pourquoi ce joueur est vise (obligatoire)
+    <input pInputText [(ngModel)]="antiFraudNote" maxlength="255" />
+  </label>
+  <ng-template #footer>
+    @if (antiFraudEntry()) {
+      <p-button label="Retirer de la liste" severity="danger" [text]="true" [loading]="antiFraudBusy()" (onClick)="removeAntiFraud()" />
+    }
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="antiFraudOpen.set(false)" />
+    <p-button label="Enregistrer" [loading]="antiFraudBusy()" [disabled]="!antiFraudNote.trim()" (onClick)="saveAntiFraud()" />
   </ng-template>
 </p-dialog>

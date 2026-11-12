@@ -900,8 +900,11 @@ export interface GameReviewItem {
   choices: { id: number; text: string }[];
   correctChoiceId: number;
   chosenChoiceId?: number;
+  /** Tel que compte au joueur (faux si l'anti-fraude l'a fausse). */
   correct: boolean;
   elapsedMs?: number;
+  /** Reponse juste comptee fausse par l'anti-fraude. */
+  antiFraudVoided: boolean;
 }
 
 export interface GameReview {
@@ -911,6 +914,11 @@ export interface GameReview {
   score?: number;
   correctCount?: number;
   answeredCount?: number;
+  /** Partie touchee par l'anti-fraude au lancement (solo). */
+  antiFraud: boolean;
+  /** Vraie correction, avant l'anti-fraude. */
+  realCorrectCount?: number;
+  realScore?: number;
   items: GameReviewItem[];
 }
 
@@ -1136,4 +1144,23 @@ export interface FraudSuspect {
   updatedAt: string;
   /** Comptes lies par appareil, touches eux aussi par le profil. */
   linkedAccounts: number;
+}
+
+/** Joueur vise par l'anti-fraude : pas de sans-faute possible en solo (ce compte seul). */
+export interface AntiFraudTarget {
+  playerId: number;
+  playerName: string;
+  email: string;
+  phone: string;
+  test: boolean;
+  note: string;
+  addedBy: number | null;
+  addedAt: string;
+  updatedAt: string;
+}
+
+/** Ecran anti-fraude : interrupteur « tous les joueurs » (staff exclu) et liste par joueur. */
+export interface AntiFraudOverview {
+  allPlayers: boolean;
+  targets: AntiFraudTarget[];
 }

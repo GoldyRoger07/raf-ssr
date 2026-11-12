@@ -24,6 +24,7 @@ import { TRANSACTION_TYPE, WITHDRAWAL_STATUS, providerLabel, withdrawalStatus } 
 import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 import {
   AdminWithdrawal,
+  AntiFraudOverview,
   BalanceType,
   FraudProfile,
   FraudSuspect,
@@ -266,6 +267,7 @@ export default class PlayerDetail implements OnInit {
     this.loadRetention();
     this.loadLinkedAccounts();
     this.loadFraud();
+    this.loadAntiFraud();
   }
 
   // Fraudeurs : profil applique a ce joueur (et a ses comptes lies), ajout depuis la fiche
@@ -346,6 +348,60 @@ export default class PlayerDetail implements OnInit {
         this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
       },
     });
+  }
+
+  // Anti-fraude : pas de sans-faute en solo pour ce compte (ses comptes lies non compris).
+  protected readonly antiFraud = signal<AntiFraudOverview | null>(null);
+  protected readonly antiFraudEntry = computed(
+    () => this.antiFraud()?.targets.find((t) => t.playerId === this.id()) ?? null,
+  );
+  protected readonly antiFraudOpen = signal(false);
+  protected readonly antiFraudBusy = signal(false);
+  protected antiFraudNote = '';
+
+  private loadAntiFraud(): void {
+    this.api.antiFraud().subscribe({ next: (view) => this.antiFraud.set(view) });
+  }
+
+  protected openAntiFraud(): void {
+    this.antiFraudNote = this.antiFraudEntry()?.note ?? '';
+    this.antiFraudOpen.set(true);
+  }
+
+  protected saveAntiFraud(): void {
+    const p = this.player();
+    if (!p || !this.antiFraudNote.trim()) {
+      return;
+    }
+    this.antiFraudBusy.set(true);
+    this.api.addAntiFraudTarget(p.id, this.antiFraudNote.trim()).subscribe({
+      next: (view) => this.antiFraudDone(view, 'Anti-fraude active', 'Plus de sans-faute possible a sa prochaine partie solo.'),
+      error: (error) => this.antiFraudFailed(error),
+    });
+  }
+
+  protected removeAntiFraud(): void {
+    const p = this.player();
+    if (!p) {
+      return;
+    }
+    this.antiFraudBusy.set(true);
+    this.api.removeAntiFraudTarget(p.id).subscribe({
+      next: (view) => this.antiFraudDone(view, "Retire de l'anti-fraude", 'Corrige normalement a sa prochaine partie solo.'),
+      error: (error) => this.antiFraudFailed(error),
+    });
+  }
+
+  private antiFraudDone(view: AntiFraudOverview, summary: string, detail: string): void {
+    this.antiFraudBusy.set(false);
+    this.antiFraudOpen.set(false);
+    this.antiFraud.set(view);
+    this.messages.add({ severity: 'success', summary, detail });
+  }
+
+  private antiFraudFailed(error: unknown): void {
+    this.antiFraudBusy.set(false);
+    this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
   }
 
   private loadLinkedAccounts(): void {

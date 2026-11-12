@@ -46,6 +46,7 @@ import {
   WithdrawalStatus,
   PayoutConfig,
   PayoutSpecialCase,
+  AntiFraudOverview,
   FraudProfile,
   FraudProfileInput,
   FraudSuspect,
@@ -444,6 +445,26 @@ export class AdminApi {
 
   removeFraudSuspect(userId: number): Observable<FraudSuspect[]> {
     return this.http.delete<FraudSuspect[]>(`${this.base}/fraud/suspects/${userId}`);
+  }
+
+  // --- Anti-fraude : pas de sans-faute en solo -----------------------------------
+
+  antiFraud(): Observable<AntiFraudOverview> {
+    return this.http.get<AntiFraudOverview>(`${this.base}/anti-fraud`);
+  }
+
+  /** Tous les joueurs (staff exclu) ; parties qui demarrent ensuite seulement. */
+  setAntiFraudAllPlayers(enabled: boolean): Observable<AntiFraudOverview> {
+    return this.http.put<AntiFraudOverview>(`${this.base}/anti-fraud/all-players`, { enabled });
+  }
+
+  /** Ajoute un joueur (deja liste : note mise a jour). */
+  addAntiFraudTarget(userId: number, note: string): Observable<AntiFraudOverview> {
+    return this.http.post<AntiFraudOverview>(`${this.base}/anti-fraud/targets`, { userId, note });
+  }
+
+  removeAntiFraudTarget(userId: number): Observable<AntiFraudOverview> {
+    return this.http.delete<AntiFraudOverview>(`${this.base}/anti-fraud/targets/${userId}`);
   }
 
   /** Clot un retrait verse en partie : le reste non verse revient dans les gains du joueur. */
