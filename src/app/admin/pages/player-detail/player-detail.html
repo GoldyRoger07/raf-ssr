@@ -157,6 +157,12 @@
                 @if (t.description) {
                   <div class="text-xs text-slate-500">{{ t.description }}</div>
                 }
+                @if (hasGame(t)) {
+                  <a [routerLink]="['/admin/parties']" [queryParams]="{ mouvement: t.id, joueur: id() }"
+                     class="mt-1 inline-flex items-center gap-1 text-xs text-orange-600 hover:underline">
+                    <i class="pi pi-list-check text-xs"></i> Voir le corrige
+                  </a>
+                }
               </td>
               <td>{{ t.balanceType === 'CREDIT' ? 'Credits' : 'Gains' }}</td>
               <td class="text-right font-medium" [class.text-green-600]="t.amount > 0" [class.text-red-600]="t.amount < 0">

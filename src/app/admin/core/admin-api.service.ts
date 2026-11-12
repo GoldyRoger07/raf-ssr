@@ -543,6 +543,15 @@ export class AdminApi {
     return this.http.get<GameReview>(`${this.base}/game/sessions/${sessionId}/review`);
   }
 
+  session(sessionId: number): Observable<AdminGameSession> {
+    return this.http.get<AdminGameSession>(`${this.base}/game/sessions/${sessionId}`);
+  }
+
+  /** Partie d'un mouvement du portefeuille : entree solo ou gain du sans-faute. */
+  sessionOfTransaction(transactionId: number): Observable<AdminGameSession> {
+    return this.http.get<AdminGameSession>(`${this.base}/game/sessions/by-transaction/${transactionId}`);
+  }
+
   invalidateSession(sessionId: number, reason: string): Observable<AdminGameSession> {
     return this.http.post<AdminGameSession>(`${this.base}/game/sessions/${sessionId}/invalidate`, { reason });
   }

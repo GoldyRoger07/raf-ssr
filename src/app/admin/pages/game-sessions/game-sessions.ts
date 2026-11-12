@@ -62,7 +62,10 @@ export default class GameSessions {
   private readonly messages = inject(MessageService);
 
   protected pageSize = PAGE_SIZE;
-  protected readonly quizId = Number(inject(ActivatedRoute).snapshot.queryParamMap.get('quiz')) || null;
+  private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected readonly quizId = Number(this.query.get('quiz')) || null;
+  /** Arrivee depuis la fiche d'un joueur (un mouvement solo) : retour vers lui. */
+  protected readonly fromPlayerId = Number(this.query.get('joueur')) || null;
   protected flaggedOnly = this.quizId === null;
 
   protected readonly rows = signal<AdminGameSession[]>([]);
@@ -105,6 +108,22 @@ export default class GameSessions {
   constructor() {
     this.typed.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.toggleFlagged());
     this.load();
+    this.openFromLink();
+  }
+
+  /** ?partie= ou ?mouvement= : ouvre directement le corrige de la partie. */
+  private openFromLink(): void {
+    const sessionId = Number(this.query.get('partie')) || null;
+    const transactionId = Number(this.query.get('mouvement')) || null;
+    const request = sessionId
+      ? this.api.session(sessionId)
+      : transactionId
+        ? this.api.sessionOfTransaction(transactionId)
+        : null;
+    request?.subscribe({
+      next: (session) => this.openReview(session),
+      error: (error) => this.messages.add({ severity: 'error', summary: 'Partie introuvable', detail: errorMessage(error) }),
+    });
   }
 
   protected get activeCount(): number {

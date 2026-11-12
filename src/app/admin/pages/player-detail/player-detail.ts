@@ -123,6 +123,11 @@ export default class PlayerDetail implements OnInit {
     return (this.retention()?.entries ?? []).filter((e) => !reason || e.reason === reason);
   });
   protected readonly typeLabels = TRANSACTION_TYPE;
+
+  /** Mouvement d'une partie solo (entree payee ou gain du sans-faute) : son corrige est consultable. */
+  protected hasGame(t: WalletTransaction): boolean {
+    return t.type === 'SOLO_ENTRY' || (t.type === 'PRIZE' && t.referenceType === 'GameSession');
+  }
   protected readonly withdrawalStatus = withdrawalStatus;
   protected readonly providerLabel = providerLabel;
 
