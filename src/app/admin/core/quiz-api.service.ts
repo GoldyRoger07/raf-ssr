@@ -102,6 +102,11 @@ export class QuizApi {
     return this.http.post<Quiz>(`${this.base}/${id}/perfect-cooldown`, { minutes });
   }
 
+  /** Solo : active ou coupe l'anti-fraude sur ce quiz. S'applique aux parties suivantes. */
+  setAntiFraud(id: number, enabled: boolean): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/anti-fraud`, { enabled });
+  }
+
   /** Solo : part des questions par difficulte (null : tirage libre). S'applique aux parties suivantes. */
   setDifficultyMix(id: number, mix: DifficultyMix | null): Observable<Quiz> {
     return this.http.post<Quiz>(`${this.base}/${id}/difficulty-mix`, mix ?? {});

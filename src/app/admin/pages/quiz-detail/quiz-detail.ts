@@ -436,6 +436,43 @@ export default class QuizDetail implements OnInit {
     });
   }
 
+  /** Solo : active ou coupe l'anti-fraude sur ce quiz. Les parties deja lancees gardent leur etat. */
+  protected toggleAntiFraud(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    const enabled = q.antiFraud === false;
+    this.confirmation.confirm({
+      header: enabled ? 'Activer l\'anti-fraude sur ce quiz' : 'Couper l\'anti-fraude sur ce quiz',
+      message: enabled
+        ? 'Les joueurs vises (liste anti-fraude ou interrupteur « pour tous ») ne pourront plus faire de sans-faute '
+          + 'sur ce quiz. Seules les parties lancees ensuite sont concernees.'
+        : 'Plus personne n\'aura l\'anti-fraude sur ce quiz, meme les joueurs de la liste : ils pourront y faire un '
+          + 'sans-faute et gagner. Les parties deja lancees gardent leur etat.',
+      acceptLabel: enabled ? 'Activer' : 'Couper',
+      rejectLabel: 'Annuler',
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => {
+        this.busy.set(true);
+        this.api.setAntiFraud(q.id, enabled).subscribe({
+          next: (updated) => {
+            this.busy.set(false);
+            this.quiz.set(updated);
+            this.messages.add({
+              severity: 'success',
+              summary: enabled ? 'Anti-fraude active sur ce quiz' : 'Anti-fraude coupe sur ce quiz',
+            });
+          },
+          error: (error) => {
+            this.busy.set(false);
+            this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+          },
+        });
+      },
+    });
+  }
+
   /** Masque ou demasque le quiz aux joueurs : le statut, les tickets et les parties ne changent pas. */
   protected toggleHidden(): void {
     const q = this.quiz();

@@ -153,6 +153,15 @@
           }
           <p-button label="Regler" icon="pi pi-sliders-h" size="small" [text]="true" (onClick)="openMix()" />
         </li>
+        <li>
+          @if (q.antiFraud !== false) {
+            <strong>Anti-fraude actif :</strong> les joueurs vises (liste anti-fraude ou interrupteur « pour tous ») ne peuvent pas faire de sans-faute sur ce quiz.
+          } @else {
+            <strong>Anti-fraude coupe :</strong> personne n'a l'anti-fraude sur ce quiz, meme les joueurs de la liste.
+          }
+          <p-button [label]="q.antiFraud !== false ? 'Couper' : 'Activer'" icon="pi pi-shield" size="small" [text]="true"
+                    [loading]="busy()" (onClick)="toggleAntiFraud()" />
+        </li>
       </ul>
       @if (soloEconomics(); as e) {
         <h3 class="mb-2 mt-5 text-sm font-semibold">Rentabilite</h3>
