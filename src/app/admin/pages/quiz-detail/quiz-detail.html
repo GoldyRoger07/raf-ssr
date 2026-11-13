@@ -154,12 +154,12 @@
           <p-button label="Regler" icon="pi pi-sliders-h" size="small" [text]="true" (onClick)="openMix()" />
         </li>
         <li>
-          @if (q.antiFraud !== false) {
-            <strong>Anti-fraude actif :</strong> les joueurs vises (liste anti-fraude ou interrupteur « pour tous ») ne peuvent pas faire de sans-faute sur ce quiz.
+          @if (q.antiFraud === true) {
+            <strong>Anti-fraude pour tous sur ce quiz :</strong> aucun joueur (hors staff) ne peut faire de sans-faute ici.
           } @else {
-            <strong>Anti-fraude coupe :</strong> personne n'a l'anti-fraude sur ce quiz, meme les joueurs de la liste.
+            <strong>Anti-fraude du quiz coupe :</strong> seuls les joueurs de la liste anti-fraude (ou tous, si l'interrupteur « pour tous » est active) n'y peuvent pas faire de sans-faute.
           }
-          <p-button [label]="q.antiFraud !== false ? 'Couper' : 'Activer'" icon="pi pi-shield" size="small" [text]="true"
+          <p-button [label]="q.antiFraud === true ? 'Couper' : 'Activer'" icon="pi pi-shield" size="small" [text]="true"
                     [loading]="busy()" (onClick)="toggleAntiFraud()" />
         </li>
       </ul>

@@ -485,7 +485,7 @@ export interface Quiz {
   perfectCooldownMinutes: number | null;
   /** Solo : part des questions faciles / moyennes / difficiles d'une partie ; null = tirage libre. */
   difficultyMix: DifficultyMix | null;
-  /** Solo : anti-fraude actif sur ce quiz (absent en groupe). Coupe : personne n'y a l'anti-fraude. */
+  /** Solo : anti-fraude pour tous les joueurs de ce quiz (absent en groupe). Coupe : la liste reste visee (OU). */
   antiFraud?: boolean;
   minScoreThreshold: number;
   closingCountdownMinutes: number;

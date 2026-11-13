@@ -442,14 +442,15 @@ export default class QuizDetail implements OnInit {
     if (!q) {
       return;
     }
-    const enabled = q.antiFraud === false;
+    const enabled = q.antiFraud !== true;
     this.confirmation.confirm({
       header: enabled ? 'Activer l\'anti-fraude sur ce quiz' : 'Couper l\'anti-fraude sur ce quiz',
       message: enabled
-        ? 'Les joueurs vises (liste anti-fraude ou interrupteur « pour tous ») ne pourront plus faire de sans-faute '
-          + 'sur ce quiz. Seules les parties lancees ensuite sont concernees.'
-        : 'Plus personne n\'aura l\'anti-fraude sur ce quiz, meme les joueurs de la liste : ils pourront y faire un '
-          + 'sans-faute et gagner. Les parties deja lancees gardent leur etat.',
+        ? 'Aucun joueur (hors staff) ne pourra plus faire de sans-faute sur ce quiz, meme hors de la liste '
+          + 'anti-fraude. Seules les parties lancees ensuite sont concernees.'
+        : 'Les joueurs hors de la liste anti-fraude pourront de nouveau faire un sans-faute sur ce quiz. Ceux de la '
+          + 'liste restent vises (et tous si l\'interrupteur « pour tous » est active). Les parties deja lancees '
+          + 'gardent leur etat.',
       acceptLabel: enabled ? 'Activer' : 'Couper',
       rejectLabel: 'Annuler',
       rejectButtonProps: { severity: 'secondary', outlined: true },
