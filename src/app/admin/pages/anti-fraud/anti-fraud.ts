@@ -5,6 +5,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TableModule } from 'primeng/table';
@@ -31,6 +32,7 @@ import { AntiFraudOverview, AntiFraudTarget, PlayerSummary } from '../../core/mo
     ButtonModule,
     ConfirmDialogModule,
     DialogModule,
+    InputNumberModule,
     InputTextModule,
     MessageModule,
     TableModule,
@@ -54,9 +56,13 @@ export default class AntiFraud {
   protected readonly candidate = signal<{ id: number; name: string } | null>(null);
   protected note = '';
 
+  /** Ajout automatique : valeurs en cours de saisie, enregistrees par saveAuto. */
+  protected autoEnabled = false;
+  protected autoThreshold: number | null = 3;
+
   constructor() {
     this.api.antiFraud().subscribe({
-      next: (view) => this.overview.set(view),
+      next: (view) => this.show(view),
       error: (error) => this.error.set(errorMessage(error)),
     });
   }
@@ -89,6 +95,44 @@ export default class AntiFraud {
           setTimeout(() => this.overview.set(view));
         }
       },
+    });
+  }
+
+  protected autoChanged(view: AntiFraudOverview): boolean {
+    return this.autoEnabled !== view.autoEnabled || this.autoThreshold !== view.autoThreshold;
+  }
+
+  protected saveAuto(): void {
+    const view = this.overview();
+    const enabled = this.autoEnabled;
+    const threshold = this.autoThreshold;
+    if (!view || !threshold) {
+      return;
+    }
+    const save = () => {
+      this.busy.set(true);
+      this.api.setAntiFraudAuto(enabled, threshold).subscribe({
+        next: (result) => {
+          this.show(result.overview);
+          this.done(enabled ? 'Ajout automatique active' : 'Ajout automatique coupe',
+            enabled
+              ? `Apres ${threshold} sans-faute payant(s). ${result.added} joueur(s) ajoute(s) tout de suite.`
+              : 'Plus aucun joueur ne sera ajoute automatiquement.');
+        },
+        error: (error) => this.fail(error),
+      });
+    };
+    if (!enabled) {
+      save();
+      return;
+    }
+    this.confirmation.confirm({
+      header: 'Ajout automatique',
+      message: `Les joueurs qui ont deja ${threshold} sans-faute en solo payant (depuis leur dernier retrait de la liste) `
+        + 'seront ajoutes tout de suite, puis chaque joueur qui les atteint. Continuer ?',
+      acceptLabel: 'Enregistrer',
+      rejectLabel: 'Annuler',
+      accept: save,
     });
   }
 
@@ -127,7 +171,8 @@ export default class AntiFraud {
   protected removeTarget(target: AntiFraudTarget): void {
     this.confirmation.confirm({
       header: 'Retirer de la liste',
-      message: `${target.playerName} sera corrige normalement a sa prochaine partie solo.`,
+      message: `${target.playerName} sera corrige normalement a sa prochaine partie solo. Son compteur de `
+        + 'sans-faute pour l\'ajout automatique repart de zero.',
       acceptLabel: 'Retirer',
       rejectLabel: 'Annuler',
       accept: () => {
@@ -141,6 +186,13 @@ export default class AntiFraud {
         });
       },
     });
+  }
+
+  /** Ecran a jour ; la saisie de l'ajout automatique reprend les valeurs enregistrees. */
+  private show(view: AntiFraudOverview): void {
+    this.overview.set(view);
+    this.autoEnabled = view.autoEnabled;
+    this.autoThreshold = view.autoThreshold;
   }
 
   private done(summary: string, detail: string): void {

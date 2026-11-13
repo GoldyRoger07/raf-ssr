@@ -47,6 +47,7 @@ import {
   WithdrawalStatus,
   PayoutConfig,
   PayoutSpecialCase,
+  AntiFraudAutoResult,
   AntiFraudOverview,
   FraudProfile,
   FraudProfileInput,
@@ -461,6 +462,11 @@ export class AdminApi {
   /** Tous les joueurs (staff exclu) ; parties qui demarrent ensuite seulement. */
   setAntiFraudAllPlayers(enabled: boolean): Observable<AntiFraudOverview> {
     return this.http.put<AntiFraudOverview>(`${this.base}/anti-fraud/all-players`, { enabled });
+  }
+
+  /** Ajout automatique apres N sans-faute solo payants ; active, ceux qui ont deja N sont ajoutes. */
+  setAntiFraudAuto(enabled: boolean, threshold: number): Observable<AntiFraudAutoResult> {
+    return this.http.put<AntiFraudAutoResult>(`${this.base}/anti-fraud/auto`, { enabled, threshold });
   }
 
   /** Ajoute un joueur (deja liste : note mise a jour). */

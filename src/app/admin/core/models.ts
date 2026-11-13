@@ -1177,7 +1177,10 @@ export interface AntiFraudTarget {
   phone: string;
   test: boolean;
   note: string;
+  /** Null : ajout automatique (Systeme). */
   addedBy: number | null;
+  /** Ajoute automatiquement apres N sans-faute solo payants. */
+  auto: boolean;
   addedAt: string;
   updatedAt: string;
 }
@@ -1185,5 +1188,14 @@ export interface AntiFraudTarget {
 /** Ecran anti-fraude : interrupteur « tous les joueurs » (staff exclu) et liste par joueur. */
 export interface AntiFraudOverview {
   allPlayers: boolean;
+  /** Ajout automatique a la liste apres N sans-faute solo payants. */
+  autoEnabled: boolean;
+  autoThreshold: number;
   targets: AntiFraudTarget[];
+}
+
+/** Reglage de l'ajout automatique enregistre : joueurs ajoutes d'un coup, et l'ecran a jour. */
+export interface AntiFraudAutoResult {
+  added: number;
+  overview: AntiFraudOverview;
 }
