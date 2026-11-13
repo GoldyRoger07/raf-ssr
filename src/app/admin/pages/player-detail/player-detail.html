@@ -37,6 +37,19 @@
           <p-tag [value]="'Profil ' + f.profileName + ' via ' + f.playerName" severity="danger" icon="pi pi-ban"
                  title="Un compte lie est liste comme fraudeur : son profil s'applique aussi a ce joueur" />
         }
+        @if (firstSoloOfferTag(); as t) {
+          @if (firstSoloOffer()?.sessionId; as sessionId) {
+            <a [routerLink]="['/admin/parties']" [queryParams]="{ partie: sessionId, joueur: id() }">
+              <p-tag [value]="t.value" [severity]="t.severity" icon="pi pi-gift" [title]="t.title" />
+            </a>
+          } @else if (firstSoloOffer()?.linkedPlayerId; as otherId) {
+            <a [routerLink]="['/admin/joueurs', otherId]">
+              <p-tag [value]="t.value" [severity]="t.severity" icon="pi pi-gift" [title]="t.title" />
+            </a>
+          } @else {
+            <p-tag [value]="t.value" [severity]="t.severity" icon="pi pi-gift" [title]="t.title" />
+          }
+        }
         @if (linkedAccounts().length) {
           <p-tag [value]="linkedAccounts().length + (linkedAccounts().length > 1 ? ' comptes lies' : ' compte lie')"
                  severity="danger" icon="pi pi-link" title="Comptes vus sur un meme appareil que ce joueur : voir l'onglet Comptes lies" />

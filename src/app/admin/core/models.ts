@@ -143,6 +143,27 @@ export interface LinkedAccount {
   lastSeenAt: string;
 }
 
+/** Premiere partie solo offerte : droit du joueur, et sinon pourquoi. */
+export type FirstSoloOfferReason =
+  | 'ELIGIBLE'
+  | 'RECEIVED'
+  | 'DISABLED'
+  | 'TEST'
+  | 'FRAUD'
+  | 'PAID'
+  | 'LINKED_RECEIVED'
+  | 'LINKED_PAID';
+
+export interface FirstSoloOfferStatus {
+  eligible: boolean;
+  reason: FirstSoloOfferReason;
+  /** RECEIVED : la partie offerte. */
+  sessionId?: number;
+  /** LINKED_* : le compte lie en cause. */
+  linkedPlayerId?: number;
+  linkedPlayerName?: string;
+}
+
 /** Filtres de la liste des joueurs ; une valeur absente ou nulle ne filtre pas. */
 export interface PlayerFilters {
   emailVerified?: boolean | null;

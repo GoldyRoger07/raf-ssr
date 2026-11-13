@@ -20,7 +20,7 @@ import { Subject, debounceTime } from 'rxjs';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
-import { TRANSACTION_TYPE, WITHDRAWAL_STATUS, providerLabel, withdrawalStatus } from '../../core/labels';
+import { Severity, TRANSACTION_TYPE, WITHDRAWAL_STATUS, providerLabel, withdrawalStatus } from '../../core/labels';
 import { PAGE_SIZE_OPTIONS, TableState } from '../../core/table-state';
 import {
   AdminWithdrawal,
@@ -28,6 +28,7 @@ import {
   BalanceType,
   FraudProfile,
   FraudSuspect,
+  FirstSoloOfferStatus,
   LinkedAccount,
   PlayerSummary,
   RetentionReason,
@@ -139,6 +140,27 @@ export default class PlayerDetail implements OnInit {
   protected readonly withdrawals = signal<AdminWithdrawal[]>([]);
   protected readonly withdrawalsTotal = signal(0);
   protected readonly linkedAccounts = signal<LinkedAccount[]>([]);
+  protected readonly firstSoloOffer = signal<FirstSoloOfferStatus | null>(null);
+
+  /** Etiquette de la premiere partie offerte : libelle court, explication au survol. */
+  protected readonly firstSoloOfferTag = computed(() => {
+    const o = this.firstSoloOffer();
+    if (!o) {
+      return null;
+    }
+    const other = o.linkedPlayerName || 'un compte lie';
+    const tags: Record<FirstSoloOfferStatus['reason'], { value: string; severity: Severity; title: string }> = {
+      ELIGIBLE: { value: '1re partie offerte : a droit', severity: 'success', title: 'Sa prochaine partie solo payante sera offerte' },
+      RECEIVED: { value: '1re partie offerte : deja recue', severity: 'info', title: o.sessionId ? 'Voir le corrige de la partie offerte' : 'Offre deja utilisee' },
+      DISABLED: { value: '1re partie offerte : coupee', severity: 'secondary', title: "L'interrupteur de l'ecran App joueur est coupe : personne n'y a droit" },
+      TEST: { value: '1re partie offerte : non (test)', severity: 'secondary', title: 'Compte de test : il joue deja gratuitement' },
+      FRAUD: { value: '1re partie offerte : non (fraudeur)', severity: 'danger', title: 'Lui ou un compte lie est liste comme fraudeur' },
+      PAID: { value: '1re partie offerte : non (deja paye)', severity: 'warn', title: 'Il a deja paye une partie solo' },
+      LINKED_RECEIVED: { value: '1re partie offerte : non (compte lie)', severity: 'warn', title: `${other} l'a deja recue, sur un appareil partage` },
+      LINKED_PAID: { value: '1re partie offerte : non (compte lie)', severity: 'warn', title: `${other} a deja paye une partie solo, sur un appareil partage` },
+    };
+    return tags[o.reason];
+  });
   protected readonly loadingWithdrawals = signal(false);
   protected readonly loadingTransactions = signal(false);
 
@@ -271,6 +293,7 @@ export default class PlayerDetail implements OnInit {
     this.loadWithdrawals();
     this.loadRetention();
     this.loadLinkedAccounts();
+    this.loadFirstSoloOffer();
     this.loadFraud();
     this.loadAntiFraud();
   }
@@ -407,6 +430,11 @@ export default class PlayerDetail implements OnInit {
   private antiFraudFailed(error: unknown): void {
     this.antiFraudBusy.set(false);
     this.messages.add({ severity: 'error', summary: 'Action impossible', detail: errorMessage(error) });
+  }
+
+  private loadFirstSoloOffer(): void {
+    this.firstSoloOffer.set(null);
+    this.api.firstSoloOffer(this.id()).subscribe({ next: (status) => this.firstSoloOffer.set(status) });
   }
 
   private loadLinkedAccounts(): void {

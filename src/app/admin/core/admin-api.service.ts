@@ -28,6 +28,7 @@ import {
   DepositNumbers,
   LeaderCommission,
   LeaderTransfer,
+  FirstSoloOfferStatus,
   LinkedAccount,
   News,
   NewsRequest,
@@ -274,6 +275,10 @@ export class AdminApi {
   }
 
   /** Comptes vus sur un appareil du joueur : ils partagent la limite solo du jour. */
+  firstSoloOffer(id: number): Observable<FirstSoloOfferStatus> {
+    return this.http.get<FirstSoloOfferStatus>(`${this.base}/players/${id}/first-solo-offer`);
+  }
+
   linkedAccounts(id: number): Observable<LinkedAccount[]> {
     return this.http.get<LinkedAccount[]>(`${this.base}/players/${id}/linked-accounts`);
   }
