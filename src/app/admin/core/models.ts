@@ -268,6 +268,9 @@ export interface LeaderPlayer {
   /** Commissions que ce joueur a rapportees a ce leader. */
   commissionsHtg: number;
   lastPlayedAt?: string | null;
+  /** Filleul dont le lien a servi a l'inscription ; null par le lien du leader ou un admin. */
+  invitedById?: number | null;
+  invitedByName?: string | null;
 }
 
 /** Recharge d'un joueur par son leader, avec les credits du leader. */

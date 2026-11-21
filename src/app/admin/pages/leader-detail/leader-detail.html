@@ -124,7 +124,14 @@
                 </td>
                 <td class="text-sm text-slate-500">
                   {{ p.addedAt | haitiDate }}
-                  <div class="text-xs">{{ p.viaInvite ? 'Par son lien' : 'Par un administrateur' }}</div>
+                  @if (p.invitedById) {
+                    <div class="text-xs">
+                      Invite par
+                      <a class="font-medium text-orange-600 hover:underline" [routerLink]="['/admin/joueurs', p.invitedById]">{{ p.invitedByName }}</a>
+                    </div>
+                  } @else {
+                    <div class="text-xs">{{ p.viaInvite ? 'Par son lien' : 'Par un administrateur' }}</div>
+                  }
                 </td>
                 <td class="text-sm">
                   @if (!p.viaInvite || p.signupBonusCredits === 0) {
