@@ -13,26 +13,65 @@
       <p-message severity="error" class="mb-4" [text]="message" />
     }
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
-      <div class="flex flex-col gap-2">
-        <label for="email" class="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
-        <input pInputText id="email" type="email" formControlName="email" autocomplete="username" class="w-full" />
-      </div>
+    @if (info(); as message) {
+      <p-message severity="success" class="mb-4" [text]="message" />
+    }
 
-      <div class="flex flex-col gap-2">
-        <label for="password" class="text-sm font-medium text-slate-700 dark:text-slate-300">Mot de passe</label>
-        <p-password
-          inputId="password"
-          formControlName="password"
-          [feedback]="false"
-          [toggleMask]="true"
-          autocomplete="current-password"
-          styleClass="w-full"
-          inputStyleClass="w-full"
-        />
-      </div>
+    @if (mfaToken() === null) {
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+        <div class="flex flex-col gap-2">
+          <label for="email" class="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+          <input pInputText id="email" type="email" formControlName="email" autocomplete="username" class="w-full" />
+        </div>
 
-      <p-button type="submit" label="Se connecter" [loading]="loading()" styleClass="w-full" />
-    </form>
+        <div class="flex flex-col gap-2">
+          <label for="password" class="text-sm font-medium text-slate-700 dark:text-slate-300">Mot de passe</label>
+          <p-password
+            inputId="password"
+            formControlName="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            autocomplete="current-password"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+          />
+        </div>
+
+        <p-button type="submit" label="Se connecter" [loading]="loading()" styleClass="w-full" />
+      </form>
+    } @else {
+      <form [formGroup]="codeForm" (ngSubmit)="submitCode()" class="space-y-5">
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Un code a 6 chiffres vient d'etre envoye a
+          <span class="font-medium text-slate-900 dark:text-slate-100">{{ form.controls.email.value }}</span>.
+          Il expire dans 10 minutes.
+        </p>
+
+        <div class="flex flex-col gap-2">
+          <label for="code" class="text-sm font-medium text-slate-700 dark:text-slate-300">Code de confirmation</label>
+          <input
+            pInputText
+            id="code"
+            formControlName="code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            class="w-full text-center font-mono text-2xl tracking-[0.5em]"
+            autofocus
+          />
+        </div>
+
+        <p-button type="submit" label="Valider" [loading]="loading()" styleClass="w-full" />
+
+        <div class="flex items-center justify-between text-sm">
+          <button type="button" class="text-slate-500 hover:underline" (click)="back()" [disabled]="loading()">
+            Retour
+          </button>
+          <button type="button" class="text-teal-700 hover:underline dark:text-teal-400" (click)="resend()" [disabled]="loading()">
+            Renvoyer un code
+          </button>
+        </div>
+      </form>
+    }
   </div>
 </div>

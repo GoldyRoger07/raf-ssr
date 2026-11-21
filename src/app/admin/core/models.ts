@@ -24,7 +24,16 @@ export interface TokenResponse {
   tokenType: string;
   expiresIn: number;
   user: UserResponse;
+  /** Compte du personnel : la connexion attend le code envoye par email. */
+  mfaRequired?: boolean;
+  /** A renvoyer avec ce code a /api/auth/login/verify. */
+  mfaToken?: string | null;
 }
+
+/** Resultat de la premiere etape : connecte, ou code email attendu. */
+export type LoginResult =
+  | { status: 'authenticated'; user: UserResponse }
+  | { status: 'code-required'; mfaToken: string };
 
 export type ProfitPeriod = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH' | 'LAST_MONTH' | 'ALL_TIME';
 

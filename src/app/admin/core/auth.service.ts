@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 
 import { API_BASE_URL } from './api';
-import { RoleName, TokenResponse, UserResponse } from './models';
+import { LoginResult, RoleName, TokenResponse, UserResponse } from './models';
 
 const REFRESH_KEY = 'raf-admin-refresh';
 
@@ -46,22 +46,40 @@ export class AuthService {
     return this.accessToken();
   }
 
-  login(email: string, password: string): Observable<UserResponse> {
+  /**
+   * Premiere etape : mot de passe. Un compte du personnel recoit ensuite un code
+   * par email ({@link verifyCode}) ; le backend ne renvoie aucun jeton avant.
+   */
+  login(email: string, password: string): Observable<LoginResult> {
     return this.http
       .post<TokenResponse>(`${this.apiUrl}/api/auth/login`, { email, password })
       .pipe(
-        map((response) => {
-          if (!response.user.roles.some((role) => STAFF_ROLES.includes(role))) {
-            // Le compte existe mais n'a rien a faire ici : on referme sa session.
-            this.http
-              .post(`${this.apiUrl}/api/auth/logout`, { refreshToken: response.refreshToken })
-              .subscribe({ error: () => undefined });
-            throw new Error("Ce compte n'a pas acces au back-office.");
+        map((response): LoginResult => {
+          if (response.mfaRequired && response.mfaToken) {
+            return { status: 'code-required', mfaToken: response.mfaToken };
           }
-          this.store(response);
-          return response.user;
+          return { status: 'authenticated', user: this.acceptStaff(response) };
         }),
       );
+  }
+
+  /** Seconde etape : code recu par email. */
+  verifyCode(mfaToken: string, code: string): Observable<UserResponse> {
+    return this.http
+      .post<TokenResponse>(`${this.apiUrl}/api/auth/login/verify`, { mfaToken, code })
+      .pipe(map((response) => this.acceptStaff(response)));
+  }
+
+  private acceptStaff(response: TokenResponse): UserResponse {
+    if (!response.user.roles.some((role) => STAFF_ROLES.includes(role))) {
+      // Le compte existe mais n'a rien a faire ici : on referme sa session.
+      this.http
+        .post(`${this.apiUrl}/api/auth/logout`, { refreshToken: response.refreshToken })
+        .subscribe({ error: () => undefined });
+      throw new Error("Ce compte n'a pas acces au back-office.");
+    }
+    this.store(response);
+    return response.user;
   }
 
   /**
