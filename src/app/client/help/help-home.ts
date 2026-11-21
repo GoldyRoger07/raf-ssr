@@ -6,19 +6,17 @@ import { IconComponent } from '../ui/icon';
 import { pageDescription } from '../ui/page';
 import { HELP_TOPICS, UI } from './help-content';
 import { HelpPrefs } from './help-prefs';
-import { LangSwitch } from './lang-switch';
 
 /** /aide : choix du probleme, en grandes tuiles faciles a toucher. */
 @Component({
   selector: 'raf-help-home',
-  imports: [RouterLink, IconComponent, LangSwitch],
+  imports: [RouterLink, IconComponent],
   template: `
     <section class="hero sunburst">
       <div class="inner">
         <span class="badge"><raf-icon name="question" [size]="56" /></span>
         <h1 class="title-stroke">{{ prefs.t(ui.pageTitle) }}</h1>
         <p class="lead">{{ prefs.t(ui.pageLead) }}</p>
-        <help-lang-switch />
       </div>
     </section>
 

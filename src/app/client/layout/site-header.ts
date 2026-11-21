@@ -3,7 +3,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { TPipe } from '../i18n';
 import { MAIN_NAV, SITE } from '../site';
+import { LangSelect } from '../ui/lang-select';
 
 /**
  * En-tete du site : transparent sur le haut de page, il prend un fond des que
@@ -11,30 +13,31 @@ import { MAIN_NAV, SITE } from '../site';
  */
 @Component({
   selector: 'site-header',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TPipe, LangSelect],
   template: `
     <header class="header" [class.solid]="scrolled() || menuOpen()">
-      <nav class="inner" aria-label="Navigation principale">
-        <a routerLink="/" class="logo" aria-label="RAF, accueil">
+      <nav class="inner" [attr.aria-label]="'Navigation principale' | t">
+        <a routerLink="/" class="logo" [attr.aria-label]="'RAF, accueil' | t">
           <img src="img/logo-raf.svg" alt="RAF" width="120" height="42" />
         </a>
 
         <ul class="links">
           @for (item of nav; track item.path) {
             <li>
-              <a [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+              <a [routerLink]="item.path" routerLinkActive="active">{{ item.label | t }}</a>
             </li>
           }
         </ul>
 
-        <a class="btn3d sm play" [href]="site.playerAppUrl">Jouer</a>
+        <site-lang-select class="lang" />
+        <a class="btn3d sm play" [href]="site.playerAppUrl">{{ 'Jouer' | t }}</a>
 
         <button
           type="button"
           class="burger"
           [attr.aria-expanded]="menuOpen()"
           aria-controls="site-menu"
-          [attr.aria-label]="menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
+          [attr.aria-label]="(menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu') | t"
           (click)="menuOpen.set(!menuOpen())"
         >
           <span></span><span></span><span></span>
@@ -43,9 +46,9 @@ import { MAIN_NAV, SITE } from '../site';
 
       <div id="site-menu" class="menu" [class.open]="menuOpen()">
         @for (item of nav; track item.path) {
-          <a [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+          <a [routerLink]="item.path" routerLinkActive="active">{{ item.label | t }}</a>
         }
-        <a class="btn3d" [href]="site.playerAppUrl">Jouer maintenant</a>
+        <a class="btn3d" [href]="site.playerAppUrl">{{ 'Jouer maintenant' | t }}</a>
       </div>
     </header>
   `,
@@ -86,7 +89,8 @@ import { MAIN_NAV, SITE } from '../site';
       transition: color 0.15s ease, background 0.15s ease;
     }
     .links a:hover, .links a.active { color: var(--raf-edge-dark); background: var(--raf-p100); }
-    .play { margin-left: auto; }
+    .lang { margin-left: auto; }
+    .play { margin-left: 0; }
     .burger {
       display: grid;
       gap: 5px;
@@ -130,7 +134,7 @@ import { MAIN_NAV, SITE } from '../site';
 
     @media (min-width: 1024px) {
       .links { display: flex; }
-      .play { margin-left: 0; }
+      .lang { margin-left: auto; }
       .burger, .menu { display: none; }
     }
   `,

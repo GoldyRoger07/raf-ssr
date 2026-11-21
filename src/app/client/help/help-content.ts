@@ -5,8 +5,10 @@
  * correcte ?) menent a des etapes courtes, suivies de « Ca a marche ? ». En cas
  * d'echec, on passe a la piste suivante, puis a un agent sur WhatsApp.
  *
- * Les libelles des ecrans (« Corriger », « Mot de passe oublié ? »...) restent en
- * francais entre « » dans les deux langues : c'est ce que le joueur voit a l'ecran.
+ * Les libelles des ecrans de RAF (« Corriger », « Mot de passe oublié ? »...) sont
+ * cites tels que le joueur les voit : en francais dans le texte francais, en kreyol
+ * (traduction de l'app, raf-ionic/src/app/core/i18n-ht.ts) dans le texte kreyol.
+ * Les ecrans du telephone (Chrome, Safari, Reglages, Gmail) restent cites en francais.
  *
  * Images : `image: 'img/aide/<fichier>'` sur une etape, une question ou une fin de
  * parcours (fichiers dans public/img/aide/). Les app-*.webp sont de vraies captures
@@ -90,7 +92,7 @@ const DEVICE_QUESTION = (android: string, iphone: string): HelpNode => ({
   ],
 });
 
-const PROFILE_STEP: HelpStep = { text: t('Dans RAF, touche « Profil » (en bas à droite).', 'Nan RAF, peze sou « Profil » (anba a dwat).') };
+const PROFILE_STEP: HelpStep = { text: t('Dans RAF, touche « Profil » (en bas à droite).', 'Nan RAF, peze sou « Pwofil » (anba a dwat).') };
 
 function spamNode(ko: string): HelpNode {
   return {
@@ -138,7 +140,7 @@ const EMAIL: HelpTopic = {
       title: t('D’abord, vérifions ton adresse email.', 'Anvan tout bagay, ann tcheke adrès imèl ou.'),
       hint: t(
         'Dans RAF, touche « Profil ». Ton adresse est écrite dans « Mon compte ». Compare-la lettre par lettre avec ta vraie adresse : gmail et pas gmial, .com et pas .co.',
-        'Nan RAF, peze sou « Profil ». Adrès ou ekri nan « Mon compte ». Konpare l lèt pa lèt ak vrè adrès ou : gmail epi pa gmial, .com epi pa .co.',
+        'Nan RAF, peze sou « Pwofil ». Adrès ou ekri nan « Kont mwen ». Konpare l lèt pa lèt ak vrè adrès ou : gmail epi pa gmial, .com epi pa .co.',
       ),
       image: 'img/aide/app-email-profil.webp',
       options: [
@@ -186,12 +188,12 @@ const EMAIL: HelpTopic = {
       title: t('Corriger ton adresse', 'Korije adrès ou'),
       steps: [
         PROFILE_STEP,
-        { text: t('À côté de ton email, touche « Corriger ».', 'Bò kote imèl ou, peze « Corriger ».'), image: 'img/aide/app-email-profil.webp' },
+        { text: t('À côté de ton email, touche « Corriger ».', 'Bò kote imèl ou, peze « Korije ».'), image: 'img/aide/app-email-profil.webp' },
         { text: t('Écris la bonne adresse, puis ton mot de passe RAF.', 'Ekri bon adrès la, epi modpas RAF ou.') },
         {
           text: t(
             'Touche « Enregistrer et renvoyer le lien ». Un nouvel email part vers la bonne adresse.',
-            'Peze « Enregistrer et renvoyer le lien ». Yon nouvo imèl ap pati nan bon adrès la.',
+            'Peze « Anrejistre epi voye lyen an ankò ». Yon nouvo imèl ap pati nan bon adrès la.',
           ),
           image: 'img/aide/app-email-corriger.webp',
         },
@@ -263,7 +265,7 @@ const EMAIL: HelpTopic = {
         {
           text: t(
             'RAF affiche « Email confirmé ». C’est terminé.',
-            'RAF ap ekri « Email confirmé ». Ou fini.',
+            'RAF ap ekri « Imèl konfime ». Ou fini.',
           ),
           image: 'img/aide/app-email-confirme.webp',
         },
@@ -278,7 +280,7 @@ const EMAIL: HelpTopic = {
       title: t('Recevoir un nouvel email', 'Resevwa yon nouvo imèl'),
       steps: [
         PROFILE_STEP,
-        { text: t('À côté de ton email, touche « Renvoyer ».', 'Bò kote imèl ou, peze « Renvoyer ».'), image: 'img/aide/app-email-profil.webp' },
+        { text: t('À côté de ton email, touche « Renvoyer ».', 'Bò kote imèl ou, peze « Voye ankò ».'), image: 'img/aide/app-email-profil.webp' },
         {
           text: t(
             'Attends 5 minutes, puis cherche encore RAF dans ta boîte mail et dans les spams.',
@@ -445,8 +447,8 @@ const INSTALL: HelpTopic = {
 
 const ENABLE_STEPS = (first: HelpStep): HelpStep[] => [
   first,
-  { text: t('Touche « Profil », puis « Notifications ».', 'Peze « Profil », epi « Notifications ».'), image: 'img/aide/app-notif-profil.webp' },
-  { text: t('Active « Notifications push ».', 'Aktive « Notifications push ».') },
+  { text: t('Touche « Profil », puis « Notifications ».', 'Peze « Pwofil », epi « Notifikasyon ».'), image: 'img/aide/app-notif-profil.webp' },
+  { text: t('Active « Notifications push ».', 'Aktive « Notifikasyon push ».') },
   { text: t('Une fenêtre s’ouvre : touche « Autoriser ».', 'Yon fenèt ap louvri : peze « Autoriser ».'), image: 'img/aide/notif-autoriser.svg' },
 ];
 
@@ -472,7 +474,7 @@ const NOTIFICATIONS: HelpTopic = {
       link: { label: t('Installer RAF d’abord', 'Enstale RAF anvan'), to: '/aide/installer' },
       ok: 'done',
       ko: 'android-blocked',
-      koLabel: t('C’est écrit « Bloquées »', 'Li ekri « Bloquées »'),
+      koLabel: t('C’est écrit « Bloquées »', 'Li ekri « Navigatè a bloke yo »'),
     },
     'android-blocked': {
       kind: 'steps',
@@ -492,7 +494,7 @@ const NOTIFICATIONS: HelpTopic = {
           ),
         },
         {
-          text: t('Reviens dans RAF et réessaie : « Profil » → « Notifications ».', 'Retounen nan RAF epi eseye ankò : « Profil » → « Notifications ».'),
+          text: t('Reviens dans RAF et réessaie : « Profil » → « Notifications ».', 'Retounen nan RAF epi eseye ankò : « Pwofil » → « Notifikasyon ».'),
         },
       ],
       ok: 'done',
@@ -549,7 +551,7 @@ const NOTIFICATIONS: HelpTopic = {
       title: t('Pas de notifications sur cet iPhone', 'Pa gen notifikasyon sou iPhone sa a'),
       text: t(
         'Cet iPhone est trop ancien pour les notifications. Ce n’est pas grave : toutes tes alertes restent dans l’onglet « Alertes » de RAF.',
-        'iPhone sa a twò ansyen pou notifikasyon. Sa pa grav : tout alèt ou yo rete nan onglè « Alertes » RAF la.',
+        'iPhone sa a twò ansyen pou notifikasyon. Sa pa grav : tout alèt ou yo rete nan onglè « Alèt » RAF la.',
       ),
       link: { label: t('Ouvrir RAF', 'Ouvri RAF'), to: 'app' },
     },
@@ -574,7 +576,7 @@ const NOTIFICATIONS: HelpTopic = {
         { text: t('Touche RAF dans la liste.', 'Peze RAF nan lis la.') },
         { text: t('Active « Autoriser les notifications ».', 'Aktive « Autoriser les notifications ».'), image: 'img/aide/iphone-reglages-notif.svg' },
         {
-          text: t('Reviens dans RAF et réessaie : « Profil » → « Notifications ».', 'Retounen nan RAF epi eseye ankò : « Profil » → « Notifications ».'),
+          text: t('Reviens dans RAF et réessaie : « Profil » → « Notifications ».', 'Retounen nan RAF epi eseye ankò : « Pwofil » → « Notifikasyon ».'),
         },
       ],
       ok: 'done',
@@ -598,7 +600,7 @@ const PASSWORD: HelpTopic = {
         {
           text: t(
             'Ouvre RAF. Sur l’écran de connexion, touche « Mot de passe oublié ? ».',
-            'Ouvri RAF. Sou ekran koneksyon an, peze « Mot de passe oublié ? ».',
+            'Ouvri RAF. Sou ekran koneksyon an, peze « Ou bliye modpas ou ? ».',
           ),
           image: 'img/aide/app-connexion-mdp.webp',
         },

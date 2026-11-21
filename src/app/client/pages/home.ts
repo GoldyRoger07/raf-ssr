@@ -6,6 +6,7 @@ import { IconComponent } from '../ui/icon';
 import { loadMotion } from '../ui/motion';
 import { PlayCta, pageDescription } from '../ui/page';
 import { RevealDirective } from '../ui/reveal';
+import { TPipe } from '../i18n';
 
 interface Item {
   icon: string;
@@ -72,7 +73,7 @@ const FAQ_TEASER = [
  */
 @Component({
   selector: 'raf-home',
-  imports: [RouterLink, IconComponent, RevealDirective, PlayCta],
+  imports: [TPipe, RouterLink, IconComponent, RevealDirective, PlayCta],
   templateUrl: './home.html',
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

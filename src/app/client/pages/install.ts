@@ -4,6 +4,7 @@ import { SITE } from '../site';
 import { IconComponent } from '../ui/icon';
 import { PageHero, PlayCta, pageDescription } from '../ui/page';
 import { RevealDirective } from '../ui/reveal';
+import { TPipe } from '../i18n';
 
 interface Guide {
   id: string;
@@ -49,7 +50,7 @@ const GUIDES: Guide[] = [
 
 @Component({
   selector: 'raf-install',
-  imports: [IconComponent, PageHero, PlayCta, RevealDirective],
+  imports: [TPipe, IconComponent, PageHero, PlayCta, RevealDirective],
   template: `
     <page-hero
       icon="phone"
@@ -62,28 +63,28 @@ const GUIDES: Guide[] = [
         <div reveal revealStagger class="grid three perks">
           <article class="tile card-raf">
             <raf-icon name="flame" [size]="48" />
-            <h3>Rapide à installer</h3>
-            <p>Aucun téléchargement lourd, aucun compte de store : quelques touches suffisent.</p>
+            <h3>{{ 'Rapide à installer' | t }}</h3>
+            <p>{{ 'Aucun téléchargement lourd, aucun compte de store : quelques touches suffisent.' | t }}</p>
           </article>
           <article class="tile card-raf">
             <raf-icon name="bell" [size]="48" />
-            <h3>Notifications incluses</h3>
-            <p>Une fois installée, l’app peut te prévenir du début d’un quiz, des résultats et de tes gains.</p>
+            <h3>{{ 'Notifications incluses' | t }}</h3>
+            <p>{{ 'Une fois installée, l’app peut te prévenir du début d’un quiz, des résultats et de tes gains.' | t }}</p>
           </article>
           <article class="tile card-raf">
             <raf-icon name="check" [size]="48" />
-            <h3>Toujours à jour</h3>
-            <p>Les nouveautés arrivent automatiquement, sans rien réinstaller.</p>
+            <h3>{{ 'Toujours à jour' | t }}</h3>
+            <p>{{ 'Les nouveautés arrivent automatiquement, sans rien réinstaller.' | t }}</p>
           </article>
         </div>
 
         <div class="guides">
           @for (g of guides; track g.id; let i = $index) {
             <article reveal [revealDelay]="i * 0.1" class="guide card-raf" [id]="g.id">
-              <h2 class="font-display">{{ g.title }} <small>{{ g.browser }}</small></h2>
+              <h2 class="font-display">{{ g.title | t }} <small>{{ g.browser | t }}</small></h2>
               <ol>
                 @for (s of g.steps; track s; let n = $index) {
-                  <li><span class="num">{{ n + 1 }}</span>{{ s }}</li>
+                  <li><span class="num">{{ n + 1 }}</span>{{ s | t }}</li>
                 }
               </ol>
             </article>
@@ -91,11 +92,10 @@ const GUIDES: Guide[] = [
         </div>
 
         <p reveal class="open">
-          <a class="btn3d green" [href]="site.playerAppUrl"><raf-icon name="play" [size]="22" /> Ouvrir RAF maintenant</a>
+          <a class="btn3d green" [href]="site.playerAppUrl"><raf-icon name="play" [size]="22" /> {{ 'Ouvrir RAF maintenant' | t }}</a>
         </p>
         <p reveal class="hint">
-          Tu ne vois pas l’option d’installation ? Mets ton navigateur à jour, ou continue simplement à jouer depuis le
-          navigateur : tout fonctionne de la même façon.
+          {{ 'Tu ne vois pas l’option d’installation ? Mets ton navigateur à jour, ou continue simplement à jouer depuis le navigateur : tout fonctionne de la même façon.' | t }}
         </p>
       </div>
     </section>

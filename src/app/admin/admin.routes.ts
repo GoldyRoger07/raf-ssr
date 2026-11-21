@@ -6,7 +6,7 @@ import { AdminApi } from './core/admin-api.service';
 import { MediaApi } from './core/media-api.service';
 import { QuestionApi } from './core/question-api.service';
 import { QuizApi } from './core/quiz-api.service';
-import { authInterceptor } from './core/auth.interceptor';
+import { authInterceptor, frenchInterceptor } from './core/auth.interceptor';
 import { adminGuard, staffGuard, superAdminGuard } from './core/auth.guard';
 import { AuthService } from './core/auth.service';
 
@@ -21,7 +21,7 @@ export default [
   {
     path: '',
     providers: [
-      provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+      provideHttpClient(withFetch(), withInterceptors([frenchInterceptor, authInterceptor])),
       AuthService,
       AdminApi,
       QuizApi,

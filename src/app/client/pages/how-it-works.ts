@@ -5,6 +5,7 @@ import { IconComponent } from '../ui/icon';
 import { PageHero, PlayCta, pageDescription } from '../ui/page';
 import { RevealDirective } from '../ui/reveal';
 import { ScrubLineDirective } from '../ui/scrub-line';
+import { TPipe } from '../i18n';
 
 interface Step {
   icon: string;
@@ -95,7 +96,7 @@ const DURING: Step[] = [
 
 @Component({
   selector: 'raf-how-it-works',
-  imports: [RouterLink, IconComponent, PageHero, PlayCta, RevealDirective, ScrubLineDirective],
+  imports: [TPipe, RouterLink, IconComponent, PageHero, PlayCta, RevealDirective, ScrubLineDirective],
   template: `
     <page-hero
       icon="question"
@@ -107,15 +108,15 @@ const DURING: Step[] = [
     <section class="section">
       <div class="container">
         <header class="section-head">
-          <p reveal class="chip-raf">Avant de jouer</p>
-          <h2 reveal class="h2">Trois choses à faire une seule fois</h2>
+          <p reveal class="chip-raf">{{ 'Avant de jouer' | t }}</p>
+          <h2 reveal class="h2">{{ 'Trois choses à faire une seule fois' | t }}</h2>
         </header>
         <div reveal revealStagger class="grid three">
           @for (s of before; track s.title) {
             <article class="tile card-raf">
               <raf-icon [name]="s.icon" [size]="52" />
-              <h3>{{ s.title }}</h3>
-              <p>{{ s.text }}</p>
+              <h3>{{ s.title | t }}</h3>
+              <p>{{ s.text | t }}</p>
             </article>
           }
         </div>
@@ -125,17 +126,17 @@ const DURING: Step[] = [
     <section class="section tinted">
       <div class="container narrow">
         <header class="section-head">
-          <p reveal class="chip-raf">Mode En groupe</p>
-          <h2 reveal class="h2">La vie d’un quiz, de l’annonce aux gains</h2>
+          <p reveal class="chip-raf">{{ 'Mode En groupe' | t }}</p>
+          <h2 reveal class="h2">{{ 'La vie d’un quiz, de l’annonce aux gains' | t }}</h2>
         </header>
         <div class="timeline">
           <span class="timeline-track" aria-hidden="true"><span class="timeline-fill" scrubLine></span></span>
           @for (s of lifecycle; track s.title) {
             <article reveal="right" class="event card-raf">
               <span class="event-dot"><raf-icon [name]="s.icon" [size]="38" /></span>
-              <span class="tag">{{ s.tag }}</span>
-              <h3>{{ s.title }}</h3>
-              <p>{{ s.text }}</p>
+              <span class="tag">{{ s.tag! | t }}</span>
+              <h3>{{ s.title | t }}</h3>
+              <p>{{ s.text | t }}</p>
             </article>
           }
         </div>
@@ -145,15 +146,15 @@ const DURING: Step[] = [
     <section class="section">
       <div class="container">
         <header class="section-head">
-          <p reveal class="chip-raf">Pendant une partie</p>
-          <h2 reveal class="h2">Ce qu’il faut savoir avant d’appuyer sur « Jouer »</h2>
+          <p reveal class="chip-raf">{{ 'Pendant une partie' | t }}</p>
+          <h2 reveal class="h2">{{ 'Ce qu’il faut savoir avant d’appuyer sur « Jouer »' | t }}</h2>
         </header>
         <div reveal revealStagger class="grid two">
           @for (s of during; track s.title) {
             <article class="tile card-raf">
               <raf-icon [name]="s.icon" [size]="52" />
-              <h3>{{ s.title }}</h3>
-              <p>{{ s.text }}</p>
+              <h3>{{ s.title | t }}</h3>
+              <p>{{ s.text | t }}</p>
             </article>
           }
         </div>
@@ -163,18 +164,17 @@ const DURING: Step[] = [
     <section class="section tinted">
       <div class="container split">
         <div>
-          <p reveal class="chip-raf">Le classement</p>
-          <h2 reveal class="h2" style="margin: 12px 0 18px">Comment on départage les joueurs</h2>
+          <p reveal class="chip-raf">{{ 'Le classement' | t }}</p>
+          <h2 reveal class="h2" style="margin: 12px 0 18px">{{ 'Comment on départage les joueurs' | t }}</h2>
           <ul reveal revealStagger class="checklist">
-            <li><raf-icon name="star" [size]="26" /> Chaque bonne réponse rapporte le même nombre de points, fixé par le quiz.</li>
-            <li><raf-icon name="ticket" [size]="26" /> Si tu as joué plusieurs tickets, seule ta meilleure partie compte.</li>
-            <li><raf-icon name="clock" [size]="26" /> En cas d’égalité, le joueur qui a lancé sa première partie le plus tôt passe devant.</li>
-            <li><raf-icon name="crown" [size]="26" /> Les rangs récompensés et leurs montants sont affichés dans la fiche du quiz.</li>
+            <li><raf-icon name="star" [size]="26" /> {{ 'Chaque bonne réponse rapporte le même nombre de points, fixé par le quiz.' | t }}</li>
+            <li><raf-icon name="ticket" [size]="26" /> {{ 'Si tu as joué plusieurs tickets, seule ta meilleure partie compte.' | t }}</li>
+            <li><raf-icon name="clock" [size]="26" /> {{ 'En cas d’égalité, le joueur qui a lancé sa première partie le plus tôt passe devant.' | t }}</li>
+            <li><raf-icon name="crown" [size]="26" /> {{ 'Les rangs récompensés et leurs montants sont affichés dans la fiche du quiz.' | t }}</li>
           </ul>
         </div>
         <div reveal="zoom" class="formula card-raf">
-          Score = bonnes réponses × points
-          <small>Une question sans réponse ou fausse rapporte 0 point.</small>
+          {{ 'Score = bonnes réponses × points' | t }} <small>{{ 'Une question sans réponse ou fausse rapporte 0 point.' | t }}</small>
         </div>
       </div>
     </section>
@@ -183,24 +183,20 @@ const DURING: Step[] = [
       <div class="container split">
         <div reveal="left" class="tile card-raf">
           <raf-icon name="flame" [size]="56" />
-          <h3 class="font-display" style="font-size: 1.8rem; font-weight: 400">Le mode Solo</h3>
+          <h3 class="font-display" style="font-size: 1.8rem; font-weight: 400">{{ 'Le mode Solo' | t }}</h3>
           <p>
-            Pas de ticket ni de classement : tu paies ta partie en crédits et tu joues tout de suite. Réussis toutes les
-            questions (le sans-faute) et le prix du quiz est versé aussitôt sur ton solde de gains. Une seule partie par sujet
-            et par jour. Tu sais tout de suite si tu as gagné ; le détail des réponses est dévoilé à la fermeture du quiz.
+            {{ 'Pas de ticket ni de classement : tu paies ta partie en crédits et tu joues tout de suite. Réussis toutes les questions (le sans-faute) et le prix du quiz est versé aussitôt sur ton solde de gains. Une seule partie par sujet et par jour. Tu sais tout de suite si tu as gagné ; le détail des réponses est dévoilé à la fermeture du quiz.' | t }}
           </p>
         </div>
         <div reveal="right" class="tile card-raf">
           <raf-icon name="bank" [size]="56" />
-          <h3 class="font-display" style="font-size: 1.8rem; font-weight: 400">Retirer tes gains</h3>
+          <h3 class="font-display" style="font-size: 1.8rem; font-weight: 400">{{ 'Retirer tes gains' | t }}</h3>
           <p>
-            Tes gains sont en gourdes sur un solde séparé de tes crédits. Depuis l’app, demande un retrait vers MonCash,
-            NatCash ou en espèces. Tu confirmes avec un code reçu par SMS, l’équipe RAF valide la demande, puis l’argent
-            est versé. Au guichet, un code de remise t’est envoyé : personne d’autre ne peut récupérer ton argent.
+            {{ 'Tes gains sont en gourdes sur un solde séparé de tes crédits. Depuis l’app, demande un retrait vers MonCash, NatCash ou en espèces. Tu confirmes avec un code reçu par SMS, l’équipe RAF valide la demande, puis l’argent est versé. Au guichet, un code de remise t’est envoyé : personne d’autre ne peut récupérer ton argent.' | t }}
           </p>
           <p style="margin-top: 10px">
-            Montant minimum, frais et plafond journalier : ils sont affichés dans l’app au moment du retrait.
-            <a routerLink="/regles" fragment="retraits" style="color: var(--raf-edge-dark); font-weight: 900; text-decoration: underline">Voir les règles</a>
+            {{ 'Montant minimum, frais et plafond journalier : ils sont affichés dans l’app au moment du retrait.' | t }}
+            <a routerLink="/regles" fragment="retraits" style="color: var(--raf-edge-dark); font-weight: 900; text-decoration: underline">{{ 'Voir les règles' | t }}</a>
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { initSiteLang } from '../i18n';
 import { IconDefsComponent } from '../ui/icon';
 import { SiteFooter } from './site-footer';
 import { SiteHeader } from './site-header';
@@ -21,4 +22,9 @@ import { SiteHeader } from './site-header';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class SiteLayout {}
+export default class SiteLayout {
+  constructor() {
+    // Prerendu en francais ; la langue choisie (ou ?lang= de l'app) s'applique ici.
+    afterNextRender(() => initSiteLang(new URLSearchParams(location.search).get('lang')));
+  }
+}

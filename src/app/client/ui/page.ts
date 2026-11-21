@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { SITE } from '../site';
 import { IconComponent } from './icon';
 import { RevealDirective } from './reveal';
+import { TPipe } from '../i18n';
 
 /**
  * Description de la page pour les moteurs de recherche et les apercus de liens.
@@ -19,7 +20,7 @@ export function pageDescription(description: string): void {
 /** Bandeau de titre des pages interieures, sur le fond rayonnant du jeu. */
 @Component({
   selector: 'page-hero',
-  imports: [IconComponent, RevealDirective],
+  imports: [TPipe, IconComponent, RevealDirective],
   template: `
     <section class="hero sunburst">
       <div class="inner">
@@ -27,11 +28,11 @@ export function pageDescription(description: string): void {
           <span reveal="zoom" class="badge"><raf-icon [name]="name" [size]="64" /></span>
         }
         @if (kicker(); as k) {
-          <p reveal class="chip-raf">{{ k }}</p>
+          <p reveal class="chip-raf">{{ k | t }}</p>
         }
-        <h1 reveal [revealDelay]="0.08" class="title-stroke">{{ title() }}</h1>
+        <h1 reveal [revealDelay]="0.08" class="title-stroke">{{ title() | t }}</h1>
         @if (lead(); as l) {
-          <p reveal [revealDelay]="0.16" class="lead">{{ l }}</p>
+          <p reveal [revealDelay]="0.16" class="lead">{{ l | t }}</p>
         }
       </div>
     </section>
@@ -64,17 +65,17 @@ export class PageHero {
 /** Dernier appel a l'action, en bas des pages : ouvrir l'app joueur. */
 @Component({
   selector: 'play-cta',
-  imports: [IconComponent, RevealDirective, RouterLink],
+  imports: [TPipe, IconComponent, RevealDirective, RouterLink],
   template: `
     <section class="wrap">
       <div reveal="zoom" class="cta">
         <raf-icon class="coin c1" name="coin" [size]="54" />
         <raf-icon class="coin c2" name="trophy" [size]="60" />
-        <h2 class="title-stroke">{{ title() }}</h2>
-        <p>{{ text() }}</p>
+        <h2 class="title-stroke">{{ title() | t }}</h2>
+        <p>{{ text() | t }}</p>
         <div class="actions">
-          <a class="btn3d green" [href]="site.playerAppUrl">Jouer maintenant</a>
-          <a class="btn3d light" routerLink="/installer">Installer l’app</a>
+          <a class="btn3d green" [href]="site.playerAppUrl">{{ 'Jouer maintenant' | t }}</a>
+          <a class="btn3d light" routerLink="/installer">{{ 'Installer l’app' | t }}</a>
         </div>
       </div>
     </section>

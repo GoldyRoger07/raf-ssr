@@ -9,6 +9,17 @@ import { AuthService } from './auth.service';
 const AUTH_PATHS = ['/api/auth/login', '/api/auth/refresh', '/api/auth/logout'];
 
 /**
+ * Le back-office reste en francais : sans cela, un navigateur regle en kreyol
+ * recevrait les messages d'erreur du backend en kreyol (Accept-Language: ht).
+ */
+export const frenchInterceptor: HttpInterceptorFn = (request, next) => {
+  const apiUrl = inject(API_BASE_URL);
+  return request.url.startsWith(`${apiUrl}/api/`)
+    ? next(request.clone({ setHeaders: { 'Accept-Language': 'fr' } }))
+    : next(request);
+};
+
+/**
  * Ajoute le jeton d'acces aux appels du backend. Sur un 401, rafraichit le jeton
  * une fois puis rejoue la requete ; si le rafraichissement echoue, la session est
  * perdue et l'utilisateur revient a la connexion.

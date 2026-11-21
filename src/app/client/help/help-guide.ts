@@ -10,7 +10,6 @@ import { IconComponent } from '../ui/icon';
 import { pageDescription } from '../ui/page';
 import { Device, HelpLink, HelpNode, UI, findTopic } from './help-content';
 import { HelpPrefs } from './help-prefs';
-import { LangSwitch } from './lang-switch';
 
 const DEVICE_NAMES: Record<Device, string> = { android: 'Android', iphone: 'iPhone' };
 
@@ -21,14 +20,13 @@ const DEVICE_NAMES: Record<Device, string> = { android: 'Android', iphone: 'iPho
  */
 @Component({
   selector: 'raf-help-guide',
-  imports: [NgTemplateOutlet, RouterLink, IconComponent, LangSwitch],
+  imports: [NgTemplateOutlet, RouterLink, IconComponent],
   template: `
     @if (topic(); as topic) {
       <section class="hero sunburst">
         <div class="inner">
           <span class="badge"><raf-icon [name]="topic.icon" [size]="56" /></span>
           <h1 class="title-stroke">{{ prefs.t(topic.title) }}</h1>
-          <help-lang-switch />
         </div>
       </section>
 

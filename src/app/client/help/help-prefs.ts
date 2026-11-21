@@ -1,12 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { ParamMap } from '@angular/router';
 
+import { initSiteLang, setSiteLang, siteLang } from '../i18n';
 import { Device, Lang, Text } from './help-content';
-
-const LANG_KEY = 'raf.aide.lang';
 
 /**
  * Langue et telephone du joueur pour le guide d'aide, partages entre ses pages.
+ * La langue est celle du site (choisie dans l'en-tete) : le guide la suit.
  *
  * Les pages sont prerendues en francais, sans telephone connu ; la lecture de
  * l'URL (?lang=ht&appareil=iphone, envoyes par l'app joueur), du stockage et du
@@ -14,7 +14,7 @@ const LANG_KEY = 'raf.aide.lang';
  */
 @Injectable({ providedIn: 'root' })
 export class HelpPrefs {
-  readonly lang = signal<Lang>('fr');
+  readonly lang = siteLang.asReadonly();
   readonly device = signal<Device | null>(null);
   private initialized = false;
 
@@ -24,12 +24,7 @@ export class HelpPrefs {
   }
 
   setLang(lang: Lang): void {
-    this.lang.set(lang);
-    try {
-      localStorage.setItem(LANG_KEY, lang);
-    } catch {
-      // Navigation privee : le choix vaut pour la visite en cours.
-    }
+    setSiteLang(lang);
   }
 
   /** A appeler dans afterNextRender : n'a d'effet qu'une fois par visite. */
@@ -39,17 +34,7 @@ export class HelpPrefs {
     }
     this.initialized = true;
 
-    const fromUrl = query.get('lang');
-    let saved: string | null = null;
-    try {
-      saved = localStorage.getItem(LANG_KEY);
-    } catch {
-      // idem
-    }
-    const lang = fromUrl ?? saved;
-    if (lang === 'ht' || lang === 'fr') {
-      this.lang.set(lang);
-    }
+    initSiteLang(query.get('lang'));
 
     const device = query.get('appareil');
     this.device.set(device === 'android' || device === 'iphone' ? device : detectDevice());

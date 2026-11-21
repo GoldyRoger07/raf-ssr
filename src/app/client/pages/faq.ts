@@ -5,6 +5,7 @@ import { SITE } from '../site';
 import { IconComponent } from '../ui/icon';
 import { PageHero, PlayCta, pageDescription } from '../ui/page';
 import { RevealDirective } from '../ui/reveal';
+import { TPipe } from '../i18n';
 
 interface Faq {
   q: string;
@@ -73,7 +74,7 @@ const GROUPS: FaqGroup[] = [
 
 @Component({
   selector: 'raf-faq',
-  imports: [RouterLink, IconComponent, PageHero, PlayCta, RevealDirective],
+  imports: [TPipe, RouterLink, IconComponent, PageHero, PlayCta, RevealDirective],
   template: `
     <page-hero
       icon="question"
@@ -84,20 +85,20 @@ const GROUPS: FaqGroup[] = [
 
     <section class="section">
       <div class="container narrow">
-        <nav reveal revealStagger class="jump" aria-label="Thèmes">
+        <nav reveal revealStagger class="jump" [attr.aria-label]="'Thèmes' | t">
           @for (g of groups; track g.id) {
-            <a class="chip-raf" routerLink="/faq" [fragment]="g.id"><raf-icon [name]="g.icon" [size]="20" /> {{ g.title }}</a>
+            <a class="chip-raf" routerLink="/faq" [fragment]="g.id"><raf-icon [name]="g.icon" [size]="20" /> {{ g.title | t }}</a>
           }
         </nav>
 
         @for (g of groups; track g.id) {
           <section class="group" [id]="g.id">
-            <h2 reveal class="h2 group-title"><raf-icon [name]="g.icon" [size]="44" /> {{ g.title }}</h2>
+            <h2 reveal class="h2 group-title"><raf-icon [name]="g.icon" [size]="44" /> {{ g.title | t }}</h2>
             <div reveal revealStagger class="list">
               @for (f of g.items; track f.q) {
                 <details class="item card-raf">
-                  <summary>{{ f.q }}</summary>
-                  <p>{{ f.a }}</p>
+                  <summary>{{ f.q | t }}</summary>
+                  <p>{{ f.a | t }}</p>
                 </details>
               }
             </div>
@@ -105,8 +106,7 @@ const GROUPS: FaqGroup[] = [
         }
 
         <p reveal class="more">
-          Pas trouvé ta réponse ? Appelle-nous au <a [href]="site.phoneHref">{{ site.phone }}</a> ou écris-nous sur
-          <a [href]="site.whatsappHref" target="_blank" rel="noopener">WhatsApp</a>.
+          {{ 'Pas trouvé ta réponse ? Appelle-nous au' | t }} <a [href]="site.phoneHref">{{ site.phone }}</a> {{ 'ou écris-nous sur' | t }} <a [href]="site.whatsappHref" target="_blank" rel="noopener">WhatsApp</a>.
         </p>
       </div>
     </section>

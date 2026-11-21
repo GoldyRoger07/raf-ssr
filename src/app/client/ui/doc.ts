@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LEGAL_NAV, SITE } from '../site';
 import { PageHero } from './page';
 import { RevealDirective } from './reveal';
+import { TPipe } from '../i18n';
 
 export interface DocSection {
   /** Ancre de la section (id du h2 correspondant dans le texte). */
@@ -18,27 +19,27 @@ export interface DocSection {
  */
 @Component({
   selector: 'doc-page',
-  imports: [RouterLink, RouterLinkActive, PageHero, RevealDirective],
+  imports: [TPipe, RouterLink, RouterLinkActive, PageHero, RevealDirective],
   template: `
     <page-hero [icon]="icon()" kicker="Informations" [title]="title()" [lead]="lead()" />
 
     <div class="container">
       <div class="doc">
-        <nav reveal="left" class="toc card-raf" aria-label="Sommaire">
-          <h2>Sommaire</h2>
+        <nav reveal="left" class="toc card-raf" [attr.aria-label]="'Sommaire' | t">
+          <h2>{{ 'Sommaire' | t }}</h2>
           @for (s of sections(); track s.id) {
-            <a routerLink="." [fragment]="s.id">{{ s.label }}</a>
+            <a routerLink="." [fragment]="s.id">{{ s.label | t }}</a>
           }
           <div class="others">
-            <h2>Voir aussi</h2>
+            <h2>{{ 'Voir aussi' | t }}</h2>
             @for (l of legalNav; track l.path) {
-              <a [routerLink]="l.path" routerLinkActive="current">{{ l.label }}</a>
+              <a [routerLink]="l.path" routerLinkActive="current">{{ l.label | t }}</a>
             }
           </div>
         </nav>
 
         <article reveal class="doc-body card-raf prose-raf">
-          <p class="updated">Dernière mise à jour : {{ site.legalUpdatedAt }}</p>
+          <p class="updated">{{ 'Dernière mise à jour : {date}' | t: { date: site.legalUpdatedAt | t } }}</p>
           <ng-content />
         </article>
       </div>

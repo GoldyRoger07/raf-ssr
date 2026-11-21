@@ -2,36 +2,37 @@ import { ChangeDetectionStrategy, Component, afterNextRender, signal } from '@an
 import { RouterLink } from '@angular/router';
 
 import { LEGAL_NAV, MAIN_NAV, SITE } from '../site';
+import { TPipe } from '../i18n';
 
 @Component({
   selector: 'site-footer',
-  imports: [RouterLink],
+  imports: [TPipe, RouterLink],
   template: `
     <footer class="footer">
       <div class="inner">
         <div class="brand">
           <img src="img/logo-raf.svg" alt="RAF" width="120" height="42" />
-          <p>Le quiz qui récompense ce que tu sais. Joue depuis ton téléphone, grimpe au classement, encaisse tes gains en gourdes.</p>
-          <a class="btn3d sm light" [href]="site.playerAppUrl">Ouvrir l’app</a>
+          <p>{{ 'Le quiz qui récompense ce que tu sais. Joue depuis ton téléphone, grimpe au classement, encaisse tes gains en gourdes.' | t }}</p>
+          <a class="btn3d sm light" [href]="site.playerAppUrl">{{ 'Ouvrir l’app' | t }}</a>
         </div>
 
         <div>
-          <h2>Découvrir</h2>
-          <a routerLink="/">Accueil</a>
+          <h2>{{ 'Découvrir' | t }}</h2>
+          <a routerLink="/">{{ 'Accueil' | t }}</a>
           @for (item of mainNav; track item.path) {
-            <a [routerLink]="item.path">{{ item.label }}</a>
+            <a [routerLink]="item.path">{{ item.label | t }}</a>
           }
         </div>
 
         <div>
-          <h2>Informations</h2>
+          <h2>{{ 'Informations' | t }}</h2>
           @for (item of legalNav; track item.path) {
-            <a [routerLink]="item.path">{{ item.label }}</a>
+            <a [routerLink]="item.path">{{ item.label | t }}</a>
           }
         </div>
 
         <div>
-          <h2>Nous contacter</h2>
+          <h2>{{ 'Nous contacter' | t }}</h2>
           <a [href]="site.phoneHref">{{ site.phone }}</a>
           <a [href]="site.whatsappHref" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> WhatsApp</a>
           @if (instagramUrl(); as url) {
@@ -41,8 +42,8 @@ import { LEGAL_NAV, MAIN_NAV, SITE } from '../site';
       </div>
 
       <div class="bottom">
-        <p class="age"><span>{{ site.minimumAge }}+</span> RAF est réservé aux personnes majeures. Joue pour le plaisir et fixe-toi une limite.</p>
-        <p>© {{ year }} {{ site.company }}. Tous droits réservés.</p>
+        <p class="age"><span>{{ site.minimumAge }}+</span> {{ 'RAF est réservé aux personnes majeures. Joue pour le plaisir et fixe-toi une limite.' | t }}</p>
+        <p>© {{ year }} {{ site.company }}. {{ 'Tous droits réservés.' | t }}</p>
       </div>
     </footer>
   `,
