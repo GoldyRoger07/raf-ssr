@@ -5,6 +5,37 @@
   </p>
 </div>
 
+@if (codes(); as c) {
+  <section class="mb-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+           [class.ring-2]="c.byEmail" [class.ring-amber-400]="c.byEmail">
+    <div class="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <i class="pi pi-envelope text-2xl" [class.text-amber-500]="c.byEmail" [class.text-slate-400]="!c.byEmail"></i>
+      <div class="min-w-64 flex-1">
+        <h2 class="font-semibold">Codes de retrait par email</h2>
+        <p class="text-sm text-slate-500">
+          Secours si les SMS sont indisponibles (abonnement Twilio suspendu) : les codes de retrait partent a l'email du joueur.
+        </p>
+      </div>
+      <span class="rounded-full px-3 py-1 text-sm font-medium"
+            [class.bg-amber-100]="c.byEmail" [class.text-amber-800]="c.byEmail"
+            [class.bg-slate-100]="!c.byEmail" [class.text-slate-700]="!c.byEmail">
+        {{ c.byEmail ? 'Actuellement : par email' : 'Actuellement : par SMS' }}
+      </span>
+      <p-button [label]="c.byEmail ? 'Revenir au SMS' : 'Passer par email'" size="small"
+                [severity]="c.byEmail ? 'primary' : 'danger'" [outlined]="!c.byEmail"
+                [icon]="c.byEmail ? 'pi pi-mobile' : 'pi pi-envelope'" (onClick)="askCodes(!c.byEmail)" />
+    </div>
+    <div class="px-5 py-4">
+      <ul class="list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+        <li>Concerne la confirmation d'un retrait, le code de remise au guichet et le retrait saisi au guichet. La verification du telephone reste par SMS.</li>
+        <li>Active, un email confirme suffit pour retirer : le telephone verifie n'est plus exige.</li>
+        <li>Les retraits confirmes par email portent le repere « Code par email » dans la liste des retraits.</li>
+        <li>Chaque bascule est tracee au journal d'audit et signalee par email a tous les administrateurs.</li>
+      </ul>
+    </div>
+  </section>
+}
+
 @if (error(); as message) {
   <p-message severity="error" [text]="message" />
 } @else if (loading()) {
@@ -79,5 +110,28 @@
   <ng-template #footer>
     <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="rateOpen.set(false)" />
     <p-button label="Changer la valeur" severity="danger" [disabled]="!impact()" [loading]="saving() !== null" (onClick)="confirmRate()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Confirmation : codes de retrait par email -->
+<p-dialog [header]="codesTarget() ? 'Envoyer les codes de retrait par email' : 'Revenir aux codes par SMS'"
+          [(visible)]="codesConfirmOpen" [modal]="true" [style]="{ width: '34rem' }" [draggable]="false" (onHide)="codesTarget.set(null)">
+  @if (codesTarget()) {
+    <p-message severity="warn" styleClass="mb-4"
+               text="Une boite mail se pirate plus facilement qu'une puce : a n'activer que si les SMS ne partent plus." />
+    <p class="text-sm">
+      Les codes de retrait partiront a l'adresse email du joueur, et un email confirme suffira pour retirer.
+      Tous les administrateurs seront prevenus par email.
+    </p>
+  } @else {
+    <p class="text-sm">
+      Les codes de retrait repartiront par SMS, et le telephone verifie sera de nouveau exige pour retirer.
+      Verifiez d'abord que les SMS partent bien. Tous les administrateurs seront prevenus par email.
+    </p>
+  }
+  <ng-template #footer>
+    <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="codesConfirmOpen.set(false)" />
+    <p-button [label]="codesTarget() ? 'Passer par email' : 'Revenir au SMS'" [severity]="codesTarget() ? 'danger' : 'primary'"
+              [loading]="codesSaving()" (onClick)="confirmCodes()" />
   </ng-template>
 </p-dialog>

@@ -20,6 +20,7 @@ import {
   RoleName,
   SocialLinks,
   PlayerAppConfig,
+  WithdrawalCodesConfig,
   UserResponse,
   UserStatus,
   BalanceType,
@@ -85,6 +86,15 @@ export class AdminApi {
 
   updateSetting(key: string, value: number): Observable<AppSetting> {
     return this.http.put<AppSetting>(`${this.base}/settings/${encodeURIComponent(key)}`, { value: String(value) });
+  }
+
+  withdrawalCodes(): Observable<WithdrawalCodesConfig> {
+    return this.http.get<WithdrawalCodesConfig>(`${this.base}/withdrawal-codes`);
+  }
+
+  /** Reserve au SUPER_ADMIN ; previent les administrateurs par email. */
+  updateWithdrawalCodes(byEmail: boolean): Observable<WithdrawalCodesConfig> {
+    return this.http.put<WithdrawalCodesConfig>(`${this.base}/withdrawal-codes`, { byEmail });
   }
 
   playerApp(): Observable<PlayerAppConfig> {

@@ -9,7 +9,7 @@ import { MessageModule } from 'primeng/message';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
 import { HaitiDatePipe, HtgPipe } from '../../core/format';
-import { AppSetting, Dashboard } from '../../core/models';
+import { AppSetting, Dashboard, WithdrawalCodesConfig } from '../../core/models';
 
 interface SettingMeta {
   group: string;
@@ -94,8 +94,45 @@ export default class Settings {
     };
   });
 
+  // Codes de retrait par email (secours si les SMS sont indisponibles).
+  protected readonly codes = signal<WithdrawalCodesConfig | null>(null);
+  protected readonly codesSaving = signal(false);
+  protected readonly codesConfirmOpen = signal(false);
+  /** Valeur demandee, en attente de confirmation (null : aucune). */
+  protected readonly codesTarget = signal<boolean | null>(null);
+
   constructor() {
     this.load();
+    this.api.withdrawalCodes().subscribe({ next: (c) => this.codes.set(c), error: () => this.codes.set(null) });
+  }
+
+  protected askCodes(byEmail: boolean): void {
+    this.codesTarget.set(byEmail);
+    this.codesConfirmOpen.set(true);
+  }
+
+  protected confirmCodes(): void {
+    const byEmail = this.codesTarget();
+    if (byEmail === null) {
+      return;
+    }
+    this.codesSaving.set(true);
+    this.api.updateWithdrawalCodes(byEmail).subscribe({
+      next: (c) => {
+        this.codes.set(c);
+        this.codesSaving.set(false);
+        this.codesConfirmOpen.set(false);
+        this.messages.add({
+          severity: c.byEmail ? 'warn' : 'success',
+          summary: c.byEmail ? 'Codes de retrait par email' : 'Codes de retrait par SMS',
+          detail: 'Les administrateurs ont ete prevenus par email.',
+        });
+      },
+      error: (error) => {
+        this.codesSaving.set(false);
+        this.messages.add({ severity: 'error', summary: 'Changement impossible', detail: errorMessage(error), life: 8000 });
+      },
+    });
   }
 
   protected load(): void {

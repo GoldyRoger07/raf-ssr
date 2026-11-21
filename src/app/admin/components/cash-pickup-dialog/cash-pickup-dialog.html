@@ -13,8 +13,8 @@
 
     @if (!codeSent()) {
       <p class="mb-5 text-sm text-slate-600 dark:text-slate-300">
-        Verifiez l'identite du joueur, puis envoyez-lui un code par SMS. Il devra vous le donner
-        pour que la remise soit validee.
+        Verifiez l'identite du joueur, puis envoyez-lui un code (par SMS, ou par email quand les codes
+        de retrait passent par email). Il devra vous le donner pour que la remise soit validee.
       </p>
       <p-button label="Envoyer le code au joueur" icon="pi pi-send" [loading]="busy()" styleClass="w-full" (onClick)="sendCode()" />
     } @else {

@@ -213,6 +213,12 @@
         </td>
         <td>
           <p-tag [value]="withdrawalStatus(row.withdrawal.status).label" [severity]="withdrawalStatus(row.withdrawal.status).severity" />
+          @if (row.withdrawal.otpChannel === 'EMAIL') {
+            <div class="mt-1">
+              <p-tag value="Code par email" severity="warn" icon="pi pi-envelope"
+                     title="Confirme par un code recu par email (SMS indisponibles) : verifiez avec attention avant d'approuver." />
+            </div>
+          }
           @if (row.withdrawal.rejectionReason) {
             <div class="mt-1 max-w-48 text-xs text-slate-500">{{ row.withdrawal.rejectionReason }}</div>
           }

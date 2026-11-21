@@ -365,6 +365,13 @@ export interface Withdrawal {
   /** Raison du dernier echec d'envoi automatique. */
   payoutError?: string | null;
   payoutAttempts?: number;
+  /** Canal du code qui a confirme le retrait ; EMAIL quand les SMS etaient remplaces. */
+  otpChannel?: 'SMS' | 'EMAIL' | null;
+}
+
+/** Codes de retrait envoyes par email au lieu du SMS (secours si Twilio est indisponible). */
+export interface WithdrawalCodesConfig {
+  byEmail: boolean;
 }
 
 /** Envoi automatique des retraits MonCash / NatCash (payouts Tranzak). */
