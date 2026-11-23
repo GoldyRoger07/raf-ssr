@@ -63,6 +63,9 @@
         }
         @case ('RUNNING') {
           @if (q.gameMode === 'SOLO') {
+            <p-button label="Prix, prime, questions" icon="pi pi-sliders-h" severity="secondary" [outlined]="true" [loading]="busy()"
+                      pTooltip="Change le prix d'une partie, la prime du sans-faute ou le nombre de questions, pour les prochaines parties."
+                      tooltipPosition="bottom" (onClick)="openTerms()" />
             <p-button label="Ajouter les nouvelles questions" icon="pi pi-plus-circle" severity="secondary" [outlined]="true" [loading]="busy()"
                       pTooltip="Ajoute au vivier les questions publiees dans le sujet depuis l'ouverture du quiz. Aucune question n'est retiree." tooltipPosition="bottom"
                       (onClick)="addNewQuestions()" />
@@ -383,6 +386,48 @@
   }
 
   <!-- Dialogue : repartition par difficulte (solo) -->
+  <p-dialog header="Prix, prime et nombre de questions" [(visible)]="termsOpen" [modal]="true" [style]="{ width: '44rem' }"
+            [breakpoints]="{ '640px': '95vw' }" [draggable]="false">
+    @if (quiz(); as q) {
+      <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+        Les nouvelles valeurs valent des la <strong>prochaine partie</strong>. Les parties deja jouees et celles en cours
+        gardent leur prix, leur prime et leurs questions. Un joueur qui avait l'ancien prix a l'ecran est prevenu avant
+        d'etre debite. Le disjoncteur de rentabilite repart de zero.
+      </p>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <label class="flex flex-col gap-1 text-sm">
+          Prix d'une partie (credits)
+          <p-inputnumber [(ngModel)]="termsPrice" (ngModelChange)="termsChanged()" [min]="0" [showButtons]="true" inputStyleClass="w-full" />
+          <span class="text-xs text-slate-500">Actuel : {{ q.ticketPriceCredits }} (0 = gratuit)</span>
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          Prime du sans-faute (HTG)
+          <p-inputnumber [(ngModel)]="termsPrize" (ngModelChange)="termsChanged()" [min]="1" [showButtons]="true" inputStyleClass="w-full" />
+          <span class="text-xs text-slate-500">Actuelle : {{ q.soloPrizeHtg | htg }}</span>
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          Questions par partie
+          <p-inputnumber [(ngModel)]="termsQuestions" (ngModelChange)="termsChanged()" [min]="1" [max]="200" [showButtons]="true" inputStyleClass="w-full" />
+          <span class="text-xs text-slate-500">Actuel : {{ q.questionsPerGame }} · vivier de {{ q.poolSize }}</span>
+        </label>
+      </div>
+      @if (termsQuestions && termsQuestions !== q.questionsPerGame) {
+        <p-message severity="warn" styleClass="mt-4"
+                   text="Le classement du quiz repartira de zero : seules les parties jouees avec le nouveau nombre de questions y compteront." />
+      }
+      @if (termsPreview(); as e) {
+        <h3 class="mb-2 mt-5 text-sm font-semibold">Bilan estime avec ces valeurs</h3>
+        <solo-economics [economics]="e" />
+      }
+    }
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="termsOpen.set(false)" />
+      @if (quiz(); as q) {
+        <p-button label="Enregistrer" [loading]="busy()" [disabled]="!termsValid() || !termsDirty(q)" (onClick)="saveTerms()" />
+      }
+    </ng-template>
+  </p-dialog>
+
   <p-dialog header="Repartition par difficulte" [(visible)]="mixOpen" [modal]="true" [style]="{ width: '40rem' }" [draggable]="false">
     <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
       Part des questions faciles, moyennes et difficiles de chaque partie. Le changement s'applique aux parties lancees

@@ -165,6 +165,24 @@ export class QuizApi {
     return this.http.get<SoloEconomics>(`${this.base}/solo/economics`, { params });
   }
 
+  /**
+   * Quiz solo ouvert : nouveaux prix, prime et nombre de questions, pour les parties
+   * lancees ensuite. Estimation perdante : 409 SOLO_TERMS_UNPROFITABLE sauf confirmation.
+   */
+  changeSoloTerms(id: number, terms: { entryPriceCredits: number; prizeHtg: number; questionsPerGame: number;
+    confirmUnprofitable: boolean }): Observable<Quiz> {
+    return this.http.put<Quiz>(`${this.base}/solo/${id}/terms`, terms);
+  }
+
+  /** Bilan estime du quiz avec ces valeurs, sur son vivier fige : rien n'est enregistre. */
+  previewSoloTerms(id: number, entryPriceCredits: number, prizeHtg: number, questionsPerGame: number): Observable<SoloEconomics> {
+    const params = new HttpParams()
+      .set('entryPriceCredits', entryPriceCredits)
+      .set('prizeHtg', prizeHtg)
+      .set('questionsPerGame', questionsPerGame);
+    return this.http.get<SoloEconomics>(`${this.base}/${id}/solo-economics/preview`, { params });
+  }
+
   publish(id: number, voteDurationMinutes: number | null): Observable<Quiz> {
     let params = new HttpParams();
     if (voteDurationMinutes) {

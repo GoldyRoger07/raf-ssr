@@ -21,7 +21,7 @@ import { Observable, Subject, debounceTime } from 'rxjs';
 
 import { DifficultyMixEditor } from '../../components/difficulty-mix-editor/difficulty-mix-editor';
 import { SoloEconomicsPanel } from '../../components/solo-economics/solo-economics';
-import { errorMessage } from '../../core/api';
+import { errorCode, errorMessage } from '../../core/api';
 import { CreditsPipe, HaitiDatePipe, HtgPipe } from '../../core/format';
 import { PLAY_MODE, quizStatus } from '../../core/labels';
 import { DEFAULT_DIFFICULTY_MIX, describeSplit, formatMix, mixValid, splitMix } from '../../core/difficulty-mix';
@@ -382,6 +382,104 @@ export default class QuizDetail implements OnInit {
       },
       error: (error) => {
         this.busy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
+  // --- Solo ouvert : prix, prime et nombre de questions --------------------------------
+  protected readonly termsOpen = signal(false);
+  protected termsPrice: number | null = null;
+  protected termsPrize: number | null = null;
+  protected termsQuestions: number | null = null;
+  /** Bilan estime avec les valeurs en cours de saisie. */
+  protected readonly termsPreview = signal<SoloEconomics | null>(null);
+  private readonly termsInput = new Subject<void>();
+  private termsPreviewWired = false;
+
+  protected openTerms(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    this.termsPrice = q.ticketPriceCredits;
+    this.termsPrize = q.soloPrizeHtg ?? null;
+    this.termsQuestions = q.questionsPerGame;
+    this.termsPreview.set(null);
+    if (!this.termsPreviewWired) {
+      this.termsPreviewWired = true;
+      this.termsInput.pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef)).subscribe(() => this.refreshTermsPreview());
+    }
+    this.refreshTermsPreview();
+    this.termsOpen.set(true);
+  }
+
+  protected termsChanged(): void {
+    this.termsInput.next();
+  }
+
+  protected termsValid(): boolean {
+    return this.termsPrice != null && this.termsPrice >= 0 && !!this.termsPrize && this.termsPrize >= 1
+      && !!this.termsQuestions && this.termsQuestions >= 1;
+  }
+
+  protected termsDirty(q: Quiz): boolean {
+    return this.termsPrice !== q.ticketPriceCredits || this.termsPrize !== q.soloPrizeHtg
+      || this.termsQuestions !== q.questionsPerGame;
+  }
+
+  private refreshTermsPreview(): void {
+    const q = this.quiz();
+    if (!q || !this.termsValid()) {
+      this.termsPreview.set(null);
+      return;
+    }
+    this.api.previewSoloTerms(q.id, this.termsPrice!, this.termsPrize!, this.termsQuestions!).subscribe({
+      next: (e) => this.termsPreview.set(e),
+      error: () => this.termsPreview.set(null),
+    });
+  }
+
+  protected saveTerms(confirmUnprofitable = false): void {
+    const q = this.quiz();
+    if (!q || !this.termsValid()) {
+      return;
+    }
+    const terms = {
+      entryPriceCredits: this.termsPrice!,
+      prizeHtg: this.termsPrize!,
+      questionsPerGame: this.termsQuestions!,
+      confirmUnprofitable,
+    };
+    const questionsChanged = terms.questionsPerGame !== q.questionsPerGame;
+    this.busy.set(true);
+    this.api.changeSoloTerms(q.id, terms).subscribe({
+      next: (updated) => {
+        this.busy.set(false);
+        this.quiz.set(updated);
+        this.termsOpen.set(false);
+        this.api.soloEconomics(q.id).subscribe({ next: (e) => this.soloEconomics.set(e), error: () => undefined });
+        this.messages.add({
+          severity: 'success',
+          summary: 'Nouvelles regles enregistrees',
+          detail: 'Elles valent des la prochaine partie ; les parties jouees et en cours gardent les anciennes.'
+            + (questionsChanged ? ' Le classement du quiz repart de zero.' : ''),
+        });
+      },
+      error: (error) => {
+        this.busy.set(false);
+        if (errorCode(error) === 'SOLO_TERMS_UNPROFITABLE') {
+          this.confirmation.confirm({
+            header: 'Quiz estime perdant',
+            message: errorMessage(error),
+            acceptLabel: 'Enregistrer quand meme',
+            rejectLabel: 'Revoir les valeurs',
+            acceptButtonProps: { severity: 'danger' },
+            rejectButtonProps: { severity: 'secondary', outlined: true },
+            accept: () => this.saveTerms(true),
+          });
+          return;
+        }
         this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error) });
       },
     });
