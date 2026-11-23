@@ -75,6 +75,7 @@
         <th pSortableColumn="active">Etat <p-sortIcon field="active" /></th>
         <th pSortableColumn="groupEnabled" class="text-center">En groupe <p-sortIcon field="groupEnabled" /></th>
         <th pSortableColumn="soloEnabled" class="text-center">Solo <p-sortIcon field="soloEnabled" /></th>
+        <th class="text-center" title="Gratuit, sans gain, correction immediate. Jamais en solo ni en groupe.">Entrainement</th>
         <th class="text-right">Actions</th>
       </tr>
     </ng-template>
@@ -90,7 +91,7 @@
         <td><p-tag [value]="c.active ? 'Active' : 'Desactivee'" [severity]="c.active ? 'success' : 'secondary'" /></td>
         <td class="text-center">
           @if (isAdmin()) {
-            <p-toggleswitch [ngModel]="c.groupEnabled" (ngModelChange)="toggleMode(c, 'GROUP', $event)"
+            <p-toggleswitch [ngModel]="c.groupEnabled" (ngModelChange)="toggleMode(c, 'GROUP', $event)" [disabled]="c.practiceEnabled"
                             [ariaLabel]="c.name + ' en mode En groupe'" />
           } @else {
             <i [class]="c.groupEnabled ? 'pi pi-check text-green-600' : 'pi pi-minus text-slate-400'"></i>
@@ -98,10 +99,18 @@
         </td>
         <td class="text-center">
           @if (isAdmin()) {
-            <p-toggleswitch [ngModel]="c.soloEnabled" (ngModelChange)="toggleMode(c, 'SOLO', $event)"
+            <p-toggleswitch [ngModel]="c.soloEnabled" (ngModelChange)="toggleMode(c, 'SOLO', $event)" [disabled]="c.practiceEnabled"
                             [ariaLabel]="c.name + ' en mode Solo'" />
           } @else {
             <i [class]="c.soloEnabled ? 'pi pi-check text-green-600' : 'pi pi-minus text-slate-400'"></i>
+          }
+        </td>
+        <td class="text-center">
+          @if (isAdmin()) {
+            <p-toggleswitch [ngModel]="c.practiceEnabled" (ngModelChange)="togglePractice(c, $event)"
+                            [ariaLabel]="c.name + ' en entrainement'" />
+          } @else {
+            <i [class]="c.practiceEnabled ? 'pi pi-check text-green-600' : 'pi pi-minus text-slate-400'"></i>
           }
         </td>
         <td class="text-right">
@@ -117,7 +126,7 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6" class="py-10 text-center text-slate-500">
+        <td colspan="7" class="py-10 text-center text-slate-500">
           {{ activeCount() ? 'Aucune categorie ne correspond a ces criteres.' : 'Aucune categorie : commencez par en creer une.' }}
         </td>
       </tr>

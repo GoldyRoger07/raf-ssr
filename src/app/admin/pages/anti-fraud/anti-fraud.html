@@ -59,6 +59,90 @@
     </div>
   </section>
 
+  @if (breaker(); as b) {
+    <section class="mb-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+        <i class="pi pi-bolt text-2xl text-orange-600"></i>
+        <div class="min-w-64 flex-1">
+          <h2 class="font-semibold">Disjoncteur de rentabilite (solo)</h2>
+          <p class="text-sm text-slate-500">
+            Active : chaque minute, pour chaque quiz solo ouvert et payant, on regarde ses dernieres parties terminees
+            (comptes de test exclus). S'il y en a assez et que les prix verses depassent la limite, en % des recettes, le
+            quiz est <strong>masque</strong> aux joueurs, jamais ferme : les parties en cours vont a leur terme, aucune
+            nouvelle ne demarre, et les admins sont prevenus. Le rendre visible le rearme : le compte repart de zero.
+            Une partie offerte compte zero recette. Les quiz gratuits ne sont jamais coupes.
+          </p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 px-5 py-4">
+        <label for="breaker-window" class="text-sm">Dernieres parties</label>
+        <p-inputnumber inputId="breaker-window" [(ngModel)]="breakerWindow" [min]="1" [max]="1000" [showButtons]="true"
+                       [disabled]="busy()" inputStyleClass="w-16" />
+        <label for="breaker-min" class="text-sm">Minimum</label>
+        <p-inputnumber inputId="breaker-min" [(ngModel)]="breakerMinGames" [min]="1" [max]="1000" [showButtons]="true"
+                       [disabled]="busy()" inputStyleClass="w-16" />
+        <label for="breaker-max" class="text-sm">Limite (% des recettes)</label>
+        <p-inputnumber inputId="breaker-max" [(ngModel)]="breakerMaxPercent" [min]="1" [max]="1000" [showButtons]="true"
+                       suffix=" %" [disabled]="busy()" inputStyleClass="w-20" />
+        <p-toggleswitch inputId="breaker-on" [(ngModel)]="breakerEnabled" [disabled]="busy()" />
+        <label for="breaker-on" class="w-16 text-sm font-medium">{{ breakerEnabled ? 'Active' : 'Coupe' }}</label>
+        <p-button label="Enregistrer" icon="pi pi-check" size="small" [loading]="busy()"
+                  [disabled]="!breakerChanged(b) || !breakerValid()" (onClick)="saveBreaker()" />
+      </div>
+      @if (breakerMinGames && breakerWindow && breakerMinGames > breakerWindow) {
+        <p class="px-5 pb-3 text-sm text-red-600">Le minimum ne peut pas depasser le nombre de parties mesurees.</p>
+      }
+      <p-table [value]="b.quizzes" dataKey="quizId">
+        <ng-template #header>
+          <tr>
+            <th>Quiz solo ouvert</th>
+            <th class="text-right">Parties mesurees</th>
+            <th class="text-right">Sans-faute</th>
+            <th class="text-right">Recettes / prix verses</th>
+            <th class="text-right">Redistribue</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-r>
+          <tr>
+            <td>
+              <a [routerLink]="['/admin/quiz', r.quizId]" class="font-medium hover:text-orange-600">{{ r.title }}</a>
+              @if (r.trippedAt) {
+                <p-tag value="Disjoncteur" severity="danger" icon="pi pi-bolt" styleClass="ml-2" />
+              } @else if (r.hidden) {
+                <p-tag value="Masque" severity="contrast" icon="pi pi-eye-slash" styleClass="ml-2" />
+              }
+              <div class="text-xs text-slate-500">
+                prix {{ r.prizeHtg | htg }}
+                @if (r.trippedAt) { · masque le {{ r.trippedAt | haitiDate }} }
+                @if (r.countedSince) { · compte depuis le {{ r.countedSince | haitiDate }} }
+              </div>
+            </td>
+            <td class="text-right">{{ r.games }}</td>
+            <td class="text-right">{{ r.perfectGames }}</td>
+            <td class="whitespace-nowrap text-right">
+              <div>{{ r.revenueHtg | htg }}</div>
+              <div class="text-xs text-slate-500">{{ r.prizesHtg | htg }}</div>
+            </td>
+            <td class="text-right font-semibold"
+                [class.text-red-600]="overLimit(r.payoutPercent, r.prizesHtg, b.config.maxPayoutPercent)"
+                [class.text-green-700]="r.payoutPercent !== null && !overLimit(r.payoutPercent, r.prizesHtg, b.config.maxPayoutPercent)">
+              @if (r.payoutPercent !== null) {
+                {{ r.payoutPercent }} %
+              } @else if (r.prizesHtg > 0) {
+                sans recette
+              } @else {
+                —
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="5" class="py-8 text-center text-slate-500">Aucun quiz solo payant ouvert.</td></tr>
+        </ng-template>
+      </p-table>
+    </section>
+  }
+
   <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
       <i class="pi pi-user-minus text-2xl text-red-600"></i>

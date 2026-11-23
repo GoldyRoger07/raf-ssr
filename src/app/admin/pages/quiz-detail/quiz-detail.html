@@ -20,7 +20,17 @@
         @if (q.hidden) {
           <p-tag value="Masque aux joueurs" severity="contrast" icon="pi pi-eye-slash" />
         }
+        @if (q.breakerTrippedAt) {
+          <p-tag value="Disjoncteur" severity="danger" icon="pi pi-bolt" />
+        }
       </div>
+      @if (q.breakerTrippedAt; as tripped) {
+        <p class="mt-1 text-sm text-red-700 dark:text-red-400">
+          Masque par le disjoncteur de rentabilite le {{ tripped | haitiDate }} : sur ses dernieres parties, il a verse plus
+          de prix que la limite permise. Verifiez le prix, le vivier et les sans-faute (fraude, questions qui circulent),
+          puis rendez-le visible : le compte repartira de zero.
+        </p>
+      }
       @if (q.hidden) {
         <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Masque : absent des listes de l'app, plus de nouveau ticket{{ q.gameMode === 'SOLO' ? ' ni de nouvelle partie' : '' }}.

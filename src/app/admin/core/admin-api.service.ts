@@ -50,6 +50,9 @@ import {
   PayoutSpecialCase,
   AntiFraudAutoResult,
   AntiFraudOverview,
+  SoloBreakerConfig,
+  SoloBreakerOverview,
+  SoloBreakerResult,
   FraudProfile,
   FraudProfileInput,
   FraudSuspect,
@@ -486,6 +489,17 @@ export class AdminApi {
 
   removeAntiFraudTarget(userId: number): Observable<AntiFraudOverview> {
     return this.http.delete<AntiFraudOverview>(`${this.base}/anti-fraud/targets/${userId}`);
+  }
+
+  // --- Disjoncteur de rentabilite des quiz solo -----------------------------------
+
+  soloBreaker(): Observable<SoloBreakerOverview> {
+    return this.http.get<SoloBreakerOverview>(`${this.base}/solo-breaker`);
+  }
+
+  /** Active : verification immediate, puis chaque minute ; un quiz qui perd est masque. */
+  setSoloBreaker(config: SoloBreakerConfig): Observable<SoloBreakerResult> {
+    return this.http.put<SoloBreakerResult>(`${this.base}/solo-breaker`, config);
   }
 
   /** Clot un retrait verse en partie : le reste non verse revient dans les gains du joueur. */

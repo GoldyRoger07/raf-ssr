@@ -15,8 +15,8 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PlayerSearch } from '../../components/player-search/player-search';
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
-import { HaitiDatePipe } from '../../core/format';
-import { AntiFraudOverview, AntiFraudTarget, PlayerSummary } from '../../core/models';
+import { HaitiDatePipe, HtgPipe } from '../../core/format';
+import { AntiFraudOverview, AntiFraudTarget, PlayerSummary, SoloBreakerOverview } from '../../core/models';
 
 /**
  * Anti-fraude : un joueur vise ne peut pas faire de sans-faute en solo. S'il repond juste
@@ -40,6 +40,7 @@ import { AntiFraudOverview, AntiFraudTarget, PlayerSummary } from '../../core/mo
     ToggleSwitchModule,
     PlayerSearch,
     HaitiDatePipe,
+    HtgPipe,
   ],
   templateUrl: './anti-fraud.html',
 })
@@ -60,11 +61,84 @@ export default class AntiFraud {
   protected autoEnabled = false;
   protected autoThreshold: number | null = 3;
 
+  /** Disjoncteur de rentabilite des quiz solo : etat enregistre et saisie en cours. */
+  protected readonly breaker = signal<SoloBreakerOverview | null>(null);
+  protected breakerEnabled = false;
+  protected breakerWindow: number | null = 50;
+  protected breakerMinGames: number | null = 20;
+  protected breakerMaxPercent: number | null = 100;
+
   constructor() {
     this.api.antiFraud().subscribe({
       next: (view) => this.show(view),
       error: (error) => this.error.set(errorMessage(error)),
     });
+    this.api.soloBreaker().subscribe({
+      next: (view) => this.showBreaker(view),
+      error: (error) => this.error.set(errorMessage(error)),
+    });
+  }
+
+  protected breakerChanged(view: SoloBreakerOverview): boolean {
+    const c = view.config;
+    return this.breakerEnabled !== c.enabled || this.breakerWindow !== c.windowGames
+      || this.breakerMinGames !== c.minGames || this.breakerMaxPercent !== c.maxPayoutPercent;
+  }
+
+  protected breakerValid(): boolean {
+    return !!this.breakerWindow && !!this.breakerMinGames && !!this.breakerMaxPercent
+      && this.breakerMinGames <= this.breakerWindow;
+  }
+
+  /** Prix verses au-dela de la limite (ou sans aucune recette) : affiche en rouge. */
+  protected overLimit(payoutPercent: number | null, prizesHtg: number, limit: number): boolean {
+    return payoutPercent === null ? prizesHtg > 0 : payoutPercent > limit;
+  }
+
+  protected saveBreaker(): void {
+    if (!this.breakerValid()) {
+      return;
+    }
+    const config = {
+      enabled: this.breakerEnabled,
+      windowGames: this.breakerWindow!,
+      minGames: this.breakerMinGames!,
+      maxPayoutPercent: this.breakerMaxPercent!,
+    };
+    const save = () => {
+      this.busy.set(true);
+      this.api.setSoloBreaker(config).subscribe({
+        next: (result) => {
+          this.showBreaker(result.overview);
+          this.done(config.enabled ? 'Disjoncteur active' : 'Disjoncteur coupe',
+            config.enabled
+              ? `Verification chaque minute. ${result.tripped} quiz masque(s) tout de suite.`
+              : 'Plus aucun quiz solo ne sera masque automatiquement.');
+        },
+        error: (error) => this.fail(error),
+      });
+    };
+    if (!config.enabled) {
+      save();
+      return;
+    }
+    this.confirmation.confirm({
+      header: 'Disjoncteur de rentabilite',
+      message: `Tout quiz solo payant dont les prix verses depassent ${config.maxPayoutPercent} % des recettes, sur ses `
+        + `${config.windowGames} dernieres parties (au moins ${config.minGames}), sera masque aux joueurs, jamais ferme. `
+        + 'Ceux qui sont deja dans ce cas le seront tout de suite. Continuer ?',
+      acceptLabel: 'Enregistrer',
+      rejectLabel: 'Annuler',
+      accept: save,
+    });
+  }
+
+  private showBreaker(view: SoloBreakerOverview): void {
+    this.breaker.set(view);
+    this.breakerEnabled = view.config.enabled;
+    this.breakerWindow = view.config.windowGames;
+    this.breakerMinGames = view.config.minGames;
+    this.breakerMaxPercent = view.config.maxPayoutPercent;
   }
 
   protected setAllPlayers(enabled: boolean): void {

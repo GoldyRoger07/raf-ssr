@@ -506,6 +506,8 @@ export interface Quiz {
   difficultyMix: DifficultyMix | null;
   /** Solo : anti-fraude pour tous les joueurs de ce quiz (absent en groupe). Coupe : la liste reste visee (OU). */
   antiFraud?: boolean;
+  /** Solo : date ou le disjoncteur de rentabilite l'a masque ; absent sinon (ou demasque depuis). */
+  breakerTrippedAt?: string;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
   startDelayMinutes: number;
@@ -748,6 +750,8 @@ export interface SoloQuizStatsRow {
   test: boolean;
   /** Masque aux joueurs. */
   hidden: boolean;
+  /** Masque par le disjoncteur de rentabilite. */
+  breakerTripped: boolean;
   status: QuizStatus;
   categoryId: number | null;
   categoryName: string | null;
@@ -795,6 +799,8 @@ export interface Category {
   groupEnabled: boolean;
   /** Le sujet est propose en mode Solo. */
   soloEnabled: boolean;
+  /** Sujet d'entrainement (gratuit, correction immediate) : jamais en solo ni en groupe. */
+  practiceEnabled: boolean;
 }
 
 export interface CategoryInput {
@@ -1211,6 +1217,47 @@ export interface AntiFraudOverview {
   autoEnabled: boolean;
   autoThreshold: number;
   targets: AntiFraudTarget[];
+}
+
+/** Disjoncteur de rentabilite des quiz solo : reglages. */
+export interface SoloBreakerConfig {
+  enabled: boolean;
+  /** Parties mesurees : les N dernieres terminees du quiz. */
+  windowGames: number;
+  /** Parties minimum dans la fenetre avant de juger. */
+  minGames: number;
+  /** Prix verses au-dela de ce % des recettes : le quiz est masque. */
+  maxPayoutPercent: number;
+}
+
+/** Quiz solo ouvert et payant, vu par le disjoncteur (fenetre de parties, comptes de test exclus). */
+export interface SoloBreakerQuiz {
+  quizId: number;
+  title: string;
+  entryCredits: number;
+  prizeHtg: number;
+  hidden: boolean;
+  /** Masque par le disjoncteur a cette date ; null sinon. */
+  trippedAt: string | null;
+  /** Demasque apres une coupure : seules les parties lancees depuis comptent. */
+  countedSince: string | null;
+  games: number;
+  perfectGames: number;
+  revenueHtg: number;
+  prizesHtg: number;
+  /** Prix verses sur recettes, en % ; null sans recette. */
+  payoutPercent: number | null;
+}
+
+export interface SoloBreakerOverview {
+  config: SoloBreakerConfig;
+  quizzes: SoloBreakerQuiz[];
+}
+
+/** Reglages enregistres : quiz masques tout de suite, et l'ecran a jour. */
+export interface SoloBreakerResult {
+  tripped: number;
+  overview: SoloBreakerOverview;
 }
 
 /** Reglage de l'ajout automatique enregistre : joueurs ajoutes d'un coup, et l'ecran a jour. */

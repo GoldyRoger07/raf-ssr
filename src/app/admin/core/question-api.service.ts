@@ -102,7 +102,8 @@ export class QuestionApi {
   }
 
   /** Interrupteurs En groupe / Solo (administrateurs). Un champ absent reste inchange. */
-  configureCategoryModes(id: number, modes: { groupEnabled?: boolean; soloEnabled?: boolean }): Observable<Category> {
+  configureCategoryModes(id: number,
+    modes: { groupEnabled?: boolean; soloEnabled?: boolean; practiceEnabled?: boolean }): Observable<Category> {
     return this.http.patch<Category>(`${this.apiUrl}/api/categories/${id}/modes`, modes);
   }
 

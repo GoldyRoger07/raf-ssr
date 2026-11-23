@@ -175,6 +175,9 @@
             @if (q.hidden) {
               <p-tag value="Masque" severity="contrast" icon="pi pi-eye-slash" class="ml-2" />
             }
+            @if (q.breakerTripped) {
+              <p-tag value="Disjoncteur" severity="danger" icon="pi pi-bolt" class="ml-2" />
+            }
             <div class="text-xs text-slate-500">
               {{ q.categoryName ?? '—' }} · {{ q.questionsPerGame }} questions × {{ q.questionDurationSeconds }} s
             </div>

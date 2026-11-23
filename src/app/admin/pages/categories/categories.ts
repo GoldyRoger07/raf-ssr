@@ -330,6 +330,48 @@ export default class Categories {
     });
   }
 
+  /**
+   * Sujet d'entrainement : la bonne reponse y est montree aussitot, donc il ne sert jamais
+   * en solo ni en groupe. L'activer coupe ces deux modes (refuse si un quiz en cours
+   * l'utilise).
+   */
+  protected togglePractice(category: Category, enabled: boolean): void {
+    const apply = () => {
+      this.replace({ ...category, practiceEnabled: enabled });
+      this.api.configureCategoryModes(category.id, { practiceEnabled: enabled }).subscribe({
+        next: (updated) => {
+          this.replace(updated);
+          this.messages.add({
+            severity: 'success',
+            summary: `${category.name} : ${enabled ? "sujet d'entrainement" : "retire de l'entrainement"}`,
+          });
+        },
+        error: (error) => {
+          this.replace(category);
+          this.messages.add({ severity: 'error', summary: 'Modification impossible', detail: errorMessage(error) });
+        },
+      });
+    };
+    if (!enabled) {
+      apply();
+      return;
+    }
+    this.confirmation.confirm({
+      header: "Sujet d'entrainement",
+      message: `« ${category.name} » sera propose en entrainement gratuit : la bonne reponse et l'explication y sont `
+        + 'montrees aussitot. Il sera retire du solo et du groupe, et ne doit plus jamais servir a un quiz payant. '
+        + "Utilisez des questions a part, jamais celles d'un quiz payant. Continuer ?",
+      acceptLabel: 'Activer',
+      rejectLabel: 'Annuler',
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: apply,
+      reject: () => {
+        this.replace({ ...category, practiceEnabled: true });
+        setTimeout(() => this.replace(category));
+      },
+    });
+  }
+
   private replace(category: Category): void {
     this.categories.update((list) => list.map((c) => (c.id === category.id ? category : c)));
   }

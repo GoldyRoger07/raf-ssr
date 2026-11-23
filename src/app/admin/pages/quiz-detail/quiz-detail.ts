@@ -487,7 +487,8 @@ export default class QuizDetail implements OnInit {
       message: hidden
         ? `Le quiz disparait des listes de l'app et ${entries}. Ceux qui ont deja un ticket le voient toujours et jouent `
           + 'normalement. Son statut ne change pas.'
-        : 'Le quiz revient dans les listes de l\'app et accepte de nouveau les joueurs.',
+        : 'Le quiz revient dans les listes de l\'app et accepte de nouveau les joueurs.'
+          + (q.breakerTrippedAt ? ' Le disjoncteur repart de zero : seules les parties lancees ensuite compteront.' : ''),
       acceptLabel: hidden ? 'Masquer' : 'Rendre visible',
       rejectLabel: 'Annuler',
       rejectButtonProps: { severity: 'secondary', outlined: true },
