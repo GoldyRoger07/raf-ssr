@@ -534,6 +534,48 @@ export default class QuizDetail implements OnInit {
     });
   }
 
+  // --- Solo : cashback du quasi sans-faute ---------------------------------------
+  protected readonly cashbackModes = [
+    { label: 'Taux global (App joueur)', value: 'GLOBAL' },
+    { label: 'Taux propre a ce quiz', value: 'CUSTOM' },
+    { label: 'Pas de cashback sur ce quiz', value: 'OFF' },
+  ];
+  protected readonly cashbackOpen = signal(false);
+  protected cashbackMode: 'GLOBAL' | 'CUSTOM' | 'OFF' = 'GLOBAL';
+  protected cashbackValue: number | null = 50;
+
+  protected openCashback(): void {
+    const own = this.quiz()?.soloCashbackPercent ?? null;
+    this.cashbackMode = own == null ? 'GLOBAL' : own === 0 ? 'OFF' : 'CUSTOM';
+    this.cashbackValue = own ? own : 50;
+    this.cashbackOpen.set(true);
+  }
+
+  protected saveCashback(): void {
+    const q = this.quiz();
+    if (!q) {
+      return;
+    }
+    const percent = this.cashbackMode === 'GLOBAL' ? null : this.cashbackMode === 'OFF' ? 0 : this.cashbackValue;
+    this.busy.set(true);
+    this.api.setCashback(q.id, percent).subscribe({
+      next: (updated) => {
+        this.busy.set(false);
+        this.quiz.set(updated);
+        this.cashbackOpen.set(false);
+        this.messages.add({
+          severity: 'success',
+          summary: percent == null ? 'Cashback : taux global' : percent === 0 ? 'Cashback coupe sur ce quiz'
+            : `Cashback a ${percent} % sur ce quiz`,
+        });
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error) });
+      },
+    });
+  }
+
   /** Solo : active ou coupe l'anti-fraude sur ce quiz. Les parties deja lancees gardent leur etat. */
   protected toggleAntiFraud(): void {
     const q = this.quiz();

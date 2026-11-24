@@ -127,7 +127,7 @@ export default class PlayerDetail implements OnInit {
 
   /** Mouvement d'une partie solo (entree payee ou gain du sans-faute) : son corrige est consultable. */
   protected hasGame(t: WalletTransaction): boolean {
-    return t.type === 'SOLO_ENTRY' || (t.type === 'PRIZE' && t.referenceType === 'GameSession');
+    return t.type === 'SOLO_ENTRY' || t.type === 'SOLO_CASHBACK' || (t.type === 'PRIZE' && t.referenceType === 'GameSession');
   }
   protected readonly withdrawalStatus = withdrawalStatus;
   protected readonly providerLabel = providerLabel;

@@ -508,6 +508,10 @@ export interface Quiz {
   antiFraud?: boolean;
   /** Solo : date ou le disjoncteur de rentabilite l'a masque ; absent sinon (ou demasque depuis). */
   breakerTrippedAt?: string;
+  /** Solo, reglage du quiz : null = taux global, 0 = aucun cashback, sinon taux propre (%). */
+  soloCashbackPercent?: number | null;
+  /** Solo : % du prix rendu pour une seule erreur tel qu'il s'applique (reglages globaux compris) ; null sans cashback. */
+  cashbackPercent?: number | null;
   minScoreThreshold: number;
   closingCountdownMinutes: number;
   startDelayMinutes: number;
@@ -933,6 +937,8 @@ export interface AdminGameSession {
   answeredCount?: number;
   /** Solo : sans-faute, prix verse. */
   won: boolean;
+  /** Solo : credits rendus pour un quasi sans-faute (une erreur) ; absent sans cashback. */
+  cashbackCredits?: number | null;
   flagged: boolean;
   flagReason?: string;
   invalidationReason?: string;
@@ -1220,6 +1226,17 @@ export interface AntiFraudOverview {
 }
 
 /** Disjoncteur de rentabilite des quiz solo : reglages. */
+/** Cashback du quasi sans-faute en solo (une seule erreur) : reglages globaux. */
+export interface SoloCashbackConfig {
+  enabled: boolean;
+  /** Taux par defaut : % du prix d'entree rendu en credits. */
+  percent: number;
+  /** Cashbacks maximum par joueur et par jour. */
+  dailyLimit: number;
+  /** Parties d'au moins ce nombre de questions. */
+  minQuestions: number;
+}
+
 export interface SoloBreakerConfig {
   enabled: boolean;
   /** Parties mesurees : les N dernieres terminees du quiz. */

@@ -26,6 +26,7 @@ export const TRANSACTION_TYPE: Record<string, string> = {
   TICKET_PURCHASE: 'Achat de ticket',
   SOLO_ENTRY: 'Partie solo',
   PRIZE: 'Gain',
+  SOLO_CASHBACK: 'Cashback (une erreur)',
   COMMISSION: 'Commission leader',
   INVITE_BONUS: "Bonus d'invitation",
   LEADER_TRANSFER_OUT: "Recharge d'un joueur (leader)",

@@ -98,6 +98,8 @@
             <div class="text-xs text-slate-500">{{ s.correctCount }}/{{ s.answeredCount }} bonnes</div>
             @if (s.won) {
               <div class="text-xs font-medium text-green-700 dark:text-green-400"><i class="pi pi-trophy mr-1"></i>Sans-faute, prix verse</div>
+            } @else if (s.cashbackCredits) {
+              <div class="text-xs font-medium text-emerald-700 dark:text-emerald-400"><i class="pi pi-replay mr-1"></i>Une erreur, {{ s.cashbackCredits }} credit(s) rendus</div>
             }
           } @else { — }
         </td>

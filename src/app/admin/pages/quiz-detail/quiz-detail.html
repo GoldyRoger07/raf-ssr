@@ -175,6 +175,19 @@
           <p-button [label]="q.antiFraud === true ? 'Couper' : 'Activer'" icon="pi pi-shield" size="small" [text]="true"
                     [loading]="busy()" (onClick)="toggleAntiFraud()" />
         </li>
+        <li>
+          @if (q.cashbackPercent) {
+            <strong>Cashback a une erreur :</strong> {{ q.cashbackPercent }} % du prix d'entree rendus en credits
+            ({{ q.soloCashbackPercent == null ? 'taux global' : 'taux propre a ce quiz' }}).
+          } @else if (q.soloCashbackPercent === 0) {
+            <strong>Pas de cashback</strong> sur ce quiz.
+          } @else if (q.soloCashbackPercent == null) {
+            Cashback a une erreur : taux global, sans effet pour l'instant (coupe dans App joueur, quiz gratuit ou parties trop courtes).
+          } @else {
+            Cashback a une erreur : {{ q.soloCashbackPercent }} % prevus, sans effet pour l'instant (coupe dans App joueur, quiz gratuit ou parties trop courtes).
+          }
+          <p-button label="Regler" icon="pi pi-replay" size="small" [text]="true" (onClick)="openCashback()" />
+        </li>
       </ul>
       @if (soloEconomics(); as e) {
         <h3 class="mb-2 mt-5 text-sm font-semibold">Rentabilite</h3>
@@ -471,6 +484,28 @@
     <ng-template #footer>
       <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="cooldownOpen.set(false)" />
       <p-button label="Enregistrer" [loading]="busy()" [disabled]="cooldownInvalid" (onClick)="saveCooldown()" />
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog header="Cashback a une erreur" [(visible)]="cashbackOpen" [modal]="true" [style]="{ width: '30rem' }" [draggable]="false">
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+      Partie payante terminee avec exactement une erreur (9/10, 19/20...) : une part du prix d'entree est rendue en
+      credits, non retirables. Interrupteur, taux global et plafond par jour : ecran App joueur. Lu a la fin de chaque partie.
+    </p>
+    <p-select [options]="cashbackModes" [(ngModel)]="cashbackMode" optionLabel="label" optionValue="value"
+              styleClass="w-full" ariaLabel="Cashback de ce quiz" />
+    @if (cashbackMode === 'CUSTOM') {
+      <div class="mt-3 flex items-center gap-2">
+        <p-inputnumber inputId="cashback-percent" [(ngModel)]="cashbackValue" [min]="1" [max]="100" [showButtons]="true"
+                       suffix=" %" inputStyleClass="w-20" ariaLabel="Taux" />
+        <span class="text-sm">du prix d'entree</span>
+      </div>
+    }
+    <ng-template #footer>
+      <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="cashbackOpen.set(false)" />
+      <p-button label="Enregistrer" [loading]="busy()"
+                [disabled]="cashbackMode === 'CUSTOM' && (!cashbackValue || cashbackValue < 1 || cashbackValue > 100)"
+                (onClick)="saveCashback()" />
     </ng-template>
   </p-dialog>
 

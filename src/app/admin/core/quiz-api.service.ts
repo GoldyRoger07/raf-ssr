@@ -103,6 +103,11 @@ export class QuizApi {
   }
 
   /** Solo : active ou coupe l'anti-fraude sur ce quiz. S'applique aux parties suivantes. */
+  /** Solo : cashback du quasi sans-faute sur ce quiz ; null = taux global, 0 = aucun, 1 a 100 = taux propre. */
+  setCashback(id: number, percent: number | null): Observable<Quiz> {
+    return this.http.post<Quiz>(`${this.base}/${id}/cashback`, { percent });
+  }
+
   setAntiFraud(id: number, enabled: boolean): Observable<Quiz> {
     return this.http.post<Quiz>(`${this.base}/${id}/anti-fraud`, { enabled });
   }

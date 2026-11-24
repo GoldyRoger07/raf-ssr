@@ -72,6 +72,49 @@
     </div>
   </section>
 
+  @if (cashback()) {
+  <section class="mb-6 max-w-3xl rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <i class="pi pi-replay text-2xl text-emerald-600"></i>
+      <div class="flex-1">
+        <h2 class="font-semibold">Cashback a une erreur (solo)</h2>
+        <p class="text-sm text-slate-500">
+          Partie solo payante terminee avec exactement une erreur (9/10, 14/15, 19/20...) : une part du prix d'entree est
+          rendue en credits, non retirables.
+        </p>
+      </div>
+      <p-toggleswitch inputId="cashback-on" [(ngModel)]="cashbackForm.enabled" [disabled]="cashbackSaving()" />
+      <label for="cashback-on" class="w-16 text-sm font-medium">{{ cashbackForm.enabled ? 'Active' : 'Coupe' }}</label>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 px-5 py-4">
+      <label for="cashback-percent" class="text-sm">Taux par defaut</label>
+      <p-inputnumber inputId="cashback-percent" [(ngModel)]="cashbackForm.percent" [min]="1" [max]="100" [showButtons]="true"
+                     suffix=" %" [disabled]="cashbackSaving()" inputStyleClass="w-20" />
+      <label for="cashback-limit" class="text-sm">Par joueur et par jour</label>
+      <p-inputnumber inputId="cashback-limit" [(ngModel)]="cashbackForm.dailyLimit" [min]="1" [max]="100" [showButtons]="true"
+                     [disabled]="cashbackSaving()" inputStyleClass="w-16" />
+      <label for="cashback-min" class="text-sm">Questions minimum</label>
+      <p-inputnumber inputId="cashback-min" [(ngModel)]="cashbackForm.minQuestions" [min]="2" [max]="200" [showButtons]="true"
+                     [disabled]="cashbackSaving()" inputStyleClass="w-16" />
+      <p-button label="Enregistrer" icon="pi pi-check" size="small" [loading]="cashbackSaving()"
+                [disabled]="!cashbackChanged() || !cashbackValid()" (onClick)="saveCashback()" />
+    </div>
+
+    <div class="px-5 pb-4">
+      <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+        <ul class="list-disc space-y-1 pl-5">
+          <li>Arrondi a l'unite inferieure, au moins 1 credit (50 % d'une partie a 5 credits : 2 credits).</li>
+          <li>Chaque quiz solo peut garder ce taux, en avoir un propre ou couper le cashback (fiche du quiz, Regles).</li>
+          <li>Exclus : parties offertes ou gratuites, comptes de test, joueurs de la liste anti-fraude ou sous profil fraudeur, et les parties ou l'anti-fraude a compte des reponses fausses.</li>
+          <li>Les credits rendus sont retires des recettes du quiz : disjoncteur, statistiques et resultat du jeu en tiennent compte. La commission du leader reste versee.</li>
+          <li>Dans l'app : badge sur la fiche du quiz, message sur l'ecran de resultat et ligne « Cashback » dans l'historique.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  }
+
   <section class="max-w-3xl rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
       <i class="pi pi-envelope text-2xl text-violet-600"></i>

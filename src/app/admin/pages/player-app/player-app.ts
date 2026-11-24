@@ -1,12 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { AdminApi } from '../../core/admin-api.service';
 import { errorMessage } from '../../core/api';
-import { PlayerAppConfig } from '../../core/models';
+import { PlayerAppConfig, SoloCashbackConfig } from '../../core/models';
 
 /**
  * Comportements de l'app joueur pilotes depuis le back-office. Chaque interrupteur
@@ -15,7 +17,7 @@ import { PlayerAppConfig } from '../../core/models';
  */
 @Component({
   selector: 'admin-player-app',
-  imports: [FormsModule, MessageModule, ToggleSwitchModule],
+  imports: [FormsModule, ButtonModule, InputNumberModule, MessageModule, ToggleSwitchModule],
   templateUrl: './player-app.html',
 })
 export default class PlayerApp {
@@ -27,7 +29,16 @@ export default class PlayerApp {
   protected readonly error = signal<string | null>(null);
   protected readonly saving = signal(false);
 
+  /** Cashback du quasi sans-faute en solo : formulaire enregistre d'un bloc. */
+  protected readonly cashback = signal<SoloCashbackConfig | null>(null);
+  protected readonly cashbackSaving = signal(false);
+  protected cashbackForm: SoloCashbackConfig = { enabled: false, percent: 50, dailyLimit: 3, minQuestions: 5 };
+
   constructor() {
+    this.api.soloCashback().subscribe({
+      next: (config) => this.showCashback(config),
+      error: (error) => this.messages.add({ severity: 'error', summary: 'Cashback solo illisible', detail: errorMessage(error) }),
+    });
     this.api.playerApp().subscribe({
       next: (config) => {
         this.config.set(config);
@@ -94,6 +105,44 @@ export default class PlayerApp {
         ? { summary: 'Retraits automatiques actives', detail: "Approuver un retrait MonCash / NatCash enverra l'argent par Tranzak." }
         : { summary: 'Retraits automatiques coupes', detail: 'Les retraits MonCash / NatCash se versent de nouveau a la main.' },
     );
+  }
+
+  protected cashbackChanged(): boolean {
+    const c = this.cashback();
+    const f = this.cashbackForm;
+    return !!c && (c.enabled !== f.enabled || c.percent !== f.percent || c.dailyLimit !== f.dailyLimit
+      || c.minQuestions !== f.minQuestions);
+  }
+
+  protected cashbackValid(): boolean {
+    const f = this.cashbackForm;
+    return f.percent >= 1 && f.percent <= 100 && f.dailyLimit >= 1 && f.dailyLimit <= 100
+      && f.minQuestions >= 2 && f.minQuestions <= 200;
+  }
+
+  protected saveCashback(): void {
+    if (!this.cashbackValid()) {
+      return;
+    }
+    this.cashbackSaving.set(true);
+    this.api.setSoloCashback({ ...this.cashbackForm }).subscribe({
+      next: (config) => {
+        this.cashbackSaving.set(false);
+        this.showCashback(config);
+        this.messages.add(config.enabled
+          ? { severity: 'success', summary: 'Cashback solo active', detail: `${config.percent} % du prix rendu pour une seule erreur.` }
+          : { severity: 'success', summary: 'Cashback solo coupe', detail: 'Aucun credit ne sera rendu.' });
+      },
+      error: (error) => {
+        this.cashbackSaving.set(false);
+        this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error), life: 8000 });
+      },
+    });
+  }
+
+  private showCashback(config: SoloCashbackConfig): void {
+    this.cashback.set(config);
+    this.cashbackForm = { ...config };
   }
 
   private save(

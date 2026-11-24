@@ -51,6 +51,7 @@ import {
   AntiFraudAutoResult,
   AntiFraudOverview,
   SoloBreakerConfig,
+  SoloCashbackConfig,
   SoloBreakerOverview,
   SoloBreakerResult,
   FraudProfile,
@@ -492,6 +493,15 @@ export class AdminApi {
   }
 
   // --- Disjoncteur de rentabilite des quiz solo -----------------------------------
+
+  /** Cashback du quasi sans-faute en solo : reglages globaux. */
+  soloCashback(): Observable<SoloCashbackConfig> {
+    return this.http.get<SoloCashbackConfig>(`${this.base}/solo-cashback`);
+  }
+
+  setSoloCashback(config: SoloCashbackConfig): Observable<SoloCashbackConfig> {
+    return this.http.put<SoloCashbackConfig>(`${this.base}/solo-cashback`, config);
+  }
 
   soloBreaker(): Observable<SoloBreakerOverview> {
     return this.http.get<SoloBreakerOverview>(`${this.base}/solo-breaker`);
