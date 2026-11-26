@@ -42,6 +42,7 @@ export default class PlayerApp {
     this.api.playerApp().subscribe({
       next: (config) => {
         this.config.set(config);
+        this.reminderDelay = config.emailReminderDelaySeconds;
         this.loading.set(false);
       },
       error: (error) => {
@@ -73,6 +74,29 @@ export default class PlayerApp {
         ? { summary: 'Rappel active', detail: "Les joueurs dont l'email n'est pas confirme reverront la fenetre." }
         : { summary: 'Rappel desactive', detail: "La fenetre de rappel ne s'affichera plus." },
     );
+  }
+
+  /** Delai du rappel de l'email : saisi puis enregistre avec le bouton. */
+  protected reminderDelay = 10;
+
+  protected reminderDelayChanged(): boolean {
+    const c = this.config();
+    return !!c && c.emailReminderDelaySeconds !== this.reminderDelay;
+  }
+
+  protected reminderDelayValid(): boolean {
+    const d = this.reminderDelay;
+    return Number.isInteger(d) && d >= 5 && d <= 86400;
+  }
+
+  protected saveReminderDelay(): void {
+    if (!this.reminderDelayValid()) {
+      return;
+    }
+    this.save({ emailReminderDelaySeconds: this.reminderDelay }, (config) => ({
+      summary: 'Delai du rappel enregistre',
+      detail: `La fenetre reviendra ${config.emailReminderDelaySeconds} secondes apres sa fermeture.`,
+    }));
   }
 
   protected setLeaderTransfer(enabled: boolean): void {
@@ -159,11 +183,13 @@ export default class PlayerApp {
       next: (config) => {
         this.saving.set(false);
         this.config.set(config);
+        this.reminderDelay = config.emailReminderDelaySeconds;
         this.messages.add({ severity: 'success', ...message(config) });
       },
       error: (error) => {
         this.saving.set(false);
         this.config.set(previous);
+        this.reminderDelay = previous.emailReminderDelaySeconds;
         this.messages.add({ severity: 'error', summary: 'Enregistrement impossible', detail: errorMessage(error), life: 8000 });
       },
     });

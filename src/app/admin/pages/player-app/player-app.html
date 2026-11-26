@@ -121,7 +121,8 @@
       <div class="flex-1">
         <h2 class="font-semibold">Rappel de confirmation de l'email</h2>
         <p class="text-sm text-slate-500">
-          Fenetre « Confirme ton email » affichee toutes les 10 secondes au joueur dont l'email n'est pas confirme.
+          Fenetre « Confirme ton email » affichee au joueur dont l'email n'est pas confirme, toutes les
+          {{ c.emailReminderDelaySeconds }} secondes apres sa fermeture.
         </p>
       </div>
       <p-toggleswitch
@@ -133,10 +134,21 @@
       <label for="email-reminder" class="w-16 text-sm font-medium">{{ c.emailReminderEnabled ? 'Active' : 'Coupe' }}</label>
     </div>
 
+    <div class="flex flex-wrap items-end gap-3 px-5 pt-4">
+      <div class="flex flex-col gap-1">
+        <label for="email-reminder-delay" class="text-sm font-medium">Temps avant reapparition (secondes)</label>
+        <p-inputnumber inputId="email-reminder-delay" [(ngModel)]="reminderDelay" [min]="5" [max]="86400"
+                       [showButtons]="true" [useGrouping]="false" suffix=" s" [disabled]="saving()" inputStyleClass="w-24" />
+      </div>
+      <p-button label="Enregistrer" icon="pi pi-check" size="small" [loading]="saving()"
+                [disabled]="!reminderDelayChanged() || !reminderDelayValid()" (onClick)="saveReminderDelay()" />
+    </div>
+
     <div class="px-5 py-4">
       <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
         <ul class="list-disc space-y-1 pl-5">
-          <li>Coupe, la fenetre ne s'affiche plus ; si elle est ouverte chez un joueur, elle se ferme a la verification suivante (10 secondes au plus).</li>
+          <li>Delai de 5 secondes a 86 400 (une journee), compte a partir de la fermeture de la fenetre ; pris en compte par l'app au passage suivant.</li>
+          <li>Coupe, la fenetre ne s'affiche plus ; si elle est ouverte chez un joueur, elle se ferme a la verification suivante (au plus le delai ci-dessus).</li>
           <li>L'email reste obligatoire : sans email confirme, le joueur ne peut toujours pas verifier son telephone ni retirer ses gains.</li>
           <li>Le joueur peut toujours confirmer son email ou renvoyer le lien depuis son profil.</li>
         </ul>

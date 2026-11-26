@@ -1145,8 +1145,10 @@ export interface AnnouncementTestResult {
 
 /** Comportements de l'app joueur pilotes depuis le back-office (PlayerAppService). */
 export interface PlayerAppConfig {
-  /** Fenetre de rappel de confirmation de l'email, toutes les 10 secondes. */
+  /** Fenetre de rappel de confirmation de l'email. */
   emailReminderEnabled: boolean;
+  /** Secondes entre deux apparitions du rappel, apres sa fermeture (5 a 86 400, 10 par defaut). */
+  emailReminderDelaySeconds: number;
   /** Bouton « Recharger un joueur » des leaders, dans le Tresor. */
   leaderTransferEnabled: boolean;
   /** Bouton « Recharger avec mes gains » de l'ecran Recharger. */
